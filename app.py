@@ -60,7 +60,7 @@ def register():
     if not name or not email or len(pw)<4: return jsonify(error="أدخل البيانات كاملة، وكلمة المرور 4 أحرف على الأقل."),400
     c=db()
     try:
-        c.execute("INSERT INTO users(name,email,password,credits) VALUES(?,?,?,?)",(name,email,pw,int(setting("free_credits","10")))); c.commit()
+        c.execute("INSERT INTO users(name,email,password,credits) VALUES(?,?,?,?,?)",(name,email,pw,int(setting("free_credits","10")))); c.commit()
     except sqlite3.IntegrityError: c.close(); return jsonify(error="الإيميل مستخدم قبل كده."),409
     u=c.execute("SELECT * FROM users WHERE email=?",(email,)).fetchone(); c.close()
     session.update(uid=u["id"],name=u["name"],admin=bool(u["is_admin"]))
