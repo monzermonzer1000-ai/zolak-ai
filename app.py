@@ -21,7 +21,7 @@ def init_db():
     c.execute("""CREATE TABLE IF NOT EXISTS settings(
         key TEXT PRIMARY KEY, value TEXT)""")
     if not c.execute("SELECT 1 FROM users WHERE is_admin=1").fetchone():
-        c.execute("INSERT OR IGNORE INTO users(name,email,password,credits,is_admin) VALUES(?,?,?,?)",
+        c.execute("INSERT OR IGNORE INTO users(name,email,password,credits,is_admin) VALUES(?,?,?,?,?)",
                   ("مدير زولك","admin@zolak.ai","admin123",9999,1))
     for k,v in [("site_name","زولك AI 🇸🇩"),("free_credits","10"),
                 ("welcome","أها يا زول 👋❤️ زولك جاهز يساعدك في أي حاجة.")]:
@@ -60,7 +60,7 @@ def register():
     if not name or not email or len(pw)<4: return jsonify(error="أدخل البيانات كاملة، وكلمة المرور 4 أحرف على الأقل."),400
     c=db()
     try:
-        c.execute("INSERT INTO users(name,email,password,credits) VALUES(?,?,?,?,?)",(name,email,pw,int(setting("free_credits","10")))); c.commit()
+        c.execute("INSERT INTO users(name,email,password,credits) VALUES(?,?,?,?)",(name,email,pw,int(setting("free_credits","10")))); c.commit()
     except sqlite3.IntegrityError: c.close(); return jsonify(error="الإيميل مستخدم قبل كده."),409
     u=c.execute("SELECT * FROM users WHERE email=?",(email,)).fetchone(); c.close()
     session.update(uid=u["id"],name=u["name"],admin=bool(u["is_admin"]))
