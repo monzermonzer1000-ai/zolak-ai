@@ -60,10 +60,12 @@ def init_db():
 
 def setting(k, default=""):
     c = db()
+
     r = c.execute(
         "SELECT value FROM settings WHERE key=?",
         (k,)
     ).fetchone()
+
     c.close()
 
     if r:
@@ -236,26 +238,37 @@ def chat():
             error="رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"
         ), 402
 
-    key = os.getenv("OPENAI_API_KEY")
+    key = os.getenv("GEMINI_API_KEY")
 
     if not key:
         c.close()
         return jsonify(
-            error="زولك جاهز، لكن مفتاح الذكاء الاصطناعي لم تتم إضافته في الاستضافة بعد."
+            error="مفتاح Gemini لم تتم إضافته في الاستضافة."
         ), 503
 
     try:
-        from openai import OpenAI
+        from google import genai
+        from google.genai import types
 
-        client = OpenAI(api_key=key)
+        client = genai.Client(api_key=key)
 
-        r = client.responses.create(
-            model=os.getenv("OPENAI_MODEL", "gpt-5"),
-            instructions="أنت زولك AI، مساعد سوداني ودود. أجب بوضوح. استخدم السوداني عند طلبه. لا تدّعي أنك إنسان.",
-            input=msg
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=msg,
+            config=types.GenerateContentConfig(
+                system_instruction=(
+                    "أنت زولك AI 🇸🇩، مساعد ذكاء اصطناعي سوداني ودود. "
+                    "أجب بوضوح وباختصار مناسب. "
+                    "استخدم اللهجة السودانية عندما يطلبها المستخدم. "
+                    "لا تدّعي أنك إنسان."
+                )
+            )
         )
 
-        ans = r.output_text
+        ans = response.text
+
+        if not ans:
+            raise Exception("Gemini لم يرجع نصاً في الاستجابة.")
 
         c.execute(
             "UPDATE users SET credits=credits-1 WHERE id=?",
@@ -372,4 +385,4 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=int(os.getenv("PORT", "5000"))
-        )
+    )
