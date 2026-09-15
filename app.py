@@ -103,7 +103,6 @@ def chat():
         c.execute("INSERT INTO chats(user_id,role,content) VALUES(?,?,?)",(session["uid"],"user",msg))
         c.execute("INSERT INTO chats(user_id,role,content) VALUES(?,?,?)",(session["uid"],"assistant",ans))
         c.commit(); c.close(); return jsonify(answer=ans)
-    except Exception:
         except Exception as e:
         c.close(); return jsonify(error=f"حصلت مشكلة: {str(e)}"),500
 
