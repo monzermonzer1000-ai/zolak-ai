@@ -21,7 +21,7 @@ def init_db():
     c.execute("""CREATE TABLE IF NOT EXISTS settings(
         key TEXT PRIMARY KEY, value TEXT)""")
     if not c.execute("SELECT 1 FROM users WHERE is_admin=1").fetchone():
-        c.execute("INSERT OR IGNORE INTO users(name,email,password,credits,is_admin) VALUES(?,?,?,?,1)",
+        c.execute("INSERT OR IGNORE INTO users(name,email,password,credits,is_admin) VALUES(?,?,?,?,?)",
                   ("مدير زولك","admin@zolak.ai","admin123",9999,1))
     for k,v in [("site_name","زولك AI 🇸🇩"),("free_credits","10"),
                 ("welcome","أها يا زول 👋❤️ زولك جاهز يساعدك في أي حاجة.")]:
