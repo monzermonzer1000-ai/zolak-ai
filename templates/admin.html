@@ -207,21 +207,37 @@ alert("✅ اتحفظت الإعدادات");
 }else{
 alert("❌ حصلت مشكلة");
 }
-
-}
-
 async function addCredit(id){
 
-await fetch("/api/admin/user/"+id+"/credits",{
+try{
+
+const r = await fetch("/api/admin/user/"+id+"/credits",{
 method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({amount:10})
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+amount:10
+})
 });
 
+const data = await r.json();
+
+if(!r.ok){
+alert("❌ "+(data.error || "حصلت مشكلة"));
+return;
+}
+
+alert("✅ تمت إضافة 10 رصيد");
 location.reload();
+
+}catch(e){
+
+alert("❌ حصل خطأ في الاتصال بالسيرفر");
 
 }
 
+}
 async function addCustomCredit(id){
 
 const amount=prompt("أدخل عدد الرصيد الداير تضيفو:");
