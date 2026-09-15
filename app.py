@@ -5,8 +5,13 @@ from flask import Flask, render_template, request, jsonify, session, redirect
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "change-this-secret-in-production")
+
 DB = "zolak.db"
 
+
+# =========================
+# قاعدة البيانات
+# =========================
 
 def db():
     c = sqlite3.connect(DB)
@@ -17,106 +22,140 @@ def db():
 def init_db():
     c = db()
 
-    c.execute("""CREATE TABLE IF NOT EXISTS users(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        credits INTEGER DEFAULT 10,
-        is_admin INTEGER DEFAULT 0,
-        banned INTEGER DEFAULT 0
-    )""")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            credits INTEGER DEFAULT 10,
+            is_admin INTEGER DEFAULT 0,
+            banned INTEGER DEFAULT 0
+        )
+    """)
 
-    c.execute("""CREATE TABLE IF NOT EXISTS chats(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        role TEXT,
-        content TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )""")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS chats(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            role TEXT,
+            content TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
 
-    c.execute("""CREATE TABLE IF NOT EXISTS settings(
-        key TEXT PRIMARY KEY,
-        value TEXT
-    )""")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS settings(
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
 
-    # إضافة عمود الحظر لو قاعدة البيانات قديمة
-    columns = [x["name"] for x in c.execute("PRAGMA table_info(users)").fetchall()]
+    # إضافة banned لو قاعدة البيانات القديمة ما فيها العمود
+    columns = [
+        x["name"]
+        for x in c.execute("PRAGMA table_info(users)").fetchall()
+    ]
 
     if "banned" not in columns:
-        c.execute("ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0")
-
-    # إنشاء المدير إذا لم يكن موجوداً
-    if not c.execute("SELECT 1 FROM users WHERE is_admin=1").fetchone():
         c.execute(
-            "INSERT OR IGNORE INTO users(name,email,password,credits,is_admin,banned) VALUES(?,?,?,?,?,?)",
-            (
-                "مدير زولك",
-                "admin@zolak.ai",
-                "admin123",
-                9999,
-                1,
-                0
-            )
+            "ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0"
         )
 
-    for k, v in [
+    # إنشاء المدير إذا غير موجود
+    admin = c.execute(
+        "SELECT id FROM users WHERE is_admin=1 LIMIT 1"
+    ).fetchone()
+
+    if not admin:
+        c.execute("""
+            INSERT INTO users
+            (name,email,password,credits,is_admin,banned)
+            VALUES(?,?,?,?,?,?)
+        """, (
+            "مدير زولك",
+            "admin@zolak.ai",
+            "admin123",
+            9999,
+            1,
+            0
+        ))
+
+    # الإعدادات الافتراضية
+    settings = [
         ("site_name", "زولك AI 🇸🇩"),
         ("free_credits", "10"),
         ("welcome", "أها يا زول 👋❤️ زولك جاهز يساعدك في أي حاجة.")
-    ]:
+    ]
+
+    for key, value in settings:
         c.execute(
             "INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)",
-            (k, v)
+            (key, value)
         )
 
     c.commit()
     c.close()
 
 
-def setting(k, default=""):
+def setting(key, default=""):
     c = db()
 
-    r = c.execute(
+    row = c.execute(
         "SELECT value FROM settings WHERE key=?",
-        (k,)
+        (key,)
     ).fetchone()
 
     c.close()
 
-    if r:
-        return r["value"]
+    if row:
+        return row["value"]
 
     return default
-
-
-def login_required(fn):
-    @wraps(fn)
-    def w(*a, **kw):
-        if "uid" not in session:
-            return jsonify(error="لازم تسجل دخول أولاً."), 401
-
-        return fn(*a, **kw)
-
-    return w
-
-
-def admin_required(fn):
-    @wraps(fn)
-    def w(*a, **kw):
-        if not session.get("admin"):
-            return redirect("/login")
-
-        return fn(*a, **kw)
-
-    return w
 
 
 init_db()
 
 
+# =========================
+# الحماية
+# =========================
+
+def login_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+
+        if "uid" not in session:
+            return jsonify(
+                error="لازم تسجل دخول أولاً."
+            ), 401
+
+        return fn(*args, **kwargs)
+
+    return wrapper
+
+
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+
+        if not session.get("admin"):
+            return jsonify(
+                error="غير مصرح لك."
+            ), 403
+
+        return fn(*args, **kwargs)
+
+    return wrapper
+
+
+# =========================
+# الصفحات
+# =========================
+
 @app.get("/")
 def home():
+
     return render_template(
         "index.html",
         site_name=setting("site_name")
@@ -125,166 +164,245 @@ def home():
 
 @app.get("/login")
 def login():
+
     return render_template("login.html")
 
 
+@app.get("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect("/")
+
+
+# =========================
+# التسجيل
+# =========================
+
 @app.post("/api/register")
 def register():
-    d = request.get_json() or {}
 
-    name = d.get("name", "").strip()
-    email = d.get("email", "").strip().lower()
-    pw = d.get("password", "")
+    data = request.get_json() or {}
 
-    if not name or not email or len(pw) < 4:
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    if not name or not email or len(password) < 4:
+
         return jsonify(
             error="أدخل البيانات كاملة، وكلمة المرور 4 أحرف على الأقل."
         ), 400
 
+    try:
+        free = int(
+            setting("free_credits", "10")
+        )
+    except:
+        free = 10
+
     c = db()
 
     try:
-        c.execute(
-            "INSERT INTO users(name,email,password,credits,banned) VALUES(?,?,?,?,?)",
-            (
-                name,
-                email,
-                pw,
-                int(setting("free_credits", "10")),
-                0
-            )
-        )
+
+        c.execute("""
+            INSERT INTO users
+            (name,email,password,credits,banned)
+            VALUES(?,?,?,?,?)
+        """, (
+            name,
+            email,
+            password,
+            free,
+            0
+        ))
 
         c.commit()
 
     except sqlite3.IntegrityError:
-        c.close()
-        return jsonify(error="الإيميل مستخدم قبل كده."), 409
 
-    u = c.execute(
+        c.close()
+
+        return jsonify(
+            error="الإيميل مستخدم قبل كده."
+        ), 409
+
+    user = c.execute(
         "SELECT * FROM users WHERE email=?",
         (email,)
     ).fetchone()
 
     c.close()
 
-    session.update(
-        uid=u["id"],
-        name=u["name"],
-        admin=bool(u["is_admin"])
+    session["uid"] = user["id"]
+    session["name"] = user["name"]
+    session["admin"] = bool(user["is_admin"])
+
+    return jsonify(
+        ok=True
     )
 
-    return jsonify(ok=True)
 
+# =========================
+# تسجيل الدخول
+# =========================
 
 @app.post("/api/login")
 def api_login():
-    d = request.get_json() or {}
 
-    email = d.get("email", "").strip().lower()
-    pw = d.get("password", "")
+    data = request.get_json() or {}
+
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
 
     c = db()
 
-    u = c.execute(
-        "SELECT * FROM users WHERE email=? AND password=?",
-        (email, pw)
-    ).fetchone()
+    user = c.execute("""
+        SELECT *
+        FROM users
+        WHERE email=? AND password=?
+    """, (
+        email,
+        password
+    )).fetchone()
 
     c.close()
 
-    if not u:
+    if not user:
+
         return jsonify(
             error="الإيميل أو كلمة المرور غلط."
         ), 401
 
-    if u["banned"] and not u["is_admin"]:
+    if user["banned"] and not user["is_admin"]:
+
         return jsonify(
             error="الحساب موقوف حالياً. تواصل مع إدارة زولك."
         ), 403
 
-    session.update(
-        uid=u["id"],
-        name=u["name"],
-        admin=bool(u["is_admin"])
+    session["uid"] = user["id"]
+    session["name"] = user["name"]
+    session["admin"] = bool(user["is_admin"])
+
+    return jsonify(
+        ok=True
     )
 
-    return jsonify(ok=True)
 
-
-@app.get("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
-
+# =========================
+# بيانات المستخدم
+# =========================
 
 @app.get("/api/me")
 def me():
+
     if "uid" not in session:
-        return jsonify(logged_in=False)
+
+        return jsonify(
+            logged_in=False
+        )
 
     c = db()
 
-    u = c.execute(
-        "SELECT name,email,credits,is_admin,banned FROM users WHERE id=?",
-        (session["uid"],)
-    ).fetchone()
+    user = c.execute("""
+        SELECT name,email,credits,is_admin,banned
+        FROM users
+        WHERE id=?
+    """, (
+        session["uid"],
+    )).fetchone()
 
     c.close()
 
+    if not user:
+
+        session.clear()
+
+        return jsonify(
+            logged_in=False
+        )
+
     return jsonify(
         logged_in=True,
-        **dict(u)
+        **dict(user)
     )
 
+
+# =========================
+# المحادثة مع Gemini
+# =========================
 
 @app.post("/api/chat")
 @login_required
 def chat():
-    d = request.get_json() or {}
-    msg = d.get("message", "").strip()
 
-    if not msg:
-        return jsonify(error="اكتب رسالتك أولاً."), 400
+    data = request.get_json() or {}
+
+    message = data.get("message", "").strip()
+
+    if not message:
+
+        return jsonify(
+            error="اكتب رسالتك أولاً."
+        ), 400
 
     c = db()
 
-    u = c.execute(
-        "SELECT credits,banned,is_admin FROM users WHERE id=?",
-        (session["uid"],)
-    ).fetchone()
+    user = c.execute("""
+        SELECT credits,banned,is_admin
+        FROM users
+        WHERE id=?
+    """, (
+        session["uid"],
+    )).fetchone()
 
-    if not u:
-        c.close()
-        return jsonify(error="الحساب غير موجود."), 404
+    if not user:
 
-    if u["banned"] and not u["is_admin"]:
         c.close()
-        return jsonify(error="حسابك موقوف حالياً."), 403
 
-    if u["credits"] <= 0 and not u["is_admin"]:
+        return jsonify(
+            error="الحساب غير موجود."
+        ), 404
+
+    if user["banned"] and not user["is_admin"]:
+
         c.close()
+
+        return jsonify(
+            error="حسابك موقوف حالياً."
+        ), 403
+
+    if user["credits"] <= 0 and not user["is_admin"]:
+
+        c.close()
+
         return jsonify(
             error="رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"
         ), 402
 
-    key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY")
 
-    if not key:
+    if not api_key:
+
         c.close()
+
         return jsonify(
             error="مفتاح Gemini لم تتم إضافته في الاستضافة."
         ), 503
 
     try:
+
         from google import genai
         from google.genai import types
 
-        client = genai.Client(api_key=key)
+        client = genai.Client(
+            api_key=api_key
+        )
 
         response = client.models.generate_content(
             model="gemini-3.6-flash",
-            contents=msg,
+            contents=message,
             config=types.GenerateContentConfig(
                 system_instruction=(
                     "أنت زولك AI 🇸🇩، مساعد ذكاء اصطناعي سوداني ودود. "
@@ -295,81 +413,131 @@ def chat():
             )
         )
 
-        ans = response.text
+        answer = response.text
 
-        if not ans:
-            raise Exception("Gemini لم يرجع نصاً في الاستجابة.")
+        if not answer:
 
-        # المدير لا ينقص رصيده
-        if not u["is_admin"]:
-            c.execute(
-                "UPDATE users SET credits=credits-1 WHERE id=?",
-                (session["uid"],)
+            raise Exception(
+                "Gemini لم يرجع نصاً."
             )
 
-        c.execute(
-            "INSERT INTO chats(user_id,role,content) VALUES(?,?,?)",
-            (session["uid"], "user", msg)
-        )
+        # المستخدم العادي يخسر محاولة
+        if not user["is_admin"]:
 
-        c.execute(
-            "INSERT INTO chats(user_id,role,content) VALUES(?,?,?)",
-            (session["uid"], "assistant", ans)
-        )
+            c.execute("""
+                UPDATE users
+                SET credits = credits - 1
+                WHERE id=? AND credits > 0
+            """, (
+                session["uid"],
+            ))
+
+        # حفظ الرسائل
+        c.execute("""
+            INSERT INTO chats
+            (user_id,role,content)
+            VALUES(?,?,?)
+        """, (
+            session["uid"],
+            "user",
+            message
+        ))
+
+        c.execute("""
+            INSERT INTO chats
+            (user_id,role,content)
+            VALUES(?,?,?)
+        """, (
+            session["uid"],
+            "assistant",
+            answer
+        ))
 
         c.commit()
         c.close()
 
-        return jsonify(answer=ans)
+        return jsonify(
+            answer=answer
+        )
 
     except Exception as e:
+
+        c.rollback()
         c.close()
+
         return jsonify(
             error=f"حصلت مشكلة: {str(e)}"
         ), 500
 
 
+# =========================
+# سجل المحادثات
+# =========================
+
 @app.get("/api/chats")
 @login_required
 def chats():
+
     c = db()
 
-    rows = c.execute(
-        "SELECT role,content,created_at FROM chats WHERE user_id=? ORDER BY id DESC LIMIT 50",
-        (session["uid"],)
-    ).fetchall()
+    rows = c.execute("""
+        SELECT role,content,created_at
+        FROM chats
+        WHERE user_id=?
+        ORDER BY id DESC
+        LIMIT 50
+    """, (
+        session["uid"],
+    )).fetchall()
 
     c.close()
 
     return jsonify(
-        chats=[dict(x) for x in reversed(rows)]
+        chats=[
+            dict(row)
+            for row in reversed(rows)
+        ]
     )
 
+
+# =========================
+# لوحة المدير
+# =========================
 
 @app.get("/admin")
 @admin_required
 def admin():
+
     c = db()
 
-    users = c.execute(
-        "SELECT id,name,email,credits,is_admin,banned FROM users ORDER BY id DESC"
-    ).fetchall()
+    users = c.execute("""
+        SELECT id,name,email,credits,is_admin,banned
+        FROM users
+        ORDER BY id DESC
+    """).fetchall()
 
-    total = c.execute(
-        "SELECT COUNT(*) n FROM users WHERE is_admin=0"
-    ).fetchone()["n"]
+    total = c.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE is_admin=0
+    """).fetchone()[0]
 
-    msgs = c.execute(
-        "SELECT COUNT(*) n FROM chats"
-    ).fetchone()["n"]
+    messages = c.execute("""
+        SELECT COUNT(*)
+        FROM chats
+    """).fetchone()[0]
 
-    banned = c.execute(
-        "SELECT COUNT(*) n FROM users WHERE banned=1 AND is_admin=0"
-    ).fetchone()["n"]
+    banned = c.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE banned=1 AND is_admin=0
+    """).fetchone()[0]
 
-    total_credits = c.execute(
-        "SELECT COALESCE(SUM(credits),0) n FROM users WHERE is_admin=0"
-    ).fetchone()["n"]
+    total_credits = c.execute("""
+        SELECT COALESCE(SUM(credits),0)
+        FROM users
+        WHERE is_admin=0
+    """).fetchone()[0]
 
     c.close()
 
@@ -377,7 +545,7 @@ def admin():
         "admin.html",
         users=users,
         total=total,
-        msgs=msgs,
+        msgs=messages,
         banned=banned,
         total_credits=total_credits,
         free=setting("free_credits", "10"),
@@ -386,161 +554,335 @@ def admin():
     )
 
 
+# =========================
+# إعدادات زولك
+# =========================
+
 @app.post("/api/admin/settings")
 @admin_required
 def admin_settings():
-    d = request.get_json() or {}
+
+    data = request.get_json() or {}
+
     c = db()
 
-    for k in ["free_credits", "welcome"]:
-        if k in d:
-            c.execute(
-                "INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)",
-                (k, str(d[k]))
-            )
+    if "free_credits" in data:
+
+        try:
+            free = int(data["free_credits"])
+
+            if free < 0:
+                free = 0
+
+        except:
+            free = 10
+
+        c.execute("""
+            INSERT OR REPLACE INTO settings(key,value)
+            VALUES(?,?)
+        """, (
+            "free_credits",
+            str(free)
+        ))
+
+    if "welcome" in data:
+
+        c.execute("""
+            INSERT OR REPLACE INTO settings(key,value)
+            VALUES(?,?)
+        """, (
+            "welcome",
+            str(data["welcome"])
+        ))
 
     c.commit()
     c.close()
 
-    return jsonify(ok=True)
+    return jsonify(
+        ok=True
+    )
 
+
+# =========================
+# ⭐ إضافة الرصيد
+# =========================
 
 @app.post("/api/admin/user/<int:uid>/credits")
 @admin_required
 def add_credits(uid):
+
+    data = request.get_json(silent=True) or {}
+
     try:
-        n = int(
-            (request.get_json() or {}).get("amount", 10)
+        amount = int(
+            data.get("amount", 0)
         )
     except:
-        return jsonify(error="قيمة الرصيد غير صحيحة."), 400
 
-    if n < 0:
-        return jsonify(error="لا يمكن إضافة قيمة سالبة."), 400
+        return jsonify(
+            error="قيمة الرصيد غير صحيحة."
+        ), 400
+
+    if amount <= 0:
+
+        return jsonify(
+            error="أدخل رقم أكبر من صفر."
+        ), 400
 
     c = db()
 
-    c.execute(
-        "UPDATE users SET credits=credits+? WHERE id=? AND is_admin=0",
-        (n, uid)
-    )
+    user = c.execute("""
+        SELECT id,name,email,credits,is_admin
+        FROM users
+        WHERE id=?
+    """, (
+        uid,
+    )).fetchone()
+
+    if not user:
+
+        c.close()
+
+        return jsonify(
+            error="المستخدم غير موجود."
+        ), 404
+
+    # منع تعديل رصيد المدير من زر المستخدمين
+    if user["is_admin"]:
+
+        c.close()
+
+        return jsonify(
+            error="لا يمكن تعديل رصيد المدير من هنا."
+        ), 403
+
+    # إضافة الرصيد
+    c.execute("""
+        UPDATE users
+        SET credits = credits + ?
+        WHERE id=? AND is_admin=0
+    """, (
+        amount,
+        uid
+    ))
+
+    if c.rowcount != 1:
+
+        c.rollback()
+        c.close()
+
+        return jsonify(
+            error="لم يتم تحديث الرصيد."
+        ), 500
+
+    # قراءة الرصيد الجديد للتأكد
+    updated = c.execute("""
+        SELECT credits
+        FROM users
+        WHERE id=?
+    """, (
+        uid,
+    )).fetchone()
 
     c.commit()
     c.close()
 
-    return jsonify(ok=True)
+    return jsonify(
+        ok=True,
+        message="تمت إضافة الرصيد بنجاح.",
+        credits=updated["credits"]
+    )
 
+
+# =========================
+# حظر المستخدم
+# =========================
 
 @app.post("/api/admin/user/<int:uid>/ban")
 @admin_required
 def ban_user(uid):
+
     c = db()
 
-    user = c.execute(
-        "SELECT is_admin FROM users WHERE id=?",
-        (uid,)
-    ).fetchone()
+    user = c.execute("""
+        SELECT is_admin
+        FROM users
+        WHERE id=?
+    """, (
+        uid,
+    )).fetchone()
 
     if not user:
+
         c.close()
-        return jsonify(error="المستخدم غير موجود."), 404
+
+        return jsonify(
+            error="المستخدم غير موجود."
+        ), 404
 
     if user["is_admin"]:
-        c.close()
-        return jsonify(error="لا يمكن حظر المدير."), 403
 
-    c.execute(
-        "UPDATE users SET banned=1 WHERE id=?",
-        (uid,)
-    )
+        c.close()
+
+        return jsonify(
+            error="لا يمكن حظر المدير."
+        ), 403
+
+    c.execute("""
+        UPDATE users
+        SET banned=1
+        WHERE id=? AND is_admin=0
+    """, (
+        uid,
+    ))
 
     c.commit()
     c.close()
 
-    return jsonify(ok=True)
+    return jsonify(
+        ok=True
+    )
 
+
+# =========================
+# إلغاء الحظر
+# =========================
 
 @app.post("/api/admin/user/<int:uid>/unban")
 @admin_required
 def unban_user(uid):
+
     c = db()
 
-    c.execute(
-        "UPDATE users SET banned=0 WHERE id=? AND is_admin=0",
-        (uid,)
-    )
+    c.execute("""
+        UPDATE users
+        SET banned=0
+        WHERE id=? AND is_admin=0
+    """, (
+        uid,
+    ))
 
     c.commit()
     c.close()
 
-    return jsonify(ok=True)
+    return jsonify(
+        ok=True
+    )
 
+
+# =========================
+# حذف المستخدم
+# =========================
 
 @app.delete("/api/admin/user/<int:uid>")
 @admin_required
 def delete_user(uid):
+
     c = db()
 
-    user = c.execute(
-        "SELECT is_admin FROM users WHERE id=?",
-        (uid,)
-    ).fetchone()
+    user = c.execute("""
+        SELECT is_admin
+        FROM users
+        WHERE id=?
+    """, (
+        uid,
+    )).fetchone()
 
     if not user:
+
         c.close()
-        return jsonify(error="المستخدم غير موجود."), 404
+
+        return jsonify(
+            error="المستخدم غير موجود."
+        ), 404
 
     if user["is_admin"]:
+
         c.close()
-        return jsonify(error="لا يمكن حذف حساب المدير."), 403
 
-    c.execute(
-        "DELETE FROM chats WHERE user_id=?",
-        (uid,)
-    )
+        return jsonify(
+            error="لا يمكن حذف حساب المدير."
+        ), 403
 
-    c.execute(
-        "DELETE FROM users WHERE id=?",
-        (uid,)
-    )
+    # حذف محادثات المستخدم
+    c.execute("""
+        DELETE FROM chats
+        WHERE user_id=?
+    """, (
+        uid,
+    ))
+
+    # حذف المستخدم
+    c.execute("""
+        DELETE FROM users
+        WHERE id=? AND is_admin=0
+    """, (
+        uid,
+    ))
 
     c.commit()
     c.close()
 
-    return jsonify(ok=True)
+    return jsonify(
+        ok=True
+    )
 
+
+# =========================
+# البحث عن المستخدمين
+# =========================
 
 @app.get("/api/admin/users")
 @admin_required
 def admin_users():
-    q = request.args.get("q", "").strip()
+
+    query = request.args.get(
+        "q",
+        ""
+    ).strip()
 
     c = db()
 
-    if q:
-        users = c.execute(
-            """SELECT id,name,email,credits,is_admin,banned
-               FROM users
-               WHERE name LIKE ? OR email LIKE ?
-               ORDER BY id DESC""",
-            (f"%{q}%", f"%{q}%")
-        ).fetchall()
+    if query:
+
+        users = c.execute("""
+            SELECT id,name,email,credits,is_admin,banned
+            FROM users
+            WHERE name LIKE ?
+               OR email LIKE ?
+            ORDER BY id DESC
+        """, (
+            f"%{query}%",
+            f"%{query}%"
+        )).fetchall()
+
     else:
-        users = c.execute(
-            """SELECT id,name,email,credits,is_admin,banned
-               FROM users
-               ORDER BY id DESC"""
-        ).fetchall()
+
+        users = c.execute("""
+            SELECT id,name,email,credits,is_admin,banned
+            FROM users
+            ORDER BY id DESC
+        """).fetchall()
 
     c.close()
 
     return jsonify(
-        users=[dict(x) for x in users]
+        users=[
+            dict(user)
+            for user in users
+        ]
     )
 
 
+# =========================
+# تشغيل الموقع
+# =========================
+
 if __name__ == "__main__":
+
     app.run(
         host="0.0.0.0",
-        port=int(os.getenv("PORT", "5000"))
+        port=int(
+            os.getenv("PORT", "5000")
+        )
     )
