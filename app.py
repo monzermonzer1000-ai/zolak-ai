@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "change-this-secret-in-production")
 
-DB = "zolak.db"
+DB = "/tmp/zolak.db"
 
 
 # =========================
