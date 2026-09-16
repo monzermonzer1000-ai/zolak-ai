@@ -12,88 +12,58 @@
 
 <body>
 
-<header>
+<div class="app">
 
-  <div class="logo">
-    زولك <span>AI</span> 🇸🇩
-  </div>
+  <header class="topbar">
 
-  <nav>
-    <span id="who"></span>
-
-    <a href="/login" id="loginLink">
-      دخول / حساب
-    </a>
-
-    <a href="/admin" id="adminLink" hidden>
-      لوحة زولك
-    </a>
-
-    <a href="/logout" id="logout" hidden>
-      خروج
-    </a>
-  </nav>
-
-</header>
-
-
-<main>
-
-  <section class="hero">
-
-    <div class="badge">
-      <span>🇸🇩</span>
-      ذكاء اصطناعي سوداني
+    <div class="logo">
+      زولك <span>AI</span> 🇸🇩
     </div>
 
-    <h1>
-      أها يا زول 👋
-      <br>
-      <span>زولك جاهز يساعدك</span>
-    </h1>
+    <nav>
+      <span id="who"></span>
 
-    <p>
-      اكتب طلبك وخلي زولك يتصرف.
-    </p>
+      <a href="/login" id="loginLink">دخول</a>
 
-  </section>
+      <a href="/admin" id="adminLink" hidden>لوحة زولك</a>
+
+      <a href="/logout" id="logout" hidden>خروج</a>
+    </nav>
+
+  </header>
 
 
-  <section class="card">
+  <main class="chat-app">
 
-    <div class="chat-top">
+    <div class="chat-header">
 
-      <div class="chat-title">
+      <div class="ai-avatar">Z</div>
 
-        <div class="ai-avatar">
-          Z
-        </div>
-
-        <div>
-          <strong>زولك AI</strong>
-          <small>
-            مساعدك الذكي 🇸🇩
-          </small>
-        </div>
-
-      </div>
-
-      <div class="online">
-        <span></span>
-        متصل
+      <div class="ai-info">
+        <strong>زولك AI</strong>
+        <small>
+          مساعدك الذكي السوداني 🇸🇩
+          <i></i>
+        </small>
       </div>
 
     </div>
 
 
-    <div id="messages">
+    <div id="messages" class="messages">
+
+      <div class="welcome">
+
+        <div class="welcome-icon">🇸🇩</div>
+
+        <h1>أها يا زول 👋</h1>
+
+        <p>زولك جاهز يساعدك.</p>
+
+      </div>
 
       <div class="msg ai">
-        أها يا زول 😄❤️
-        <br>
-        أنا زولك.
-        <br>
-        قول لي عايز شنو؟
+        قول لي عايز شنو؟ 😄
       </div>
 
     </div>
@@ -101,84 +71,43 @@
 
     <div class="suggestions">
 
-      <button>✍️ أكتب لي منشور</button>
-
-      <button>📝 ظبّط لي الكلام</button>
-
+      <button>✍️ اكتب لي منشور</button>
+      <button>📝 ظبط لي الكلام</button>
       <button>📚 فهمني</button>
-
-      <button>📄 لخص لي</button>
-
-      <button>🌍 ترجم لي</button>
-
       <button>💡 أديني فكرة</button>
-
-      <button>🎓 ساعدني في الدراسة</button>
-
-      <button>💼 ساعدني في الشغل</button>
 
     </div>
 
 
-    <div class="row">
+    <div class="composer">
 
       <textarea
         id="prompt"
-        placeholder="أكتب رسالتك هنا..."
+        placeholder="اكتب رسالتك..."
         rows="1"
       ></textarea>
 
-      <button id="send">
-        <span>أرسلها</span>
+      <button id="send" aria-label="إرسال">
         🚀
       </button>
 
     </div>
 
 
-    <div class="input-hint">
-      زولك ممكن يساعدك في الكتابة، الدراسة، الترجمة والأفكار.
+    <div class="bottom-info">
+
+      <div id="credits" class="credits"></div>
+
+      <span>زولك AI 🇸🇩</span>
+
     </div>
 
+  </main>
 
-    <div id="credits" class="credits"></div>
-
-  </section>
-
-
-  <div class="features">
-
-    <div class="feature">
-      <div>⚡</div>
-      <strong>سريع</strong>
-      <span>ردود سريعة ومباشرة</span>
-    </div>
-
-    <div class="feature">
-      <div>🧠</div>
-      <strong>ذكي</strong>
-      <span>يفهم طلبك ويساعدك</span>
-    </div>
-
-    <div class="feature">
-      <div>🇸🇩</div>
-      <strong>سوداني</strong>
-      <span>مصمم ليك يا زول</span>
-    </div>
-
-  </div>
-
-
-  <footer>
-    <span>زولك AI 🇸🇩</span>
-    <span>•</span>
-    <span>ذكاء اصطناعي بطابع سوداني</span>
-  </footer>
-
-</main>
+</div>
 
 
 <script src="/static/app.js"></script>
 
 </body>
-  </html>
+</html>
