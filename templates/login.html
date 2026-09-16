@@ -1,4 +1,292 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>حسابك — زولك AI</title><link rel="stylesheet" href="/static/style.css"></head><body><main class="auth"><div class="logo">زولك <span>AI</span> 🇸🇩</div><div class="card"><h2 id="title">أدخل حسابك يا زول 👋</h2><input id="name" placeholder="الاسم" hidden><input id="email" placeholder="الإيميل"><input id="password" type="password" placeholder="كلمة المرور"><button id="go">دخلني 🚀</button><button class="ghost" id="toggle">ما عندك حساب؟ اعمل واحد</button><p id="err"></p></div></main><script>
-let reg=false;const $=x=>document.getElementById(x);$('toggle').onclick=()=>{reg=!reg;$('name').hidden=!reg;$('title').textContent=reg?'اعمل حسابك في زولك ❤️':'أدخل حسابك يا زول 👋';$('go').textContent=reg?'اعمل الحساب 🚀':'دخلني 🚀';$('toggle').textContent=reg?'عندي حساب بالفعل':'ما عندك حساب؟ اعمل واحد'};
-$('go').onclick=async()=>{let body={email:$('email').value,password:$('password').value};if(reg)body.name=$('name').value;let r=await fetch(reg?'/api/register':'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});let d=await r.json();if(d.ok)location.href='/';else $('err').textContent=d.error||'حصل خطأ'};
-</script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>تسجيل الدخول — زولك AI</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+        .auth {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #212121;
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .auth-logo {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .auth-logo span {
+            color: #aaa;
+        }
+
+        .auth-card {
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 15px 40px rgba(0,0,0,.25);
+        }
+
+        .auth-card h2 {
+            text-align: center;
+            margin: 0 0 8px;
+            font-size: 22px;
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 13px 14px;
+            margin-bottom: 12px;
+            border: 1px solid #444;
+            border-radius: 10px;
+            background: #202020;
+            color: white;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .auth-input:focus {
+            border-color: #666;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            background: white;
+            color: #111;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .google-button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 12px;
+            border: 1px solid #555;
+            border-radius: 10px;
+            background: #fff;
+            color: #111;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            color: #777;
+            font-size: 12px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #444;
+        }
+
+        .ghost {
+            width: 100%;
+            margin-top: 15px;
+            border: none;
+            background: transparent;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .ghost:hover {
+            color: white;
+        }
+
+        #err {
+            color: #ff6b6b;
+            text-align: center;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<main class="auth">
+
+    <div class="auth-box">
+
+        <div class="auth-logo">
+            زولك <span>AI</span> 🇸🇩
+        </div>
+
+        <div class="auth-card">
+
+            <h2 id="title">
+                أدخل حسابك يا زول 👋
+            </h2>
+
+            <div class="auth-subtitle">
+                سجّل دخولك عشان تواصل مع زولك AI
+            </div>
+
+            <button class="google-button" type="button" id="google">
+                🔵 تسجيل الدخول باستخدام Google
+            </button>
+
+            <div class="divider">
+                أو
+            </div>
+
+            <input
+                class="auth-input"
+                id="name"
+                placeholder="الاسم"
+                hidden
+            >
+
+            <input
+                class="auth-input"
+                id="email"
+                type="email"
+                placeholder="الإيميل"
+            >
+
+            <input
+                class="auth-input"
+                id="password"
+                type="password"
+                placeholder="كلمة المرور"
+            >
+
+            <button class="login-button" id="go" type="button">
+                دخول
+            </button>
+
+            <button class="ghost" id="toggle" type="button">
+                ما عندك حساب؟ اعمل واحد
+            </button>
+
+            <p id="err"></p>
+
+        </div>
+
+    </div>
+
+</main>
+
+
+<script>
+
+let reg = false;
+
+const $ = id => document.getElementById(id);
+
+
+$("toggle").onclick = () => {
+
+    reg = !reg;
+
+    $("name").hidden = !reg;
+
+    $("title").textContent =
+        reg
+        ? "اعمل حسابك في زولك ❤️"
+        : "أدخل حسابك يا زول 👋";
+
+    $("go").textContent =
+        reg
+        ? "اعمل الحساب"
+        : "دخول";
+
+    $("toggle").textContent =
+        reg
+        ? "عندي حساب بالفعل"
+        : "ما عندك حساب؟ اعمل واحد";
+};
+
+
+$("go").onclick = async () => {
+
+    const body = {
+        email: $("email").value.trim(),
+        password: $("password").value
+    };
+
+    if (reg) {
+        body.name = $("name").value.trim();
+    }
+
+    try {
+
+        const response = await fetch(
+            reg ? "/api/register" : "/api/login",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.ok) {
+
+            location.href = "/";
+
+        } else {
+
+            $("err").textContent =
+                data.error || "حصل خطأ";
+
+        }
+
+    } catch (error) {
+
+        $("err").textContent =
+            "حصل خطأ في الاتصال، جرّب تاني.";
+
+    }
+};
+
+
+$("google").onclick = () => {
+
+    $("err").textContent =
+        "تسجيل الدخول بواسطة Google سيتم تفعيله قريباً.";
+
+};
+
+</script>
+
+</body>
+</html>
