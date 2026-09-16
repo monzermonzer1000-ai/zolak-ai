@@ -18,7 +18,7 @@ html,body{
 
 body{
   background:
-    linear-gradient(rgba(7,10,15,.94),rgba(7,10,15,.97)),
+    linear-gradient(rgba(7,10,15,.60),rgba(7,10,15,.72)),
     url("/static/sudan-flag-background.jpg");
   background-size:cover;
   background-position:center;
@@ -381,4 +381,4 @@ main{
     align-items:flex-start;
     flex-direction:column;
   }
-}
+  }
