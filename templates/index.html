@@ -3,8 +3,9 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#070a0f">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#212121">
+
   <title>زولك AI 🇸🇩</title>
 
   <link rel="stylesheet" href="/static/style.css">
@@ -12,93 +13,189 @@
 
 <body>
 
-<div class="app">
+<div class="chatgpt-layout">
 
-  <header class="topbar">
+  <!-- الشريط الجانبي -->
+  <aside class="sidebar">
 
-    <div class="logo">
-      زولك <span>AI</span> 🇸🇩
-    </div>
+    <div class="sidebar-top">
 
-    <nav>
-      <span id="who"></span>
-
-      <a href="/login" id="loginLink">دخول</a>
-
-      <a href="/admin" id="adminLink" hidden>لوحة زولك</a>
-
-      <a href="/logout" id="logout" hidden>خروج</a>
-    </nav>
-
-  </header>
-
-
-  <main class="chat-app">
-
-    <div class="chat-header">
-
-      <div class="ai-avatar">Z</div>
-
-      <div class="ai-info">
-        <strong>زولك AI</strong>
-        <small>
-          مساعدك الذكي السوداني 🇸🇩
-          <i></i>
-        </small>
+      <div class="brand">
+        <div class="brand-icon">Z</div>
+        <div>
+          <strong>زولك AI</strong>
+          <small>🇸🇩 مساعدك الذكي</small>
+        </div>
       </div>
 
-    </div>
-
-
-    <div id="messages" class="messages">
-
-      <div class="welcome">
-
-        <div class="welcome-icon">🇸🇩</div>
-
-        <h1>أها يا زول 👋</h1>
-
-        <p>زولك جاهز يساعدك.</p>
-
-      </div>
-
-      <div class="msg ai">
-        قول لي عايز شنو؟ 😄
-      </div>
-
-    </div>
-
-
-    <div class="suggestions">
-
-      <button>✍️ اكتب لي منشور</button>
-      <button>📝 ظبط لي الكلام</button>
-      <button>📚 فهمني</button>
-      <button>💡 أديني فكرة</button>
-
-    </div>
-
-
-    <div class="composer">
-
-      <textarea
-        id="prompt"
-        placeholder="اكتب رسالتك..."
-        rows="1"
-      ></textarea>
-
-      <button id="send" aria-label="إرسال">
-        🚀
+      <button class="new-chat" type="button">
+        <span>＋</span>
+        محادثة جديدة
       </button>
 
     </div>
 
 
-    <div class="bottom-info">
+    <div class="sidebar-section">
 
-      <div id="credits" class="credits"></div>
+      <div class="sidebar-label">
+        المحادثات
+      </div>
 
-      <span>زولك AI 🇸🇩</span>
+      <div class="chat-item active">
+        <span>💬</span>
+        <span>محادثة جديدة</span>
+      </div>
+
+    </div>
+
+
+    <div class="sidebar-bottom">
+
+      <div class="account">
+
+        <div class="account-avatar">
+          ز
+        </div>
+
+        <div class="account-info">
+          <strong id="who">زائر</strong>
+          <small>حساب زولك</small>
+        </div>
+
+      </div>
+
+      <div class="account-links">
+
+        <a href="/login" id="loginLink">
+          دخول / إنشاء حساب
+        </a>
+
+        <a href="/admin" id="adminLink" hidden>
+          لوحة زولك
+        </a>
+
+        <a href="/logout" id="logout" hidden>
+          تسجيل الخروج
+        </a>
+
+      </div>
+
+    </div>
+
+  </aside>
+
+
+  <!-- منطقة المحادثة -->
+  <main class="main-chat">
+
+    <!-- الهيدر -->
+    <header class="chat-navbar">
+
+      <button class="mobile-menu" type="button" aria-label="القائمة">
+        ☰
+      </button>
+
+      <div class="model-name">
+        <strong>زولك AI</strong>
+        <span>🇸🇩</span>
+      </div>
+
+      <div class="navbar-status">
+        <span></span>
+        متصل
+      </div>
+
+    </header>
+
+
+    <!-- الرسائل -->
+    <section id="messages" class="messages">
+
+      <div class="welcome-screen">
+
+        <div class="welcome-logo">
+          Z
+        </div>
+
+        <h1>كيف أقدر أساعدك؟</h1>
+
+        <p>
+          زولك AI — مساعدك الذكي بطابع سوداني 🇸🇩
+        </p>
+
+        <div class="quick-actions">
+
+          <button type="button">
+            <span>✍️</span>
+            <div>
+              <strong>اكتب لي</strong>
+              <small>منشور أو رسالة</small>
+            </div>
+          </button>
+
+          <button type="button">
+            <span>📚</span>
+            <div>
+              <strong>ساعدني أفهم</strong>
+              <small>شرح وتبسيط</small>
+            </div>
+          </button>
+
+          <button type="button">
+            <span>📝</span>
+            <div>
+              <strong>عدّل الكلام</strong>
+              <small>صياغة وتصحيح</small>
+            </div>
+          </button>
+
+          <button type="button">
+            <span>💡</span>
+            <div>
+              <strong>أديني فكرة</strong>
+              <small>أفكار وحلول</small>
+            </div>
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- منطقة الكتابة -->
+    <div class="composer-area">
+
+      <div class="composer">
+
+        <textarea
+          id="prompt"
+          rows="1"
+          placeholder="اسأل زولك أي حاجة..."
+          autocomplete="off"
+        ></textarea>
+
+        <button
+          id="send"
+          type="button"
+          aria-label="إرسال"
+        >
+          ↑
+        </button>
+
+      </div>
+
+      <div class="composer-footer">
+
+        <span>
+          زولك قد يخطئ أحياناً، راجع المعلومات المهمة.
+        </span>
+
+        <span id="credits" class="credits"></span>
+
+      </div>
 
     </div>
 
@@ -110,4 +207,5 @@
 <script src="/static/app.js"></script>
 
 </body>
-</html>
+
+  </html>
