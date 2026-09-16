@@ -19,7 +19,7 @@ html,body{
 body{
   background:
     linear-gradient(rgba(7,10,15,.94),rgba(7,10,15,.97)),
-    url("https://upload.wikimedia.org/wikipedia/commons/0/01/Flag_of_Sudan.svg");
+    url("sudan-flag-background.jpg");
   background-size:cover;
   background-position:center;
   background-attachment:fixed;
@@ -381,4 +381,4 @@ main{
     align-items:flex-start;
     flex-direction:column;
   }
-    }
+  }
