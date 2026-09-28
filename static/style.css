@@ -1294,3 +1294,33 @@ body {
         animation-duration: 0.01ms !important;
     }
                      }
+/* تثبيت زر الإرسال داخل مربع الكتابة */
+.composer-inner {
+    position: relative !important;
+}
+
+#send {
+    position: absolute !important;
+    right: 12px !important;
+    bottom: 10px !important;
+    left: auto !important;
+    top: auto !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: #16a34a !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 5 !important;
+}
+
+#prompt {
+    box-sizing: border-box;
+    width: 100%;
+    padding-right: 64px !important;
+        }
