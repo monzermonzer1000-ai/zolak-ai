@@ -3,66 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="description" content="زولك AI — مساعدك الذكي بطابع سوداني">
     <title>{{ site_name or "زولك AI 🇸🇩" }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
-    <div class="app">
+    <div class="app chatgpt-layout">
 
+        <!-- القائمة الجانبية -->
         <aside class="sidebar">
             <div class="brand">
-                <div class="brand-logo">Z</div>
-                <div>
+                <div class="brand-logo brand-icon">Z</div>
+                <div class="brand-text">
                     <strong>زولك AI</strong>
                     <span>مساعدك السوداني 🇸🇩</span>
                 </div>
             </div>
 
-            <button class="new-chat" type="button">
-                + محادثة جديدة
+            <button class="new-chat" id="newChat" type="button">
+                <span class="new-chat-icon">＋</span>
+                <span>محادثة جديدة</span>
             </button>
 
-            <div class="sidebar-links">
-                <a href="/">الرئيسية</a>
-                <a href="/login" id="loginLink">تسجيل الدخول</a>
-                <a href="/admin" id="adminLink" hidden>لوحة المدير</a>
-                <a href="/logout" id="logout" hidden>تسجيل الخروج</a>
+            <div class="sidebar-section">
+                <span class="sidebar-heading">القائمة الرئيسية</span>
+
+                <nav class="sidebar-links">
+                    <a href="/" class="sidebar-link active">
+                        <span class="nav-icon">⌂</span>
+                        <span>الرئيسية</span>
+                    </a>
+
+                    <a href="/login" id="loginLink" class="sidebar-link">
+                        <span class="nav-icon">♙</span>
+                        <span>تسجيل الدخول</span>
+                    </a>
+
+                    <a href="/admin" id="adminLink" class="sidebar-link" hidden>
+                        <span class="nav-icon">⚙</span>
+                        <span>لوحة المدير</span>
+                    </a>
+
+                    <a href="/logout" id="logout" class="sidebar-link" hidden>
+                        <span class="nav-icon">⇥</span>
+                        <span>تسجيل الخروج</span>
+                    </a>
+                </nav>
             </div>
 
-            <div class="account-box">
-                <div id="who">يا زول 👋</div>
-                <div id="credits">سجّل دخولك للبدء</div>
+            <div class="sidebar-spacer"></div>
+
+            <!-- بطاقة الحساب -->
+            <div class="account-box account sidebar-bottom">
+                <div class="account-avatar">ز</div>
+                <div class="account-info">
+                    <div id="who" class="account-name">يا زول 👋</div>
+                    <div id="credits" class="account-credits">سجّل دخولك للبدء</div>
+                </div>
+                <span class="account-status" aria-hidden="true"></span>
+            </div>
+
+            <div class="sidebar-footer">
+                <span>صُنع بكل حب في السودان</span>
+                <span>🇸🇩</span>
             </div>
         </aside>
 
-        <main class="main">
-            <header class="topbar">
-                <button class="mobile-menu" type="button">☰</button>
-                <strong>زولك AI 🇸🇩</strong>
+        <!-- المحتوى الرئيسي -->
+        <main class="main main-chat">
+
+            <!-- الشريط العلوي -->
+            <header class="topbar chat-navbar">
+                <div class="topbar-right">
+                    <button
+                        class="mobile-menu"
+                        id="mobileMenu"
+                        type="button"
+                        aria-label="فتح القائمة"
+                        title="القائمة"
+                    >
+                        ☰
+                    </button>
+
+                    <div class="mobile-brand">
+                        <span class="mobile-brand-logo">Z</span>
+                        <strong>زولك AI</strong>
+                        <span class="sudan-badge">🇸🇩</span>
+                    </div>
+                </div>
+
+                <div class="topbar-left">
+                    <span class="online-indicator"></span>
+                    <span class="assistant-status">مساعدك الذكي</span>
+                </div>
             </header>
 
-            <section class="messages" id="messages">
+            <!-- مساحة المحادثة -->
+            <section class="messages" id="messages" aria-live="polite">
                 <div class="welcome-screen">
                     <div class="welcome-logo">Z</div>
-                    <h1>كيف أقدر أساعدك؟</h1>
-                    <p>زولك AI — مساعدك الذكي بطابع سوداني 🇸🇩</p>
+
+                    <span class="welcome-eyebrow">أهلاً بيك في زولك AI 🇸🇩</span>
+
+                    <h1>كيف أقدر أساعدك اليوم؟</h1>
+
+                    <p>
+                        اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
+                        <br>
+                        أنا هنا عشان أساعدك.
+                    </p>
+
+                    <div class="welcome-suggestions">
+                        <button
+                            class="suggestion-card"
+                            type="button"
+                            data-prompt="اشرح لي موضوع الذكاء الاصطناعي بطريقة بسيطة"
+                        >
+                            <span class="suggestion-icon">✦</span>
+                            <span class="suggestion-text">
+                                <strong>اشرح لي موضوع</strong>
+                                <small>خلينا نفهم حاجة جديدة</small>
+                            </span>
+                            <span class="suggestion-arrow">←</span>
+                        </button>
+
+                        <button
+                            class="suggestion-card"
+                            type="button"
+                            data-prompt="ساعدني أكتب رسالة احترافية"
+                        >
+                            <span class="suggestion-icon">✎</span>
+                            <span class="suggestion-text">
+                                <strong>ساعدني في الكتابة</strong>
+                                <small>رسائل وأفكار ومحتوى</small>
+                            </span>
+                            <span class="suggestion-arrow">←</span>
+                        </button>
+
+                        <button
+                            class="suggestion-card"
+                            type="button"
+                            data-prompt="اقترح لي أفكار لمشروع جديد"
+                        >
+                            <span class="suggestion-icon">◇</span>
+                            <span class="suggestion-text">
+                                <strong>أفكار لمشروع</strong>
+                                <small>نخطط ونطوّر أفكارك</small>
+                            </span>
+                            <span class="suggestion-arrow">←</span>
+                        </button>
+
+                        <button
+                            class="suggestion-card"
+                            type="button"
+                            data-prompt="ساعدني أتعلم مهارة جديدة"
+                        >
+                            <span class="suggestion-icon">⌘</span>
+                            <span class="suggestion-text">
+                                <strong>التعلّم والتطوير</strong>
+                                <small>خطوات واضحة للتعلّم</small>
+                            </span>
+                            <span class="suggestion-arrow">←</span>
+                        </button>
+                    </div>
                 </div>
             </section>
 
-            <div class="composer">
-                <textarea
-                    id="prompt"
-                    placeholder="اكتب رسالتك هنا..."
-                    rows="1"
-                ></textarea>
+            <!-- منطقة كتابة الرسالة -->
+            <div class="composer composer-area">
+                <div class="composer-inner">
+                    <textarea
+                        id="prompt"
+                        placeholder="اكتب رسالتك هنا..."
+                        rows="1"
+                        aria-label="اكتب رسالتك"
+                    ></textarea>
 
-                <button id="send" type="button">إرسال</button>
+                    <button
+                        id="send"
+                        type="button"
+                        aria-label="إرسال الرسالة"
+                        title="إرسال"
+                    >
+                        <span class="send-icon">↑</span>
+                    </button>
+                </div>
+
+                <div class="composer-note">
+                    <span>زولك AI ممكن يخطئ أحياناً، راجع المعلومات المهمة.</span>
+                    <span class="composer-flag">صُنع في السودان 🇸🇩</span>
+                </div>
             </div>
         </main>
-
     </div>
 
     <script src="{{ url_for('static', filename='app.js') }}"></script>
+
+    <script>
+        // تعبئة مربع الكتابة عند اختيار أحد الاقتراحات
+        document.querySelectorAll(".suggestion-card").forEach(function (card) {
+            card.addEventListener("click", function () {
+                const prompt = document.getElementById("prompt");
+                const text = card.getAttribute("data-prompt");
+
+                if (prompt && text) {
+                    prompt.value = text;
+                    prompt.focus();
+                    prompt.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+            });
+        });
+
+        // بدء محادثة جديدة مع المحافظة على وظائف النظام الموجودة
+        const newChatButton = document.getElementById("newChat");
+        if (newChatButton) {
+            newChatButton.addEventListener("click", function () {
+                const messages = document.getElementById("messages");
+                const prompt = document.getElementById("prompt");
+
+                if (messages) {
+                    messages.innerHTML = `
+                        <div class="welcome-screen">
+                            <div class="welcome-logo">Z</div>
+                            <span class="welcome-eyebrow">أهلاً بيك في زولك AI 🇸🇩</span>
+                            <h1>كيف أقدر أساعدك اليوم؟</h1>
+                            <p>اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.<br>أنا هنا عشان أساعدك.</p>
+                        </div>
+                    `;
+                }
+
+                if (prompt) {
+                    prompt.value = "";
+                    prompt.focus();
+                }
+            });
+        }
+    </script>
 </body>
-</html>
+                </html>
