@@ -1,8 +1,15 @@
+
+"use strict";
+
+// عناصر واجهة المحادثة
 const promptBox = document.getElementById("prompt");
 const sendButton = document.getElementById("send");
 const messages = document.getElementById("messages");
 
+// إضافة رسالة للمحادثة
 function addMessage(text, type) {
+    if (!messages) return;
+
     const message = document.createElement("div");
     message.className = "message " + type;
 
@@ -15,40 +22,51 @@ function addMessage(text, type) {
     messages.scrollTop = messages.scrollHeight;
 }
 
+// تحديث بيانات الحساب والرصيد
 async function refreshAccount() {
     try {
         const response = await fetch("/api/me");
         const data = await response.json();
 
-        if (data.logged_in) {
-            document.getElementById("loginLink").hidden = true;
-            document.getElementById("logout").hidden = false;
+        if (!data.logged_in) return;
 
-            document.getElementById("who").textContent =
-                "يا " + data.name + " ❤️";
+        const loginLink = document.getElementById("loginLink");
+        const logout = document.getElementById("logout");
+        const who = document.getElementById("who");
+        const credits = document.getElementById("credits");
+        const adminLink = document.getElementById("adminLink");
 
-            document.getElementById("credits").textContent =
-                "🎁 باقي ليك " + data.credits + " استخدام";
+        if (loginLink) loginLink.hidden = true;
+        if (logout) logout.hidden = false;
 
-            if (data.is_admin) {
-                document.getElementById("adminLink").hidden = false;
-            }
+        if (who) {
+            who.textContent = "يا " + data.name + " ❤️";
+        }
+
+        if (credits) {
+            credits.textContent = "🎁 باقي ليك " + data.credits + " استخدام";
+        }
+
+        if (adminLink && data.is_admin) {
+            adminLink.hidden = false;
         }
     } catch (error) {
-        console.log("Account refresh error:", error);
+        console.error("خطأ في تحديث الحساب:", error);
     }
 }
 
+// إرسال الرسالة واستقبال رد الذكاء الاصطناعي
 async function sendMessage() {
+    if (!promptBox || !sendButton || !messages) return;
+
     const question = promptBox.value.trim();
 
     if (!question || sendButton.disabled) return;
 
     addMessage(question, "user");
-
     promptBox.value = "";
     sendButton.disabled = true;
-    sendButton.textContent = "جارٍ...";
+    sendButton.innerHTML = '<span class="send-icon">…</span>';
 
     try {
         const response = await fetch("/api/chat", {
@@ -76,20 +94,25 @@ async function sendMessage() {
         refreshAccount();
 
     } catch (error) {
+        console.error("خطأ في إرسال الرسالة:", error);
+
         addMessage(
-            "ما قدرنا نتصل بالخدمة، جرّب تاني.",
+            "ما قدرنا نتصل بالخدمة، تأكد من اتصالك وحاول تاني.",
             "assistant"
         );
     } finally {
         sendButton.disabled = false;
-        sendButton.textContent = "إرسال";
+        sendButton.innerHTML = '<span class="send-icon">↑</span>';
+        promptBox.focus();
     }
 }
 
+// زر الإرسال
 if (sendButton) {
     sendButton.addEventListener("click", sendMessage);
 }
 
+// إرسال الرسالة بزر Enter
 if (promptBox) {
     promptBox.addEventListener("keydown", function (event) {
         if (event.key === "Enter" && !event.shiftKey) {
@@ -99,23 +122,91 @@ if (promptBox) {
     });
 }
 
+// التعامل مع بطاقات الاقتراح، حتى البطاقات التي تظهر بعد محادثة جديدة
+document.addEventListener("click", function (event) {
+    const card = event.target.closest(".suggestion-card");
+
+    if (!card || !promptBox) return;
+
+    const text = card.getAttribute("data-prompt");
+    if (!text) return;
+
+    event.preventDefault();
+    promptBox.value = text;
+    sendMessage();
+}, true);
+
+// محتوى الترحيب الذي يظهر عند بدء محادثة جديدة
+function showWelcome() {
+    if (!messages || !promptBox) return;
+
+    messages.innerHTML = `
+        <div class="welcome-screen">
+            <div class="welcome-logo">Z</div>
+            <span class="welcome-eyebrow">أهلاً بيك في زولك AI 🇸🇩</span>
+            <h1>كيف أقدر أساعدك اليوم؟</h1>
+            <p>
+                اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
+                <br>
+                أنا هنا عشان أساعدك.
+            </p>
+
+            <div class="welcome-suggestions">
+                <button class="suggestion-card" type="button"
+                    data-prompt="اشرح لي موضوع الذكاء الاصطناعي بطريقة بسيطة">
+                    <span class="suggestion-icon">✦</span>
+                    <span class="suggestion-text">
+                        <strong>اشرح لي موضوع</strong>
+                        <small>خلينا نفهم حاجة جديدة</small>
+                    </span>
+                    <span class="suggestion-arrow">←</span>
+                </button>
+
+                <button class="suggestion-card" type="button"
+                    data-prompt="ساعدني أكتب رسالة احترافية">
+                    <span class="suggestion-icon">✎</span>
+                    <span class="suggestion-text">
+                        <strong>ساعدني في الكتابة</strong>
+                        <small>رسائل وأفكار ومحتوى</small>
+                    </span>
+                    <span class="suggestion-arrow">←</span>
+                </button>
+
+                <button class="suggestion-card" type="button"
+                    data-prompt="اقترح لي أفكار لمشروع جديد">
+                    <span class="suggestion-icon">◇</span>
+                    <span class="suggestion-text">
+                        <strong>أفكار لمشروع</strong>
+                        <small>نخطط ونطوّر أفكارك</small>
+                    </span>
+                    <span class="suggestion-arrow">←</span>
+                </button>
+
+                <button class="suggestion-card" type="button"
+                    data-prompt="ساعدني أتعلم مهارة جديدة">
+                    <span class="suggestion-icon">⌘</span>
+                    <span class="suggestion-text">
+                        <strong>التعلّم والتطوير</strong>
+                        <small>خطوات واضحة للتعلّم</small>
+                    </span>
+                    <span class="suggestion-arrow">←</span>
+                </button>
+            </div>
+        </div>
+    `;
+
+    promptBox.value = "";
+    promptBox.focus();
+}
+
+// زر محادثة جديدة
 const newChatButton = document.querySelector(".new-chat");
 
 if (newChatButton) {
-    newChatButton.addEventListener("click", function () {
-        messages.innerHTML = `
-            <div class="welcome-screen">
-                <div class="welcome-logo">Z</div>
-                <h1>كيف أقدر أساعدك؟</h1>
-                <p>زولك AI — مساعدك الذكي بطابع سوداني 🇸🇩</p>
-            </div>
-        `;
-
-        promptBox.value = "";
-        promptBox.focus();
-    });
+    newChatButton.addEventListener("click", showWelcome);
 }
 
+// فتح وإغلاق القائمة الجانبية
 const mobileMenu = document.querySelector(".mobile-menu");
 
 if (mobileMenu) {
@@ -124,17 +215,20 @@ if (mobileMenu) {
 
         if (!sidebar) return;
 
-        if (sidebar.style.display === "flex") {
-            sidebar.style.display = "none";
-        } else {
-            sidebar.style.display = "flex";
-            sidebar.style.position = "fixed";
-            sidebar.style.zIndex = "1000";
-            sidebar.style.right = "0";
-            sidebar.style.top = "0";
-            sidebar.style.bottom = "0";
-        }
+        sidebar.classList.toggle("open");
     });
 }
 
+// إغلاق القائمة عند الضغط على رابط فيها على الهاتف
+document.querySelectorAll(".sidebar .sidebar-link").forEach(function (link) {
+    link.addEventListener("click", function () {
+        const sidebar = document.querySelector(".sidebar");
+
+        if (sidebar && window.innerWidth <= 760) {
+            sidebar.classList.remove("open");
+        }
+    });
+});
+
+// تحميل بيانات الحساب عند فتح الصفحة
 refreshAccount();
