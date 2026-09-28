@@ -1,415 +1,423 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوحة زولك AI 🇸🇩</title>
-<link rel="stylesheet" href="/static/style.css">
 
-<style>
-body{font-family:Arial,sans-serif}
-.container{max-width:1100px;margin:auto;padding:20px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.card{background:#fff;border-radius:16px;padding:18px;margin:15px 0;box-shadow:0 3px 15px #0001}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.stat{padding:18px;border-radius:14px;background:#f5f5f5;text-align:center}
-.stat b{display:block;font-size:25px;margin-top:8px}
-input,textarea{width:100%;box-sizing:border-box;padding:12px;margin:7px 0 14px;border:1px solid #ddd;border-radius:10px}
-button{border:0;border-radius:10px;padding:10px 15px;cursor:pointer;margin:3px}
-.primary{background:#111;color:white}
-.danger{background:#d32f2f;color:white}
-.success{background:#198754;color:white}
-.user{border:1px solid #eee;border-radius:14px;padding:14px;margin:10px 0}
-.userhead{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
-.email{color:#777;font-size:14px}
-.actions{margin-top:10px}
-.badge{padding:5px 9px;border-radius:8px;background:#eee;font-size:13px}
-.banned{background:#ffe0e0;color:#b00020}
-.rights{text-align:center;color:#777;padding:25px}
-</style>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>لوحة زولك AI 🇸🇩</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #212121;
+            color: #ffffff;
+        }
+
+        .admin-page {
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .admin-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        /* الهيدر */
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+
+            padding: 15px 0 20px;
+            margin-bottom: 20px;
+
+            border-bottom: 1px solid #3b3b3b;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .home-link {
+            color: #ddd;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        .home-link:hover {
+            color: #fff;
+        }
+
+        /* العنوان */
+
+        .admin-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+
+            margin-bottom: 20px;
+        }
+
+        .admin-title h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        /* البطاقات */
+
+        .card {
+            background: #2a2a2a;
+            color: #fff;
+
+            border: 1px solid #3b3b3b;
+            border-radius: 16px;
+
+            padding: 20px;
+            margin: 18px 0;
+
+            box-shadow: 0 4px 20px rgba(0,0,0,.20);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 18px;
+
+            font-size: 20px;
+            color: #fff;
+        }
+
+        /* الإحصائيات */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .stat {
+            background: #303030;
+
+            border: 1px solid #414141;
+            border-radius: 14px;
+
+            padding: 20px;
+
+            text-align: center;
+            color: #fff;
+        }
+
+        .stat-title {
+            font-size: 15px;
+            color: #ccc;
+        }
+
+        .stat b {
+            display: block;
+
+            margin-top: 8px;
+
+            font-size: 27px;
+            color: #fff;
+        }
+
+        /* الحقول */
+
+        label {
+            display: block;
+
+            margin-bottom: 5px;
+
+            color: #ddd;
+            font-size: 14px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+
+            padding: 12px;
+
+            margin: 6px 0 16px;
+
+            border: 1px solid #555;
+            border-radius: 10px;
+
+            background: #202020;
+            color: #fff;
+
+            font-family: inherit;
+            font-size: 15px;
+
+            outline: none;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #888;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* الأزرار */
+
+        button {
+            border: 0;
+            border-radius: 10px;
+
+            padding: 10px 15px;
+
+            margin: 3px;
+
+            cursor: pointer;
+
+            font-family: inherit;
+            font-size: 14px;
+
+            transition: opacity .15s ease,
+                        transform .15s ease;
+        }
+
+        button:hover {
+            opacity: .88;
+        }
+
+        button:active {
+            transform: scale(.98);
+        }
+
+        .primary {
+            background: #fff;
+            color: #111;
+        }
+
+        .success {
+            background: #198754;
+            color: #fff;
+        }
+
+        .danger {
+            background: #d32f2f;
+            color: #fff;
+        }
+
+        .logout-btn {
+            background: #444;
+            color: #fff;
+        }
+
+        /* المستخدمين */
+
+        .user {
+            background: #242424;
+
+            border: 1px solid #444;
+            border-radius: 14px;
+
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .userhead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .email {
+            margin-top: 5px;
+
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .balance {
+            margin-top: 12px;
+
+            color: #ddd;
+        }
+
+        .actions {
+            margin-top: 12px;
+
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        /* الحالة */
+
+        .badge {
+            display: inline-block;
+
+            padding: 5px 9px;
+
+            border-radius: 8px;
+
+            background: #444;
+            color: #fff;
+
+            font-size: 13px;
+        }
+
+        .banned {
+            background: #5a2020;
+            color: #ffb5b5;
+        }
+
+        /* الحقوق */
+
+        .rights {
+            text-align: center;
+
+            color: #888;
+
+            padding: 25px 10px 35px;
+
+            line-height: 1.8;
+        }
+
+        /* موبايل */
+
+        @media (max-width: 800px) {
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .admin-page {
+                padding: 12px;
+            }
+
+            .admin-title h1 {
+                font-size: 23px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stat {
+                padding: 15px 10px;
+            }
+
+            .stat b {
+                font-size: 23px;
+            }
+
+            .actions button {
+                flex: 1 1 auto;
+            }
+
+        }
+
+        @media (max-width: 380px) {
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
 </head>
+
 
 <body>
 
-<header>
-<div class="logo">زولك AI 🇸🇩</div>
-<a href="/">الرئيسية</a>
-</header>
+<div class="admin-page">
 
-<div class="container">
+<div class="admin-container">
 
-<div class="top">
-<h1>🛡️ لوحة المدير</h1>
-<a href="/logout"><button>تسجيل الخروج</button></a>
-</div>
 
-<!-- الإحصائيات -->
-<section class="stats">
+    <!-- الهيدر -->
 
-<div class="stat">
-👥 المستخدمين
-<b>{{total}}</b>
-</div>
+    <header class="admin-header">
 
-<div class="stat">
-💬 الرسائل
-<b>{{msgs}}</b>
-</div>
+        <div class="logo">
+            زولك AI 🇸🇩
+        </div>
 
-<div class="stat">
-🚫 الموقوفين
-<b>{{banned}}</b>
-</div>
+        <a class="home-link" href="/">
+            الرئيسية
+        </a>
 
-<div class="stat">
-🎁 إجمالي الأرصدة
-<b>{{total_credits}}</b>
-</div>
+    </header>
 
-</section>
 
-<!-- إعدادات زولك -->
-<section class="card">
+    <!-- العنوان -->
 
-<h2>⚙️ إعدادات زولك</h2>
+    <div class="admin-title">
 
-<label>🎁 الرصيد المجاني عند التسجيل</label>
-<input id="free" type="number" value="{{free}}">
+        <h1>
+            🛡️ لوحة المدير
+        </h1>
 
-<label>📝 رسالة الترحيب</label>
-<textarea id="welcome" rows="4">{{welcome}}</textarea>
+        <a href="/logout">
+            <button class="logout-btn">
+                تسجيل الخروج
+            </button>
+        </a>
 
-<button class="primary" onclick="saveSettings()">
-💾 حفظ الإعدادات
-</button>
+    </div>
 
-</section>
 
-<!-- البحث -->
-<section class="card">
+    <!-- الإحصائيات -->
 
-<h2>🔍 البحث عن مستخدم</h2>
+    <section class="stats">
 
-<input
-id="search"
-placeholder="اكتب الاسم أو الإيميل..."
-oninput="searchUsers()"
->
+        <div class="stat">
 
-</section>
+            <div class="stat-title">
+                👥 المستخدمين
+            </div>
 
-<!-- المستخدمين -->
-<section class="card">
+            <b>
+                {{ total }}
+            </b>
 
-<h2>👥 المستخدمين</h2>
+        </div>
 
-<div id="users">
 
-{% for u in users %}
+        <div class="stat">
 
-<div class="user">
+            <div class="stat-title">
+                💬 الرسائل
+            </div>
 
-<div class="userhead">
-
-<div>
-<strong>👤 {{u['name']}}</strong>
-<div class="email">📧 {{u['email']}}</div>
-</div>
-
-<div>
-
-{% if u['is_admin'] %}
-<span class="badge">🛡️ مدير</span>
-{% elif u['banned'] %}
-<span class="badge banned">🚫 موقوف</span>
-{% else %}
-<span class="badge">✅ نشط</span>
-{% endif %}
-
-</div>
-
-</div>
-
-<div style="margin-top:10px">
-🎁 الرصيد:
-<strong>{{u['credits']}}</strong>
-</div>
-
-{% if not u['is_admin'] %}
-
-<div class="actions">
-
-<button class="success" onclick="addCredit({{u['id']}})">
-➕ إضافة 10
-</button>
-
-<button onclick="addCustomCredit({{u['id']}})">
-🎁 إضافة رصيد
-</button>
-
-{% if u['banned'] %}
-
-<button class="primary" onclick="unbanUser({{u['id']}})">
-✅ إلغاء الحظر
-</button>
-
-{% else %}
-
-<button class="danger" onclick="banUser({{u['id']}})">
-🚫 حظر
-</button>
-
-{% endif %}
-
-<button class="danger" onclick="deleteUser({{u['id']}})">
-🗑️ حذف
-</button>
-
-</div>
-
-{% endif %}
-
-</div>
-
-{% endfor %}
-
-</div>
-
-</section>
-
-<!-- الحقوق -->
-<div class="rights">
-© 2026 منذر السيد — جميع الحقوق محفوظة
-<br>
-زولك AI 🇸🇩
-</div>
-
-</div>
-
-<script>
-
-async function saveSettings(){
-
-const free=document.getElementById("free").value;
-const welcome=document.getElementById("welcome").value;
-
-const r=await fetch("/api/admin/settings",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-free_credits:free,
-welcome:welcome
-})
-});
-
-if(r.ok){
-alert("✅ اتحفظت الإعدادات");
-}else{
-alert("❌ حصلت مشكلة");
-}
-async function addCredit(id){
-
-try{
-
-const r = await fetch("/api/admin/user/"+id+"/credits",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-amount:10
-})
-});
-
-const data = await r.json();
-
-if(!r.ok){
-alert("❌ "+(data.error || "حصلت مشكلة"));
-return;
-}
-
-alert("✅ تمت إضافة 10 رصيد");
-location.reload();
-
-}catch(e){
-
-alert("❌ حصل خطأ في الاتصال بالسيرفر");
-
-}
-
-}
-async function addCustomCredit(id){
-
-const amount=prompt("أدخل عدد الرصيد الداير تضيفو:");
-
-if(!amount)return;
-
-const n=parseInt(amount);
-
-if(isNaN(n)||n<0){
-alert("❌ أدخل رقم صحيح");
-return;
-}
-
-await fetch("/api/admin/user/"+id+"/credits",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({amount:n})
-});
-
-location.reload();
-
-}
-
-async function banUser(id){
-
-if(!confirm("متأكد داير توقف المستخدم؟"))return;
-
-await fetch("/api/admin/user/"+id+"/ban",{
-method:"POST"
-});
-
-location.reload();
-
-}
-
-async function unbanUser(id){
-
-await fetch("/api/admin/user/"+id+"/unban",{
-method:"POST"
-});
-
-location.reload();
-
-}
-
-async function deleteUser(id){
-
-if(!confirm("⚠️ متأكد داير تحذف المستخدم نهائياً؟"))return;
-
-await fetch("/api/admin/user/"+id,{
-method:"DELETE"
-});
-
-location.reload();
-
-}
-
-let searchTimer;
-
-function searchUsers(){
-
-clearTimeout(searchTimer);
-
-searchTimer=setTimeout(async()=>{
-
-const q=document.getElementById("search").value;
-
-const r=await fetch("/api/admin/users?q="+encodeURIComponent(q));
-
-if(!r.ok)return;
-
-const data=await r.json();
-
-renderUsers(data.users);
-
-},250);
-
-}
-
-function renderUsers(users){
-
-const box=document.getElementById("users");
-
-box.innerHTML="";
-
-users.forEach(u=>{
-
-let status="";
-
-if(u.is_admin){
-status='<span class="badge">🛡️ مدير</span>';
-}else if(u.banned){
-status='<span class="badge banned">🚫 موقوف</span>';
-}else{
-status='<span class="badge">✅ نشط</span>';
-}
-
-let actions="";
-
-if(!u.is_admin){
-
-actions=`
-
-<div class="actions">
-
-<button class="success" onclick="addCredit(${u.id})">
-➕ إضافة 10
-</button>
-
-<button onclick="addCustomCredit(${u.id})">
-🎁 إضافة رصيد
-</button>
-
-${
-u.banned
-?
-`<button class="primary" onclick="unbanUser(${u.id})">✅ إلغاء الحظر</button>`
-:
-`<button class="danger" onclick="banUser(${u.id})">🚫 حظر</button>`
-}
-
-<button class="danger" onclick="deleteUser(${u.id})">
-🗑️ حذف
-</button>
-
-</div>
-
-`;
-
-}
-
-box.innerHTML+=`
-
-<div class="user">
-
-<div class="userhead">
-
-<div>
-<strong>👤 ${escapeHtml(u.name)}</strong>
-<div class="email">📧 ${escapeHtml(u.email)}</div>
-</div>
-
-<div>${status}</div>
-
-</div>
-
-<div style="margin-top:10px">
-🎁 الرصيد:
-<strong>${u.credits}</strong>
-</div>
-
-${actions}
-
-</div>
-
-`;
-
-});
-
-}
-
-function escapeHtml(text){
-
-const div=document.createElement("div");
-
-div.textContent=text;
-
-return div.innerHTML;
-
-}
-
-</script>
-
-</body>
-  </html>
+           
