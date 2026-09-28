@@ -30,7 +30,7 @@ textarea {
 }
 
 /* =========================
-   SIDEBAR
+SIDEBAR
 ========================= */
 
 .sidebar {
@@ -174,7 +174,7 @@ textarea {
 }
 
 /* =========================
-   MAIN
+MAIN
 ========================= */
 
 .main-chat {
@@ -187,7 +187,7 @@ textarea {
 }
 
 /* =========================
-   NAVBAR
+NAVBAR
 ========================= */
 
 .chat-navbar {
@@ -233,7 +233,7 @@ textarea {
 }
 
 /* =========================
-   MESSAGES
+MESSAGES
 ========================= */
 
 .messages {
@@ -252,7 +252,7 @@ textarea {
 }
 
 /* =========================
-   WELCOME
+WELCOME
 ========================= */
 
 .welcome-screen {
@@ -327,7 +327,7 @@ textarea {
 }
 
 /* =========================
-   CHAT MESSAGES
+CHAT MESSAGES
 ========================= */
 
 .message {
@@ -363,7 +363,7 @@ textarea {
 }
 
 /* =========================
-   COMPOSER
+COMPOSER
 ========================= */
 
 .composer-area {
@@ -409,7 +409,7 @@ textarea {
 }
 
 /* =========================
-   SEND BUTTON
+SEND BUTTON
 ========================= */
 
 #send {
@@ -460,7 +460,7 @@ textarea {
 }
 
 /* =========================
-   FOOTER
+FOOTER
 ========================= */
 
 .composer-footer {
@@ -481,7 +481,7 @@ textarea {
 }
 
 /* =========================
-   MOBILE
+MOBILE
 ========================= */
 
 @media (max-width: 700px) {
@@ -550,9 +550,10 @@ textarea {
         font-size: 10px;
     }
 }
+
 /* ==========================================
-   ZOLAK AI — PREMIUM HOMEPAGE
-   ========================================== */
+ZOLAK AI — PREMIUM HOMEPAGE
+========================================== */
 
 :root {
     --zolak-bg: #0b1020;
@@ -584,6 +585,7 @@ body {
 }
 
 /* Main layout */
+
 .app.chatgpt-layout {
     display: flex;
     flex-direction: row;
@@ -592,11 +594,16 @@ body {
     min-height: 520px;
     overflow: hidden;
     background:
-        radial-gradient(ellipse at 55% 5%, rgba(22, 163, 74, 0.07), transparent 40%),
+        radial-gradient(
+            ellipse at 55% 5%,
+            rgba(22, 163, 74, 0.07),
+            transparent 40%
+        ),
         var(--zolak-bg);
 }
 
 /* Sidebar */
+
 .sidebar {
     position: relative;
     z-index: 20;
@@ -654,6 +661,7 @@ body {
 }
 
 /* New chat */
+
 .new-chat {
     display: flex;
     align-items: center;
@@ -670,7 +678,10 @@ body {
     font-size: 13px;
     font-weight: 650;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
 }
 
 .new-chat:hover {
@@ -692,6 +703,7 @@ body {
 }
 
 /* Sidebar links */
+
 .sidebar-section {
     margin-top: 28px;
 }
@@ -721,7 +733,9 @@ body {
     color: #aab5c5;
     font-size: 13px;
     text-decoration: none;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
 }
 
 .sidebar-link:hover {
@@ -754,6 +768,7 @@ body {
 }
 
 /* Account panel */
+
 .account-box,
 .account.sidebar-bottom {
     display: flex;
@@ -828,6 +843,7 @@ body {
 }
 
 /* Main chat */
+
 .main.main-chat {
     position: relative;
     display: flex;
@@ -841,6 +857,7 @@ body {
 }
 
 /* Top navigation */
+
 .topbar.chat-navbar {
     display: flex;
     flex: 0 0 62px;
@@ -889,6 +906,7 @@ body {
 }
 
 /* Messages area */
+
 .messages {
     display: flex;
     flex: 1;
@@ -898,6 +916,16 @@ body {
     overflow-x: hidden;
     overflow-y: auto;
     padding: 30px 20px 22px;
+
+    /* 🇸🇩 خلفية علم السودان */
+    background:
+        linear-gradient(
+            rgba(11, 16, 32, 0.48),
+            rgba(11, 16, 32, 0.48)
+        ),
+        url("/static/sudan-flag-background.jpg")
+        center center / cover no-repeat;
+
     scrollbar-color: #354157 transparent;
     scrollbar-width: thin;
 }
@@ -922,7 +950,11 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 22px;
     background:
-        radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.2), transparent 50%),
+        radial-gradient(
+            circle at 30% 20%,
+            rgba(255, 255, 255, 0.2),
+            transparent 50%
+        ),
         linear-gradient(145deg, #22c55e, #08743a);
     box-shadow: 0 12px 35px rgba(22, 163, 74, 0.2);
     color: white;
@@ -954,6 +986,7 @@ body {
 }
 
 /* Suggestion cards */
+
 .welcome-suggestions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -975,7 +1008,10 @@ body {
     color: var(--zolak-text);
     text-align: right;
     cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease;
 }
 
 .suggestion-card:hover {
@@ -1026,7 +1062,9 @@ body {
 .suggestion-arrow {
     color: #718096;
     font-size: 15px;
-    transition: color 0.2s ease, transform 0.2s ease;
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
 }
 
 .suggestion-card:hover .suggestion-arrow {
@@ -1035,6 +1073,7 @@ body {
 }
 
 /* Composer */
+
 .composer.composer-area {
     position: relative;
     z-index: 2;
@@ -1045,7 +1084,12 @@ body {
     width: 100%;
     padding: 12px 22px 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.045);
-    background: linear-gradient(180deg, rgba(11, 16, 32, 0.45), #0b1020 24%);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(11, 16, 32, 0.45),
+            #0b1020 24%
+        );
 }
 
 .composer-inner {
@@ -1059,12 +1103,16 @@ body {
     border-radius: 17px;
     background: #151d2c;
     box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .composer-inner:focus-within {
     border-color: rgba(34, 197, 94, 0.48);
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.07), 0 10px 35px rgba(0, 0, 0, 0.18);
+    box-shadow:
+        0 0 0 3px rgba(34, 197, 94, 0.07),
+        0 10px 35px rgba(0, 0, 0, 0.18);
 }
 
 #prompt {
@@ -1106,7 +1154,9 @@ body {
     font-size: 22px;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.2s ease, filter 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        filter 0.2s ease;
 }
 
 #send:hover {
@@ -1147,6 +1197,7 @@ body {
 }
 
 /* Mobile menu */
+
 .mobile-menu {
     display: none;
     align-items: center;
@@ -1163,7 +1214,9 @@ body {
 }
 
 /* Responsive */
+
 @media (max-width: 800px) {
+
     .app.chatgpt-layout {
         position: relative;
     }
@@ -1255,6 +1308,7 @@ body {
 }
 
 @media (max-width: 480px) {
+
     .welcome-suggestions {
         grid-template-columns: 1fr;
         gap: 8px;
@@ -1285,7 +1339,9 @@ body {
 }
 
 /* Respect reduced motion */
+
 @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -1293,8 +1349,10 @@ body {
         transition-duration: 0.01ms !important;
         animation-duration: 0.01ms !important;
     }
-                     }
+}
+
 /* تثبيت زر الإرسال داخل مربع الكتابة */
+
 .composer-inner {
     position: relative !important;
 }
@@ -1323,10 +1381,18 @@ body {
     box-sizing: border-box;
     width: 100%;
     padding-right: 64px !important;
-        }
+}
+
 /* 🇸🇩 خلفية علم السودان */
-.chat-container {
+
+.messages {
     background:
-        linear-gradient(rgba(11, 16, 32, 0.55), rgba(11, 16, 32, 0.55)),
-        url("/static/sudan-flag-background.jpg") center / cover no-repeat !important;
+        linear-gradient(
+            rgba(11, 16, 32, 0.48),
+            rgba(11, 16, 32, 0.48)
+        ),
+        url("/static/sudan-flag-background.jpg")
+        center center / cover no-repeat !important;
+
+    background-attachment: scroll !important;
 }
