@@ -1,376 +1,883 @@
-const promptBox = document.getElementById("prompt");
-const sendButton = document.getElementById("send");
-const messages = document.getElementById("messages");
+import os
+import sqlite3
+from functools import wraps
+from flask import Flask, render_template, request, jsonify, session, redirect
+
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "change-this-secret-in-production")
+
+DB = "/tmp/zolak.db"
+
+
+# =========================
+# قاعدة البيانات
+# =========================
+
+def db():
+    c = sqlite3.connect(DB)
+    c.row_factory = sqlite3.Row
+    return c
+
+
+def init_db():
+    c = db()
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            credits INTEGER DEFAULT 10,
+            is_admin INTEGER DEFAULT 0,
+            banned INTEGER DEFAULT 0
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS chats(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            role TEXT,
+            content TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS settings(
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
 
+    columns = [
+        x["name"]
+        for x in c.execute("PRAGMA table_info(users)").fetchall()
+    ]
 
-// =========================
-// إضافة رسالة
-// =========================
+    if "banned" not in columns:
+        c.execute(
+            "ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0"
+        )
 
-function addMessage(text, type) {
+    admin = c.execute(
+        "SELECT id FROM users WHERE is_admin=1 LIMIT 1"
+    ).fetchone()
 
-    const message = document.createElement("div");
+    if not admin:
+        c.execute("""
+            INSERT INTO users
+            (name,email,password,credits,is_admin,banned)
+            VALUES(?,?,?,?,?,?)
+        """, (
+            "مدير زولك",
+            "admin@zolak.ai",
+            "admin123",
+            9999,
+            1,
+            0
+        ))
 
-    message.className = "message " + type;
+    settings = [
+        ("site_name", "زولك AI 🇸🇩"),
+        ("free_credits", "10"),
+        ("welcome", "أها يا زول 👋❤️ زولك جاهز يساعدك في أي حاجة.")
+    ]
 
-    const content = document.createElement("div");
+    for key, value in settings:
+        c.execute(
+            "INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)",
+            (key, value)
+        )
 
-    content.className = "message-content";
+    c.commit()
+    c.close()
 
-    content.textContent = text;
 
-    message.appendChild(content);
+def setting(key, default=""):
+    c = db()
 
-    messages.appendChild(message);
+    row = c.execute(
+        "SELECT value FROM settings WHERE key=?",
+        (key,)
+    ).fetchone()
 
-    messages.scrollTop = messages.scrollHeight;
-}
+    c.close()
 
+    if row:
+        return row["value"]
 
-// =========================
-// تحديث الحساب
-// =========================
+    return default
 
-async function refreshAccount() {
 
-    try {
+init_db()
 
-        const response = await fetch("/api/me");
 
-        const data = await response.json();
+# =========================
+# الحماية
+# =========================
 
-        if (data.logged_in) {
+def login_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
 
-            document.getElementById("loginLink").hidden = true;
+        if "uid" not in session:
+            return jsonify(
+                error="لازم تسجل دخول أولاً."
+            ), 401
 
-            document.getElementById("logout").hidden = false;
+        return fn(*args, **kwargs)
 
-            document.getElementById("who").textContent =
-                "يا " + data.name + " ❤️";
+    return wrapper
 
-            document.getElementById("credits").textContent =
-                "🎁 باقي ليك " + data.credits + " استخدام";
 
-            if (data.is_admin) {
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
 
-                document.getElementById("adminLink").hidden = false;
+        if not session.get("admin"):
+            return jsonify(
+                error="غير مصرح لك."
+            ), 403
 
-            }
+        return fn(*args, **kwargs)
 
-        }
+    return wrapper
 
-    } catch (error) {
 
-        console.log("Account refresh error:", error);
+# =========================
+# الصفحات
+# =========================
 
-    }
+@app.get("/")
+def home():
 
-}
+    return render_template(
+        "index.html",
+        site_name=setting("site_name")
+    )
 
 
-// =========================
-// إرسال الرسالة
-// =========================
+@app.get("/login")
+def login():
 
-async function sendMessage() {
+    return render_template("login.html")
 
-    const question = promptBox.value.trim();
 
-    if (!question) return;
+@app.get("/logout")
+def logout():
 
-    addMessage(question, "user");
+    session.clear()
 
-    promptBox.value = "";
+    return redirect("/")
 
-    sendButton.disabled = true;
 
-    sendButton.textContent = "…";
+# =========================
+# التسجيل
+# =========================
 
-    try {
+@app.post("/api/register")
+def register():
 
-        const response = await fetch("/api/chat", {
+    data = request.get_json() or {}
 
-            method: "POST",
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+    if not name or not email or len(password) < 4:
 
-            body: JSON.stringify({
-                message: question
-            })
+        return jsonify(
+            error="أدخل البيانات كاملة، وكلمة المرور 4 أحرف على الأقل."
+        ), 400
 
-        });
+    try:
+        free = int(
+            setting("free_credits", "10")
+        )
+    except:
+        free = 10
 
-        const data = await response.json();
+    c = db()
 
-        if (response.status === 401) {
+    try:
 
-            window.location.href = "/login";
+        c.execute("""
+            INSERT INTO users
+            (name,email,password,credits,banned)
+            VALUES(?,?,?,?,?)
+        """, (
+            name,
+            email,
+            password,
+            free,
+            0
+        ))
 
-            return;
+        c.commit()
 
-        }
+    except sqlite3.IntegrityError:
 
-        addMessage(
-            data.answer || data.error || "حصل خطأ، جرّب تاني.",
-            "assistant"
-        );
+        c.close()
 
-        refreshAccount();
+        return jsonify(
+            error="الإيميل مستخدم قبل كده."
+        ), 409
 
-    } catch (error) {
+    user = c.execute(
+        "SELECT * FROM users WHERE email=?",
+        (email,)
+    ).fetchone()
 
-        addMessage(
-            "ما قدرنا نتصل بالخدمة، جرّب تاني.",
-            "assistant"
-        );
+    c.close()
 
-    }
+    session["uid"] = user["id"]
+    session["name"] = user["name"]
+    session["admin"] = bool(user["is_admin"])
 
-    sendButton.disabled = false;
+    return jsonify(
+        ok=True
+    )
 
-    sendButton.textContent = "↑";
-}
 
+# =========================
+# تسجيل الدخول
+# =========================
 
-// =========================
-// زر الإرسال
-// =========================
+@app.post("/api/login")
+def api_login():
 
-if (sendButton) {
+    data = request.get_json() or {}
 
-    sendButton.addEventListener("click", sendMessage);
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
 
-}
+    c = db()
 
+    user = c.execute("""
+        SELECT *
+        FROM users
+        WHERE email=? AND password=?
+    """, (
+        email,
+        password
+    )).fetchone()
 
-// =========================
-// زر Enter
-// =========================
+    c.close()
 
-if (promptBox) {
+    if not user:
 
-    promptBox.addEventListener("keydown", function (event) {
+        return jsonify(
+            error="الإيميل أو كلمة المرور غلط."
+        ), 401
 
-        if (event.key === "Enter" && !event.shiftKey) {
+    if user["banned"] and not user["is_admin"]:
 
-            event.preventDefault();
+        return jsonify(
+            error="الحساب موقوف حالياً. تواصل مع إدارة زولك."
+        ), 403
 
-            sendMessage();
+    session["uid"] = user["id"]
+    session["name"] = user["name"]
+    session["admin"] = bool(user["is_admin"])
 
-        }
+    return jsonify(
+        ok=True
+    )
 
-    });
 
-}
+# =========================
+# بيانات المستخدم
+# =========================
 
+@app.get("/api/me")
+def me():
 
-// =========================
-// الأزرار السريعة
-// =========================
+    if "uid" not in session:
 
-document.querySelectorAll(".quick-actions button").forEach(function (button) {
+        return jsonify(
+            logged_in=False
+        )
 
-    button.addEventListener("click", function () {
+    c = db()
 
-        const title = button.querySelector("strong");
+    user = c.execute("""
+        SELECT name,email,credits,is_admin,banned
+        FROM users
+        WHERE id=?
+    """, (
+        session["uid"],
+    )).fetchone()
 
-        if (!title) return;
+    c.close()
 
-        const action = title.textContent.trim();
+    if not user:
 
-        const prompts = {
+        session.clear()
 
-            "اكتب لي":
-                "اكتب لي منشور أو رسالة جميلة ومناسبة.",
+        return jsonify(
+            logged_in=False
+        )
 
-            "ساعدني أفهم":
-                "اشرح لي الموضوع بطريقة بسيطة وسهلة الفهم.",
+    return jsonify(
+        logged_in=True,
+        **dict(user)
+    )
 
-            "عدّل الكلام":
-                "عدّل لي الكلام وصيغه بطريقة أفضل وأوضح.",
 
-            "أديني فكرة":
-                "أديني فكرة جديدة ومميزة."
+# =========================
+# المحادثة مع Gemini
+# =========================
 
-        };
+@app.post("/api/chat")
+@login_required
+def chat():
 
-        promptBox.value =
-            prompts[action] || "";
+    data = request.get_json() or {}
 
-        promptBox.focus();
+    message = data.get("message", "").strip()
 
-    });
+    if not message:
 
-});
+        return jsonify(
+            error="اكتب رسالتك أولاً."
+        ), 400
 
+    c = db()
 
-// =========================
-// محادثة جديدة
-// =========================
+    user = c.execute("""
+        SELECT credits,banned,is_admin
+        FROM users
+        WHERE id=?
+    """, (
+        session["uid"],
+    )).fetchone()
 
-const newChatButton =
-    document.querySelector(".new-chat");
+    if not user:
 
-if (newChatButton) {
+        c.close()
 
-    newChatButton.addEventListener("click", function () {
+        return jsonify(
+            error="الحساب غير موجود."
+        ), 404
 
-        messages.innerHTML = `
-            <div class="welcome-screen">
+    if user["banned"] and not user["is_admin"]:
 
-                <div class="welcome-logo">
-                    Z
-                </div>
+        c.close()
 
-                <h1>كيف أقدر أساعدك؟</h1>
+        return jsonify(
+            error="حسابك موقوف حالياً."
+        ), 403
 
-                <p>
-                    زولك AI — مساعدك الذكي بطابع سوداني 🇸🇩
-                </p>
+    if user["credits"] <= 0 and not user["is_admin"]:
 
-                <div class="quick-actions">
+        c.close()
 
-                    <button type="button">
-                        <span>✍️</span>
-                        <div>
-                            <strong>اكتب لي</strong>
-                            <small>منشور أو رسالة</small>
-                        </div>
-                    </button>
+        return jsonify(
+            error="رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"
+        ), 402
 
-                    <button type="button">
-                        <span>📚</span>
-                        <div>
-                            <strong>ساعدني أفهم</strong>
-                            <small>شرح وتبسيط</small>
-                        </div>
-                    </button>
+    api_key = os.getenv("GEMINI_API_KEY")
 
-                    <button type="button">
-                        <span>📝</span>
-                        <div>
-                            <strong>عدّل الكلام</strong>
-                            <small>صياغة وتصحيح</small>
-                        </div>
-                    </button>
+    if not api_key:
 
-                    <button type="button">
-                        <span>💡</span>
-                        <div>
-                            <strong>أديني فكرة</strong>
-                            <small>أفكار وحلول</small>
-                        </div>
-                    </button>
+        c.close()
 
-                </div>
+        return jsonify(
+            error="مفتاح Gemini لم تتم إضافته في الاستضافة."
+        ), 503
 
-            </div>
-        `;
+    try:
 
-        attachQuickButtons();
+        from google import genai
+        from google.genai import types
 
-        promptBox.value = "";
+        client = genai.Client(
+            api_key=api_key
+        )
 
-        promptBox.focus();
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=message,
+            config=types.GenerateContentConfig(
+                system_instruction=(
+                    "أنت زولك AI 🇸🇩، مساعد ذكاء اصطناعي سوداني ودود. "
+                    "أجب بوضوح وباختصار مناسب. "
+                    "استخدم اللهجة السودانية عندما يطلبها المستخدم. "
+                    "لا تدّعي أنك إنسان."
+                )
+            )
+        )
 
-    });
+        answer = response.text
 
-}
+        # توقيع زولك AI
+        answer = answer.rstrip() + "\n\n— تطوير منذر السيد 🇸🇩"
 
+        if not answer:
 
-// =========================
-// تشغيل الأزرار السريعة
-// =========================
+            raise Exception(
+                "Gemini لم يرجع نصاً."
+            )
 
-function attachQuickButtons() {
+        # المستخدم العادي يخسر محاولة
+        if not user["is_admin"]:
 
-    document
-        .querySelectorAll(".quick-actions button")
-        .forEach(function (button) {
+            c.execute("""
+                UPDATE users
+                SET credits = credits - 1
+                WHERE id=? AND credits > 0
+            """, (
+                session["uid"],
+            ))
 
-            button.addEventListener("click", function () {
+        # حفظ الرسائل
+        c.execute("""
+            INSERT INTO chats
+            (user_id,role,content)
+            VALUES(?,?,?)
+        """, (
+            session["uid"],
+            "user",
+            message
+        ))
 
-                const title =
-                    button.querySelector("strong");
+        c.execute("""
+            INSERT INTO chats
+            (user_id,role,content)
+            VALUES(?,?,?)
+        """, (
+            session["uid"],
+            "assistant",
+            answer
+        ))
 
-                if (!title) return;
+        c.commit()
+        c.close()
 
-                const action =
-                    title.textContent.trim();
+        return jsonify(
+            answer=answer
+        )
 
-                const prompts = {
+    except Exception as e:
 
-                    "اكتب لي":
-                        "اكتب لي منشور أو رسالة جميلة ومناسبة.",
+        c.rollback()
+        c.close()
 
-                    "ساعدني أفهم":
-                        "اشرح لي الموضوع بطريقة بسيطة وسهلة الفهم.",
+        return jsonify(
+            error=f"حصلت مشكلة: {str(e)}"
+        ), 500
 
-                    "عدّل الكلام":
-                        "عدّل لي الكلام وصيغه بطريقة أفضل وأوضح.",
 
-                    "أديني فكرة":
-                        "أديني فكرة جديدة ومميزة."
+# =========================
+# سجل المحادثات
+# =========================
 
-                };
+@app.get("/api/chats")
+@login_required
+def chats():
 
-                promptBox.value =
-                    prompts[action] || "";
+    c = db()
 
-                promptBox.focus();
+    rows = c.execute("""
+        SELECT role,content,created_at
+        FROM chats
+        WHERE user_id=?
+        ORDER BY id DESC
+        LIMIT 50
+    """, (
+        session["uid"],
+    )).fetchall()
 
-            });
+    c.close()
 
-        });
+    return jsonify(
+        chats=[
+            dict(row)
+            for row in reversed(rows)
+        ]
+    )
 
-}
 
+# =========================
+# لوحة المدير
+# =========================
 
-// =========================
-// القائمة في الهاتف
-// =========================
+@app.get("/admin")
+@admin_required
+def admin():
 
-const mobileMenu =
-    document.querySelector(".mobile-menu");
+    c = db()
 
-if (mobileMenu) {
+    users = c.execute("""
+        SELECT id,name,email,credits,is_admin,banned
+        FROM users
+        ORDER BY id DESC
+    """).fetchall()
 
-    mobileMenu.addEventListener("click", function () {
+    total = c.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE is_admin=0
+    """).fetchone()[0]
 
-        const sidebar =
-            document.querySelector(".sidebar");
+    messages = c.execute("""
+        SELECT COUNT(*)
+        FROM chats
+    """).fetchone()[0]
 
-        if (!sidebar) return;
+    banned = c.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE banned=1 AND is_admin=0
+    """).fetchone()[0]
 
-        if (sidebar.style.display === "flex") {
+    total_credits = c.execute("""
+        SELECT COALESCE(SUM(credits),0)
+        FROM users
+        WHERE is_admin=0
+    """).fetchone()[0]
 
-            sidebar.style.display = "none";
+    c.close()
 
-        } else {
+    return render_template(
+        "admin.html",
+        users=users,
+        total=total,
+        msgs=messages,
+        banned=banned,
+        total_credits=total_credits,
+        free=setting("free_credits", "10"),
+        welcome=setting("welcome"),
+        rights="© 2026 منذر السيد — جميع الحقوق محفوظة"
+    )
 
-            sidebar.style.display = "flex";
 
-            sidebar.style.position = "fixed";
+# =========================
+# إعدادات زولك
+# =========================
 
-            sidebar.style.zIndex = "1000";
+@app.post("/api/admin/settings")
+@admin_required
+def admin_settings():
 
-            sidebar.style.right = "0";
+    data = request.get_json() or {}
 
-            sidebar.style.top = "0";
+    c = db()
 
-            sidebar.style.bottom = "0";
+    if "free_credits" in data:
 
-        }
+        try:
+            free = int(data["free_credits"])
 
-    });
+            if free < 0:
+                free = 0
 
-}
+        except:
+            free = 10
 
+        c.execute("""
+            INSERT OR REPLACE INTO settings(key,value)
+            VALUES(?,?)
+        """, (
+            "free_credits",
+            str(free)
+        ))
 
-// =========================
-// تشغيل الحساب
-// =========================
+    if "welcome" in data:
 
-refreshAccount();
+        c.execute("""
+            INSERT OR REPLACE INTO settings(key,value)
+            VALUES(?,?)
+        """, (
+            "welcome",
+            str(data["welcome"])
+        ))
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
+
+
+# =========================
+# ⭐ إضافة الرصيد
+# =========================
+
+@app.post("/api/admin/user/<int:uid>/credits")
+@admin_required
+def add_credits(uid):
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+        amount = int(
+            data.get("amount", 0)
+        )
+    except:
+
+        return jsonify(
+            error="قيمة الرصيد غير صحيحة."
+        ), 400
+
+    if amount <= 0:
+
+        return jsonify(
+            error="أدخل رقم أكبر من صفر."
+        ), 400
+
+    c = db()
+
+    user = c.execute("""
+        SELECT id,name,email,credits,is_admin
+        FROM users
+        WHERE id=?
+    """, (
+        uid,
+    )).fetchone()
+
+    if not user:
+
+        c.close()
+
+        return jsonify(
+            error="المستخدم غير موجود."
+        ), 404
+
+    if user["is_admin"]:
+
+        c.close()
+
+        return jsonify(
+            error="لا يمكن تعديل رصيد المدير من هنا."
+        ), 403
+
+    c.execute("""
+        UPDATE users
+        SET credits = credits + ?
+        WHERE id=? AND is_admin=0
+    """, (
+        amount,
+        uid
+    ))
+
+    if c.rowcount != 1:
+
+        c.rollback()
+        c.close()
+
+        return jsonify(
+            error="لم يتم تحديث الرصيد."
+        ), 500
+
+    updated = c.execute("""
+        SELECT credits
+        FROM users
+        WHERE id=?
+    """, (
+        uid,
+    )).fetchone()
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True,
+        message="تمت إضافة الرصيد بنجاح.",
+        credits=updated["credits"]
+    )
+
+
+# =========================
+# حظر المستخدم
+# =========================
+
+@app.post("/api/admin/user/<int:uid>/ban")
+@admin_required
+def ban_user(uid):
+
+    c = db()
+
+    user = c.execute("""
+        SELECT is_admin
+        FROM users
+        WHERE id=?
+    """, (
+        uid,
+    )).fetchone()
+
+    if not user:
+
+        c.close()
+
+        return jsonify(
+            error="المستخدم غير موجود."
+        ), 404
+
+    if user["is_admin"]:
+
+        c.close()
+
+        return jsonify(
+            error="لا يمكن حظر المدير."
+        ), 403
+
+    c.execute("""
+        UPDATE users
+        SET banned=1
+        WHERE id=? AND is_admin=0
+    """, (
+        uid,
+    ))
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
+
+
+# =========================
+# إلغاء الحظر
+# =========================
+
+@app.post("/api/admin/user/<int:uid>/unban")
+@admin_required
+def unban_user(uid):
+
+    c = db()
+
+    c.execute("""
+        UPDATE users
+        SET banned=0
+        WHERE id=? AND is_admin=0
+    """, (
+        uid,
+    ))
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
+
+
+# =========================
+# حذف المستخدم
+# =========================
+
+@app.delete("/api/admin/user/<int:uid>")
+@admin_required
+def delete_user(uid):
+
+    c = db()
+
+    user = c.execute("""
+        SELECT is_admin
+        FROM users
+        WHERE id=?
+    """, (
+        uid,
+    )).fetchone()
+
+    if not user:
+
+        c.close()
+
+        return jsonify(
+            error="المستخدم غير موجود."
+        ), 404
+
+    if user["is_admin"]:
+
+        c.close()
+
+        return jsonify(
+            error="لا يمكن حذف حساب المدير."
+        ), 403
+
+    c.execute("""
+        DELETE FROM chats
+        WHERE user_id=?
+    """, (
+        uid,
+    ))
+
+    c.execute("""
+        DELETE FROM users
+        WHERE id=? AND is_admin=0
+    """, (
+        uid,
+    ))
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
+
+
+# =========================
+# البحث عن المستخدمين
+# =========================
+
+@app.get("/api/admin/users")
+@admin_required
+def admin_users():
+
+    query = request.args.get(
+        "q",
+        ""
+    ).strip()
+
+    c = db()
+
+    if query:
+
+        users = c.execute("""
+            SELECT id,name,email,credits,is_admin,banned
+            FROM users
+            WHERE name LIKE ?
+               OR email LIKE ?
+            ORDER BY id DESC
+        """, (
+            f"%{query}%",
+            f"%{query}%"
+        )).fetchall()
+
+    else:
+
+        users = c.execute("""
+            SELECT id,name,email,credits,is_admin,banned
+            FROM users
+            ORDER BY id DESC
+        """).fetchall()
+
+    c.close()
+
+    return jsonify(
+        users=[
+            dict(user)
+            for user in users
+        ]
+    )
+
+
+# =========================
+# تشغيل الموقع
+# =========================
+
+if __name__ == "__main__":
+
+    app.run(
+        host="0.0.0.0",
+        port=int(
+            os.getenv("PORT", "5000")
+        )
+    )
