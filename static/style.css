@@ -1324,9 +1324,9 @@ body {
     width: 100%;
     padding-right: 64px !important;
         }
-/* 🇸🇩 خلفية علم السودان للمحادثة */
-.messages {
+/* 🇸🇩 خلفية علم السودان */
+.chat-container {
     background:
-        linear-gradient(rgba(11, 16, 32, 0.78), rgba(11, 16, 32, 0.78)),
-        url("/static/sudan-flag-background.jpg") center center / cover no-repeat;
+        linear-gradient(rgba(11, 16, 32, 0.55), rgba(11, 16, 32, 0.55)),
+        url("/static/sudan-flag-background.jpg") center / cover no-repeat !important;
 }
