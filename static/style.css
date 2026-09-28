@@ -1396,3 +1396,24 @@ body {
 .messages {
     background: transparent !important;
 }
+
+/* 🇸🇩 خلفية زولك AI */
+
+body {
+    background-image: url("/static/sudan-flag-background.jpg") !important;
+    background-position: center center !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+}
+
+.app.chatgpt-layout {
+    background: transparent !important;
+}
+
+.main.main-chat {
+    background: transparent !important;
+}
+
+.messages {
+    background: rgba(11, 16, 32, 0.18) !important;
+                }
