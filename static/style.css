@@ -1385,10 +1385,12 @@ body {
 /* 🇸🇩 خلفية علم السودان */
 
 .main.main-chat {
-    background-image: url("/static/sudan-flag-background.jpg") !important;
-    background-position: center !important;
-    background-size: cover !important;
-    background-repeat: no-repeat !important;
+    background:
+        linear-gradient(
+            rgba(11, 16, 32, 0.15),
+            rgba(11, 16, 32, 0.15)
+        ),
+        url("/static/sudan-flag-background.jpg") center center / cover no-repeat !important;
 }
 
 .messages {
