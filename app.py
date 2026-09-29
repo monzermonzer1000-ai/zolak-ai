@@ -3,6 +3,7 @@ import sqlite3
 import time
 import json
 from functools import wraps
+from datetime import datetime
 
 from flask import (
     Flask,
@@ -44,6 +45,10 @@ def init_db():
 
     c = db()
 
+    # -----------------------------
+    # المستخدمون
+    # -----------------------------
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,15 +61,38 @@ def init_db():
         )
     """)
 
+    # -----------------------------
+    # المحادثات الرئيسية
+    # -----------------------------
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS conversations(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT DEFAULT 'محادثة جديدة',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # -----------------------------
+    # الرسائل
+    # -----------------------------
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS chats(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
+            conversation_id INTEGER,
             role TEXT,
             content TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    # -----------------------------
+    # الإعدادات
+    # -----------------------------
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS settings(
@@ -73,18 +101,39 @@ def init_db():
         )
     """)
 
-    columns = [
+    # -----------------------------
+    # توافق قاعدة البيانات القديمة
+    # -----------------------------
+
+    user_columns = [
         x["name"]
         for x in c.execute(
             "PRAGMA table_info(users)"
         ).fetchall()
     ]
 
-    if "banned" not in columns:
+    if "banned" not in user_columns:
         c.execute("""
             ALTER TABLE users
             ADD COLUMN banned INTEGER DEFAULT 0
         """)
+
+    chat_columns = [
+        x["name"]
+        for x in c.execute(
+            "PRAGMA table_info(chats)"
+        ).fetchall()
+    ]
+
+    if "conversation_id" not in chat_columns:
+        c.execute("""
+            ALTER TABLE chats
+            ADD COLUMN conversation_id INTEGER
+        """)
+
+    # -----------------------------
+    # إنشاء المدير إذا غير موجود
+    # -----------------------------
 
     admin = c.execute("""
         SELECT id
@@ -118,6 +167,10 @@ def init_db():
             1,
             0
         ))
+
+    # -----------------------------
+    # الإعدادات الافتراضية
+    # -----------------------------
 
     settings = [
 
@@ -209,6 +262,74 @@ def init_db():
             value
         ))
 
+    # =====================================================
+    # ترحيل المحادثات القديمة
+    # =====================================================
+    #
+    # إذا كانت عندك رسائل قديمة من النظام السابق بدون
+    # conversation_id، يتم وضعها داخل محادثة واحدة قديمة
+    # لكل مستخدم بدلاً من حذفها.
+    #
+
+    old_rows = c.execute("""
+        SELECT DISTINCT user_id
+        FROM chats
+        WHERE conversation_id IS NULL
+        AND user_id IS NOT NULL
+    """).fetchall()
+
+    for old_user in old_rows:
+
+        uid = old_user["user_id"]
+
+        existing = c.execute("""
+            SELECT id
+            FROM conversations
+            WHERE user_id=?
+            ORDER BY id ASC
+            LIMIT 1
+        """, (
+            uid,
+        )).fetchone()
+
+        if existing:
+
+            conversation_id = existing["id"]
+
+        else:
+
+            c.execute("""
+                INSERT INTO conversations
+                (
+                    user_id,
+                    title
+                )
+                VALUES(?,?)
+            """, (
+                uid,
+                "المحادثات القديمة"
+            ))
+
+            conversation_id = c.lastrowid
+
+        c.execute("""
+            UPDATE chats
+            SET conversation_id=?
+            WHERE user_id=?
+            AND conversation_id IS NULL
+        """, (
+            conversation_id,
+            uid
+        ))
+
+        c.execute("""
+            UPDATE conversations
+            SET updated_at=CURRENT_TIMESTAMP
+            WHERE id=?
+        """, (
+            conversation_id,
+        ))
+
     c.commit()
     c.close()
 
@@ -234,6 +355,77 @@ def setting(key, default=""):
 
 
 init_db()
+
+
+# =========================================================
+# أدوات المحادثات
+# =========================================================
+
+def create_conversation(user_id, title="محادثة جديدة"):
+
+    c = db()
+
+    c.execute("""
+        INSERT INTO conversations
+        (
+            user_id,
+            title
+        )
+        VALUES(?,?)
+    """, (
+        user_id,
+        title
+    ))
+
+    conversation_id = c.lastrowid
+
+    c.commit()
+    c.close()
+
+    return conversation_id
+
+
+def get_conversation(user_id, conversation_id):
+
+    c = db()
+
+    row = c.execute("""
+        SELECT
+            id,
+            user_id,
+            title,
+            created_at,
+            updated_at
+        FROM conversations
+        WHERE id=?
+        AND user_id=?
+    """, (
+        conversation_id,
+        user_id
+    )).fetchone()
+
+    c.close()
+
+    return row
+
+
+def make_title(message):
+
+    title = str(message).strip()
+
+    if not title:
+        return "محادثة جديدة"
+
+    # إزالة الأسطر
+    title = " ".join(
+        title.split()
+    )
+
+    # عنوان قصير للقائمة
+    if len(title) > 42:
+        title = title[:42].rstrip() + "..."
+
+    return title
 
 
 # =========================================================
@@ -361,7 +553,10 @@ def home():
 
 @app.get("/login")
 def login():
-    return render_template("login.html")
+
+    return render_template(
+        "login.html"
+    )
 
 
 @app.get("/logout")
@@ -662,6 +857,192 @@ def me():
 
 
 # =========================================================
+# إنشاء محادثة جديدة
+# =========================================================
+
+@app.post("/api/conversations")
+@login_required
+def new_conversation():
+
+    if setting(
+        "chat_history_enabled",
+        "1"
+    ) != "1":
+
+        return jsonify(
+            error="حفظ المحادثات متوقف حالياً."
+        ), 403
+
+    conversation_id = create_conversation(
+        session["uid"],
+        "محادثة جديدة"
+    )
+
+    conversation = get_conversation(
+        session["uid"],
+        conversation_id
+    )
+
+    return jsonify(
+        ok=True,
+        conversation=dict(conversation)
+    )
+
+
+# =========================================================
+# قائمة محادثات المستخدم
+# =========================================================
+
+@app.get("/api/conversations")
+@login_required
+def conversations():
+
+    if setting(
+        "chat_history_enabled",
+        "1"
+    ) != "1":
+
+        return jsonify(
+            conversations=[]
+        )
+
+    c = db()
+
+    rows = c.execute("""
+        SELECT
+            id,
+            title,
+            created_at,
+            updated_at
+        FROM conversations
+        WHERE user_id=?
+        ORDER BY updated_at DESC, id DESC
+    """, (
+        session["uid"],
+    )).fetchall()
+
+    c.close()
+
+    return jsonify(
+        conversations=[
+            dict(row)
+            for row in rows
+        ]
+    )
+
+
+# =========================================================
+# رسائل محادثة معينة
+# =========================================================
+
+@app.get("/api/conversations/<int:conversation_id>")
+@login_required
+def get_conversation_messages(conversation_id):
+
+    if setting(
+        "chat_history_enabled",
+        "1"
+    ) != "1":
+
+        return jsonify(
+            error="حفظ المحادثات متوقف حالياً."
+        ), 403
+
+    conversation = get_conversation(
+        session["uid"],
+        conversation_id
+    )
+
+    if not conversation:
+
+        return jsonify(
+            error="المحادثة غير موجودة."
+        ), 404
+
+    c = db()
+
+    rows = c.execute("""
+        SELECT
+            id,
+            role,
+            content,
+            created_at
+        FROM chats
+        WHERE user_id=?
+        AND conversation_id=?
+        ORDER BY id ASC
+    """, (
+        session["uid"],
+        conversation_id
+    )).fetchall()
+
+    c.close()
+
+    return jsonify(
+        conversation=dict(conversation),
+        chats=[
+            dict(row)
+            for row in rows
+        ]
+    )
+
+
+# =========================================================
+# حذف محادثة
+# =========================================================
+
+@app.delete("/api/conversations/<int:conversation_id>")
+@login_required
+def delete_conversation(conversation_id):
+
+    c = db()
+
+    conversation = c.execute("""
+        SELECT id
+        FROM conversations
+        WHERE id=?
+        AND user_id=?
+    """, (
+        conversation_id,
+        session["uid"]
+    )).fetchone()
+
+    if not conversation:
+
+        c.close()
+
+        return jsonify(
+            error="المحادثة غير موجودة."
+        ), 404
+
+    c.execute("""
+        DELETE FROM chats
+        WHERE conversation_id=?
+        AND user_id=?
+    """, (
+        conversation_id,
+        session["uid"]
+    ))
+
+    c.execute("""
+        DELETE FROM conversations
+        WHERE id=?
+        AND user_id=?
+    """, (
+        conversation_id,
+        session["uid"]
+    ))
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True,
+        message="تم حذف المحادثة."
+    )
+
+
+# =========================================================
 # الذكاء الاصطناعي
 # =========================================================
 
@@ -685,6 +1066,28 @@ def chat():
         return jsonify(
             error="اكتب رسالتك أولاً."
         ), 400
+
+    # -----------------------------------------
+    # تحديد المحادثة
+    # -----------------------------------------
+
+    conversation_id = data.get(
+        "conversation_id"
+    )
+
+    try:
+
+        if conversation_id is not None:
+            conversation_id = int(
+                conversation_id
+            )
+
+    except (
+        ValueError,
+        TypeError
+    ):
+
+        conversation_id = None
 
     c = db()
 
@@ -727,6 +1130,48 @@ def chat():
                     "رصيدك المجاني خلص."
                 )
             ), 402
+
+        # -----------------------------------------
+        # إنشاء محادثة إذا لم يتم تحديد واحدة
+        # -----------------------------------------
+
+        if conversation_id is None:
+
+            c.execute("""
+                INSERT INTO conversations
+                (
+                    user_id,
+                    title
+                )
+                VALUES(?,?)
+            """, (
+                session["uid"],
+                make_title(message)
+            ))
+
+            conversation_id = c.lastrowid
+
+        else:
+
+            conversation = c.execute("""
+                SELECT id
+                FROM conversations
+                WHERE id=?
+                AND user_id=?
+            """, (
+                conversation_id,
+                session["uid"]
+            )).fetchone()
+
+            if not conversation:
+
+                return jsonify(
+                    error="المحادثة غير موجودة."
+                ), 404
+
+        # -----------------------------------------
+        # مفتاح Gemini
+        # -----------------------------------------
 
         api_key = os.getenv(
             "GEMINI_API_KEY"
@@ -807,6 +1252,10 @@ def chat():
 
         answer += "\n\n— تطوير منذر السيد 🇸🇩"
 
+        # -----------------------------------------
+        # خصم الرصيد
+        # -----------------------------------------
+
         if not user["is_admin"]:
 
             c.execute("""
@@ -829,38 +1278,106 @@ def chat():
                     )
                 ), 402
 
+        # -----------------------------------------
+        # حفظ رسالة المستخدم
+        # -----------------------------------------
+
         c.execute("""
             INSERT INTO chats
             (
                 user_id,
+                conversation_id,
                 role,
                 content
             )
-            VALUES(?,?,?)
+            VALUES(?,?,?,?,?)
         """, (
             session["uid"],
+            conversation_id,
             "user",
             message
         ))
 
+        # -----------------------------------------
+        # حفظ رد الذكاء الاصطناعي
+        # -----------------------------------------
+
         c.execute("""
             INSERT INTO chats
             (
                 user_id,
+                conversation_id,
                 role,
                 content
             )
-            VALUES(?,?,?)
+            VALUES(?,?,?,?,?)
         """, (
             session["uid"],
+            conversation_id,
             "assistant",
             answer
         ))
 
+        # -----------------------------------------
+        # تحديث عنوان المحادثة
+        # -----------------------------------------
+
+        existing_messages = c.execute("""
+            SELECT COUNT(*)
+            FROM chats
+            WHERE conversation_id=?
+            AND user_id=?
+        """, (
+            conversation_id,
+            session["uid"]
+        )).fetchone()[0]
+
+        if existing_messages <= 2:
+
+            c.execute("""
+                UPDATE conversations
+                SET title=?,
+                    updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
+                AND user_id=?
+            """, (
+                make_title(message),
+                conversation_id,
+                session["uid"]
+            ))
+
+        else:
+
+            c.execute("""
+                UPDATE conversations
+                SET updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
+                AND user_id=?
+            """, (
+                conversation_id,
+                session["uid"]
+            ))
+
         c.commit()
 
+        conversation = c.execute("""
+            SELECT
+                id,
+                title,
+                created_at,
+                updated_at
+            FROM conversations
+            WHERE id=?
+            AND user_id=?
+        """, (
+            conversation_id,
+            session["uid"]
+        )).fetchone()
+
         return jsonify(
-            answer=answer
+            answer=answer,
+            conversation_id=conversation_id,
+            conversation=dict(conversation)
         )
 
     except Exception as e:
@@ -897,7 +1414,7 @@ def chat():
 
 
 # =========================================================
-# سجل المحادثات
+# سجل المحادثات القديم - توافق
 # =========================================================
 
 @app.get("/api/chats")
@@ -919,7 +1436,8 @@ def chats():
         SELECT
             role,
             content,
-            created_at
+            created_at,
+            conversation_id
         FROM chats
         WHERE user_id=?
         ORDER BY id DESC
@@ -931,642 +1449,4 @@ def chats():
     c.close()
 
     return jsonify(
-        chats=[
-            dict(row)
-            for row in reversed(rows)
-        ]
-    )
-
-
-# =========================================================
-# لوحة المدير
-# =========================================================
-
-@app.get("/admin")
-@admin_required
-def admin():
-
-    c = db()
-
-    users = c.execute("""
-        SELECT
-            id,
-            name,
-            email,
-            credits,
-            is_admin,
-            banned
-        FROM users
-        ORDER BY id DESC
-    """).fetchall()
-
-    total = c.execute("""
-        SELECT COUNT(*)
-        FROM users
-        WHERE is_admin=0
-    """).fetchone()[0]
-
-    messages = c.execute("""
-        SELECT COUNT(*)
-        FROM chats
-    """).fetchone()[0]
-
-    banned = c.execute("""
-        SELECT COUNT(*)
-        FROM users
-        WHERE banned=1
-        AND is_admin=0
-    """).fetchone()[0]
-
-    total_credits = c.execute("""
-        SELECT COALESCE(SUM(credits),0)
-        FROM users
-        WHERE is_admin=0
-    """).fetchone()[0]
-
-    c.close()
-
-    return render_template(
-        "admin.html",
-        users=users,
-        total=total,
-        msgs=messages,
-        banned=banned,
-        total_credits=total_credits,
-        free=setting(
-            "free_credits",
-            "10"
-        ),
-        welcome=setting(
-            "welcome"
-        ),
-        rights="© 2026 منذر السيد — جميع الحقوق محفوظة"
-    )
-
-
-# =========================================================
-# محادثات مستخدم
-# =========================================================
-
-@app.get("/api/admin/user/<int:uid>/chats")
-@admin_required
-def admin_user_chats(uid):
-
-    c = db()
-
-    user = c.execute("""
-        SELECT
-            id,
-            name,
-            email
-        FROM users
-        WHERE id=?
-    """, (
-        uid,
-    )).fetchone()
-
-    if not user:
-
-        c.close()
-
-        return jsonify(
-            error="المستخدم غير موجود."
-        ), 404
-
-    rows = c.execute("""
-        SELECT
-            role,
-            content,
-            created_at
-        FROM chats
-        WHERE user_id=?
-        ORDER BY id ASC
-    """, (
-        uid,
-    )).fetchall()
-
-    c.close()
-
-    return jsonify(
-        user=dict(user),
-        chats=[
-            dict(row)
-            for row in rows
-        ]
-    )
-
-
-# =========================================================
-# إعدادات الإدارة
-# =========================================================
-
-ADMIN_SETTING_KEYS = {
-
-    "site_name",
-    "site_description",
-    "free_credits",
-    "welcome",
-
-    "homepage_title",
-    "homepage_subtitle",
-    "homepage_button",
-
-    "primary_color",
-    "theme",
-    "mobile_ui",
-
-    "no_credits_message",
-    "error_message",
-
-    "logo_url",
-    "background_url",
-
-    "sudan_identity",
-    "ad_text",
-    "notifications",
-
-    "ai_model",
-    "ai_free_messages",
-
-    "feature_writing",
-    "feature_translation",
-    "feature_study",
-
-    "registration_enabled",
-    "chat_history_enabled",
-    "email_login_enabled",
-
-    "maintenance_mode",
-    "allow_login",
-    "admin_protection",
-
-    "packages"
-}
-
-
-@app.get("/api/admin/settings")
-@admin_required
-def get_admin_settings():
-
-    c = db()
-
-    rows = c.execute("""
-        SELECT
-            key,
-            value
-        FROM settings
-    """).fetchall()
-
-    c.close()
-
-    return jsonify(
-        settings={
-            row["key"]: row["value"]
-            for row in rows
-        }
-    )
-
-
-@app.post("/api/admin/settings")
-@admin_required
-def admin_settings():
-
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-    boolean_keys = {
-
-        "mobile_ui",
-        "sudan_identity",
-        "notifications",
-
-        "feature_writing",
-        "feature_translation",
-        "feature_study",
-
-        "registration_enabled",
-        "chat_history_enabled",
-        "email_login_enabled",
-
-        "maintenance_mode",
-        "allow_login",
-        "admin_protection"
-    }
-
-    number_keys = {
-        "free_credits",
-        "ai_free_messages"
-    }
-
-    c = db()
-
-    try:
-
-        for key, value in data.items():
-
-            if key not in ADMIN_SETTING_KEYS:
-                continue
-
-            if key in number_keys:
-
-                try:
-
-                    value = max(
-                        0,
-                        int(value)
-                    )
-
-                except (
-                    ValueError,
-                    TypeError
-                ):
-
-                    return jsonify(
-                        error="القيمة الرقمية غير صحيحة."
-                    ), 400
-
-            elif key in boolean_keys:
-
-                value = (
-                    "1"
-                    if str(value).lower()
-                    in {
-                        "1",
-                        "true",
-                        "yes",
-                        "on"
-                    }
-                    else "0"
-                )
-
-            else:
-
-                value = str(
-                    value
-                ).strip()
-
-            c.execute("""
-                INSERT OR REPLACE INTO settings
-                (
-                    key,
-                    value
-                )
-                VALUES(?,?)
-            """, (
-                key,
-                value
-            ))
-
-        c.commit()
-
-    except Exception:
-
-        c.rollback()
-
-        raise
-
-    finally:
-
-        c.close()
-
-    return jsonify(
-        ok=True,
-        message="تم حفظ الإعدادات بنجاح."
-    )
-
-
-# =========================================================
-# إدارة الرصيد
-# =========================================================
-
-@app.post("/api/admin/user/<int:uid>/credits")
-@admin_required
-def add_credits(uid):
-
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-    if "credits" in data:
-
-        try:
-
-            new_credits = int(
-                data.get(
-                    "credits",
-                    0
-                )
-            )
-
-        except (
-            ValueError,
-            TypeError
-        ):
-
-            return jsonify(
-                error="قيمة الرصيد غير صحيحة."
-            ), 400
-
-        if new_credits < 0:
-
-            return jsonify(
-                error="الرصيد لا يمكن أن يكون سالباً."
-            ), 400
-
-        mode = "set"
-
-    elif "amount" in data:
-
-        try:
-
-            amount = int(
-                data.get(
-                    "amount",
-                    0
-                )
-            )
-
-        except (
-            ValueError,
-            TypeError
-        ):
-
-            return jsonify(
-                error="قيمة الرصيد غير صحيحة."
-            ), 400
-
-        if amount <= 0:
-
-            return jsonify(
-                error="أدخل رقم أكبر من صفر."
-            ), 400
-
-        mode = "add"
-
-    else:
-
-        return jsonify(
-            error="أدخل قيمة الرصيد."
-        ), 400
-
-    c = db()
-
-    user = c.execute("""
-        SELECT
-            id,
-            credits,
-            is_admin
-        FROM users
-        WHERE id=?
-    """, (
-        uid,
-    )).fetchone()
-
-    if not user:
-
-        c.close()
-
-        return jsonify(
-            error="المستخدم غير موجود."
-        ), 404
-
-    if user["is_admin"]:
-
-        c.close()
-
-        return jsonify(
-            error="لا يمكن تعديل رصيد المدير من هنا."
-        ), 403
-
-    if mode == "set":
-
-        c.execute("""
-            UPDATE users
-            SET credits=?
-            WHERE id=?
-            AND is_admin=0
-        """, (
-            new_credits,
-            uid
-        ))
-
-    else:
-
-        c.execute("""
-            UPDATE users
-            SET credits=credits+?
-            WHERE id=?
-            AND is_admin=0
-        """, (
-            amount,
-            uid
-        ))
-
-    updated = c.execute("""
-        SELECT credits
-        FROM users
-        WHERE id=?
-    """, (
-        uid,
-    )).fetchone()
-
-    c.commit()
-    c.close()
-
-    return jsonify(
-        ok=True,
-        message="تم تحديث الرصيد بنجاح.",
-        credits=updated["credits"]
-    )
-
-
-# =========================================================
-# حظر المستخدم
-# =========================================================
-
-@app.post("/api/admin/user/<int:uid>/ban")
-@admin_required
-def ban_user(uid):
-
-    c = db()
-
-    user = c.execute("""
-        SELECT is_admin
-        FROM users
-        WHERE id=?
-    """, (
-        uid,
-    )).fetchone()
-
-    if not user:
-
-        c.close()
-
-        return jsonify(
-            error="المستخدم غير موجود."
-        ), 404
-
-    if user["is_admin"]:
-
-        c.close()
-
-        return jsonify(
-            error="لا يمكن حظر المدير."
-        ), 403
-
-    c.execute("""
-        UPDATE users
-        SET banned=1
-        WHERE id=?
-        AND is_admin=0
-    """, (
-        uid,
-    ))
-
-    c.commit()
-    c.close()
-
-    return jsonify(
-        ok=True
-    )
-
-
-# =========================================================
-# إلغاء الحظر
-# =========================================================
-
-@app.post("/api/admin/user/<int:uid>/unban")
-@admin_required
-def unban_user(uid):
-
-    c = db()
-
-    user = c.execute("""
-        SELECT
-            id,
-            is_admin
-        FROM users
-        WHERE id=?
-    """, (
-        uid,
-    )).fetchone()
-
-    if not user:
-
-        c.close()
-
-        return jsonify(
-            error="المستخدم غير موجود."
-        ), 404
-
-    if user["is_admin"]:
-
-        c.close()
-
-        return jsonify(
-            error="لا يمكن تعديل حالة المدير."
-        ), 403
-
-    c.execute("""
-        UPDATE users
-        SET banned=0
-        WHERE id=?
-        AND is_admin=0
-    """, (
-        uid,
-    ))
-
-    c.commit()
-    c.close()
-
-    return jsonify(
-        ok=True
-    )
-
-
-# =========================================================
-# حذف المستخدم
-# =========================================================
-
-@app.delete("/api/admin/user/<int:uid>")
-@admin_required
-def delete_user(uid):
-
-    c = db()
-
-    user = c.execute("""
-        SELECT
-            id,
-            is_admin
-        FROM users
-        WHERE id=?
-    """, (
-        uid,
-    )).fetchone()
-
-    if not user:
-
-        c.close()
-
-        return jsonify(
-            error="المستخدم غير موجود."
-        ), 404
-
-    if user["is_admin"]:
-
-        c.close()
-
-        return jsonify(
-            error="لا يمكن حذف حساب المدير."
-        ), 403
-
-    c.execute("""
-        DELETE FROM chats
-        WHERE user_id=?
-    """, (
-        uid,
-    ))
-
-    c.execute("""
-        DELETE FROM users
-        WHERE id=?
-        AND is_admin=0
-    """, (
-        uid,
-    ))
-
-    c.commit()
-    c.close()
-
-    return jsonify(
-        ok=True,
-        message="تم حذف المستخدم ومحادثاته."
-    )
-
-
-# =========================================================
-# المستخدمون
-# =========================================================
-
-@app.get("/api/admin/users")
-@admin_required
-def admin_users():
-
-    query = request.args.get(
-        "q",
-        ""
-    ).strip()
-
-    c = db()
-
-    sql = """
-        SELECT
-            u.id,
-            u.name,
-            u.email,
-            u.credits,
-            u.is_admin,
-            u.banned,
-
-            COUNT(ch.id)
+        chats
