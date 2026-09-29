@@ -1,384 +1,412 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0b1220">
-    <meta name="description" content="زولك AI — مساعدك الذكي بطابع سوداني">
+
+    <meta name="theme-color" content="{{ primary_color or '#00c896' }}">
+    <meta
+        name="description"
+        content="{{ site_description or 'مساعد ذكاء اصطناعي سوداني 🇸🇩🤖' }}"
+    >
+
     <title>{{ site_name or "زولك AI 🇸🇩" }}</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        /* إخفاء العناصر التي تحمل hidden حتى لو تعارض معها CSS */
         [hidden] {
             display: none !important;
         }
 
-        /* 🇸🇩 خلفية علم السودان */
+        :root {
+            --zolak-primary: {{ primary_color or '#00c896' }};
+        }
+
+        /* الخلفية */
         .app.chatgpt-layout {
+            {% if background_url %}
+            background-image: url("{{ background_url }}") !important;
+            {% else %}
             background-image: url("/static/sudan-flag-background.jpg") !important;
+            {% endif %}
+
             background-position: center center !important;
             background-size: cover !important;
             background-repeat: no-repeat !important;
         }
 
-        .main.main-chat {
+        .main.main-chat,
+        .messages {
             background: rgba(11, 16, 32, 0.12) !important;
         }
 
-        .messages {
-            background: rgba(11, 16, 32, 0.12) !important;
+        /* اللون الذي يختاره المدير */
+        .brand-logo,
+        .welcome-logo,
+        .mobile-brand-logo {
+            background: var(--zolak-primary) !important;
+        }
+
+        .new-chat {
+            border-color: var(--zolak-primary) !important;
+        }
+
+        .online-indicator,
+        .account-status {
+            background: var(--zolak-primary) !important;
+        }
+
+        .sidebar-link.active {
+            border-right-color: var(--zolak-primary) !important;
+        }
+
+        #send {
+            background: var(--zolak-primary) !important;
+        }
+
+        /* الوضع الفاتح */
+        body.theme-light {
+            background: #f5f7fa !important;
+        }
+
+        body.theme-light .sidebar {
+            background: rgba(255,255,255,0.96) !important;
+            color: #172033 !important;
+        }
+
+        body.theme-light .main,
+        body.theme-light .messages {
+            background: rgba(255,255,255,0.20) !important;
+            color: #172033 !important;
+        }
+
+        body.theme-light .composer-inner {
+            background: rgba(255,255,255,0.95) !important;
+            border-color: rgba(0,0,0,0.12) !important;
+        }
+
+        body.theme-light textarea {
+            color: #172033 !important;
+        }
+
+        body.theme-light .welcome-screen h1,
+        body.theme-light .welcome-screen p {
+            color: #172033 !important;
+        }
+
+        /* الشعار إذا وضع المدير صورة */
+        .custom-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: inherit;
         }
     </style>
 </head>
 
-<body>
-    <div class="app chatgpt-layout">
+<body class="{% if theme == 'light' %}theme-light{% else %}theme-dark{% endif %}">
 
-        <!-- القائمة الجانبية -->
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="brand-logo brand-icon">Z</div>
-                <div class="brand-text">
-                    <strong>زولك AI</strong>
-                    <span>مساعدك السوداني 🇸🇩</span>
-                </div>
-            </div>
+<div class="app chatgpt-layout">
 
-            <button class="new-chat" id="newChat" type="button">
-                <span class="new-chat-icon">＋</span>
-                <span>محادثة جديدة</span>
-            </button>
+    <!-- القائمة الجانبية -->
+    <aside class="sidebar">
 
-            <div class="sidebar-section">
-                <span class="sidebar-heading">القائمة الرئيسية</span>
+        <div class="brand">
 
-                <nav class="sidebar-links">
-                    <a href="/" class="sidebar-link active">
-                        <span class="nav-icon">⌂</span>
-                        <span>الرئيسية</span>
-                    </a>
-
-                    <a href="/login" id="loginLink" class="sidebar-link">
-                        <span class="nav-icon">♙</span>
-                        <span>تسجيل الدخول</span>
-                    </a>
-
-                    <a href="/admin" id="adminLink" class="sidebar-link" hidden>
-                        <span class="nav-icon">⚙</span>
-                        <span>لوحة المدير</span>
-                    </a>
-
-                    <a href="/logout" id="logout" class="sidebar-link" hidden>
-                        <span class="nav-icon">⇥</span>
-                        <span>تسجيل الخروج</span>
-                    </a>
-                </nav>
-            </div>
-
-            <div class="sidebar-spacer"></div>
-
-            <div class="account-box account sidebar-bottom">
-                <div class="account-avatar">ز</div>
-
-                <div class="account-info">
-                    <div id="who" class="account-name">يا زول 👋</div>
-                    <div id="credits" class="account-credits">
-                        سجّل دخولك للبدء
-                    </div>
-                </div>
-
-                <span class="account-status" aria-hidden="true"></span>
-            </div>
-
-            <div class="sidebar-footer">
-                <span>صُنع بكل حب في السودان</span>
-                <span>🇸🇩</span>
-            </div>
-        </aside>
-
-        <!-- المحتوى الرئيسي -->
-        <main class="main main-chat">
-
-            <!-- الشريط العلوي -->
-            <header class="topbar chat-navbar">
-                <div class="topbar-right">
-
-                    <button
-                        class="mobile-menu"
-                        id="mobileMenu"
-                        type="button"
-                        aria-label="فتح القائمة"
-                        title="القائمة"
+            <div class="brand-logo brand-icon">
+                {% if logo_url %}
+                    <img
+                        src="{{ logo_url }}"
+                        alt="{{ site_name or 'زولك AI' }}"
+                        class="custom-logo"
                     >
-                        ☰
-                    </button>
+                {% else %}
+                    Z
+                {% endif %}
+            </div>
 
-                    <div class="mobile-brand">
-                        <span class="mobile-brand-logo">Z</span>
-                        <strong>زولك AI</strong>
-                        <span class="sudan-badge">🇸🇩</span>
-                    </div>
+            <div class="brand-text">
+                <strong>{{ site_name or "زولك AI" }}</strong>
+                <span>
+                    {{ homepage_subtitle or site_description or "مساعدك السوداني 🇸🇩" }}
+                </span>
+            </div>
+
+        </div>
+
+        <button class="new-chat" id="newChat" type="button">
+            <span class="new-chat-icon">＋</span>
+            <span>محادثة جديدة</span>
+        </button>
+
+        <div class="sidebar-section">
+
+            <span class="sidebar-heading">القائمة الرئيسية</span>
+
+            <nav class="sidebar-links">
+
+                <a href="/" class="sidebar-link active">
+                    <span class="nav-icon">⌂</span>
+                    <span>الرئيسية</span>
+                </a>
+
+                <a href="/login" id="loginLink" class="sidebar-link">
+                    <span class="nav-icon">♙</span>
+                    <span>تسجيل الدخول</span>
+                </a>
+
+                <a href="/admin" id="adminLink" class="sidebar-link" hidden>
+                    <span class="nav-icon">⚙</span>
+                    <span>لوحة المدير</span>
+                </a>
+
+                <a href="/logout" id="logout" class="sidebar-link" hidden>
+                    <span class="nav-icon">⇥</span>
+                    <span>تسجيل الخروج</span>
+                </a>
+
+            </nav>
+        </div>
+
+        <div class="sidebar-spacer"></div>
+
+        <div class="account-box account sidebar-bottom">
+
+            <div class="account-avatar">ز</div>
+
+            <div class="account-info">
+                <div id="who" class="account-name">
+                    يا زول 👋
                 </div>
 
-                <div class="topbar-left">
-                    <span class="online-indicator"></span>
-                    <span class="assistant-status">مساعدك الذكي</span>
-                </div>
-            </header>
-
-            <!-- مساحة المحادثة -->
-            <section class="messages" id="messages" aria-live="polite">
-
-                <div class="welcome-screen">
-                    <div class="welcome-logo">Z</div>
-
-                    <span class="welcome-eyebrow">
-                        أهلاً بيك في زولك AI 🇸🇩
-                    </span>
-
-                    <h1>كيف أقدر أساعدك اليوم؟</h1>
-
-                    <p>
-                        اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
-                        <br>
-                        أنا هنا عشان أساعدك.
-                    </p>
-
-                    <div class="welcome-suggestions">
-
-                        <button
-                            class="suggestion-card"
-                            type="button"
-                            data-prompt="اشرح لي موضوع الذكاء الاصطناعي بطريقة بسيطة"
-                        >
-                            <span class="suggestion-icon">✦</span>
-                            <span class="suggestion-text">
-                                <strong>اشرح لي موضوع</strong>
-                                <small>خلينا نفهم حاجة جديدة</small>
-                            </span>
-                            <span class="suggestion-arrow">←</span>
-                        </button>
-
-                        <button
-                            class="suggestion-card"
-                            type="button"
-                            data-prompt="ساعدني أكتب رسالة احترافية"
-                        >
-                            <span class="suggestion-icon">✎</span>
-                            <span class="suggestion-text">
-                                <strong>ساعدني في الكتابة</strong>
-                                <small>رسائل وأفكار ومحتوى</small>
-                            </span>
-                            <span class="suggestion-arrow">←</span>
-                        </button>
-
-                        <button
-                            class="suggestion-card"
-                            type="button"
-                            data-prompt="اقترح لي أفكار لمشروع جديد"
-                        >
-                            <span class="suggestion-icon">◇</span>
-                            <span class="suggestion-text">
-                                <strong>أفكار لمشروع</strong>
-                                <small>نخطط ونطوّر أفكارك</small>
-                            </span>
-                            <span class="suggestion-arrow">←</span>
-                        </button>
-
-                        <button
-                            class="suggestion-card"
-                            type="button"
-                            data-prompt="ساعدني أتعلم مهارة جديدة"
-                        >
-                            <span class="suggestion-icon">⌘</span>
-                            <span class="suggestion-text">
-                                <strong>التعلّم والتطوير</strong>
-                                <small>خطوات واضحة للتعلّم</small>
-                            </span>
-                            <span class="suggestion-arrow">←</span>
-                        </button>
-
-                    </div>
-                </div>
-            </section>
-
-            <!-- منطقة كتابة الرسالة -->
-            <div class="composer composer-area">
-                <div class="composer-inner">
-
-                    <textarea
-                        id="prompt"
-                        placeholder="اكتب رسالتك هنا..."
-                        rows="1"
-                        aria-label="اكتب رسالتك"
-                    ></textarea>
-
-                    <button
-                        id="send"
-                        type="button"
-                        aria-label="إرسال الرسالة"
-                        title="إرسال"
-                    >
-                        <span class="send-icon">↑</span>
-                    </button>
-                </div>
-
-                <div class="composer-note">
-                    <span>
-                        زولك AI ممكن يخطئ أحياناً، راجع المعلومات المهمة.
-                    </span>
-
-                    <span class="composer-flag">
-                        صُنع في السودان 🇸🇩
-                    </span>
+                <div id="credits" class="account-credits">
+                    سجّل دخولك للبدء
                 </div>
             </div>
 
-        </main>
-    </div>
+            <span class="account-status" aria-hidden="true"></span>
 
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
+        </div>
 
-    <script>
-        // تعبئة مربع الكتابة عند اختيار أحد الاقتراحات
-        document
-            .querySelectorAll(".suggestion-card")
-            .forEach(function (card) {
+        <div class="sidebar-footer">
+            <span>
+                {{ site_name or "زولك AI" }} — صُنع في السودان
+            </span>
+            <span>🇸🇩</span>
+        </div>
 
-                card.addEventListener("click", function () {
-                    const prompt = document.getElementById("prompt");
-                    const text = card.getAttribute("data-prompt");
+    </aside>
 
-                    if (prompt && text) {
-                        prompt.value = text;
-                        prompt.focus();
 
-                        prompt.dispatchEvent(
-                            new Event("input", {
-                                bubbles: true
-                            })
-                        );
-                    }
-                });
-            });
+    <!-- المحتوى الرئيسي -->
+    <main class="main main-chat">
 
-        // بدء محادثة جديدة في الواجهة
-        const newChatButton = document.getElementById("newChat");
+        <!-- الشريط العلوي -->
+        <header class="topbar chat-navbar">
 
-        if (newChatButton) {
-            newChatButton.addEventListener("click", function () {
-                const messages = document.getElementById("messages");
-                const prompt = document.getElementById("prompt");
+            <div class="topbar-right">
 
-                if (messages) {
-                    messages.innerHTML = `
-                        <div class="welcome-screen">
-                            <div class="welcome-logo">Z</div>
+                <button
+                    class="mobile-menu"
+                    id="mobileMenu"
+                    type="button"
+                    aria-label="فتح القائمة"
+                    title="القائمة"
+                >
+                    ☰
+                </button>
 
-                            <span class="welcome-eyebrow">
-                                أهلاً بيك في زولك AI 🇸🇩
-                            </span>
+                <div class="mobile-brand">
 
-                            <h1>كيف أقدر أساعدك اليوم؟</h1>
+                    <span class="mobile-brand-logo">
 
-                            <p>
-                                اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
-                                <br>
-                                أنا هنا عشان أساعدك.
-                            </p>
+                        {% if logo_url %}
+                            <img
+                                src="{{ logo_url }}"
+                                alt="{{ site_name or 'زولك AI' }}"
+                                class="custom-logo"
+                            >
+                        {% else %}
+                            Z
+                        {% endif %}
 
-                            <div class="welcome-suggestions">
-                                <button
-                                    class="suggestion-card"
-                                    type="button"
-                                    data-prompt="اشرح لي موضوع الذكاء الاصطناعي بطريقة بسيطة"
+                    </span>
+
+                    <strong>
+                        {{ site_name or "زولك AI" }}
+                    </strong>
+
+                    <span class="sudan-badge">🇸🇩</span>
+
+                </div>
+
+            </div>
+
+            <div class="topbar-left">
+
+                <span class="online-indicator"></span>
+
+                <span class="assistant-status">
+                    مساعدك الذكي
+                </span>
+
+            </div>
+
+        </header>
+
+
+        <!-- مساحة المحادثة -->
+        <section
+            class="messages"
+            id="messages"
+            aria-live="polite"
+        >
+
+            <div class="welcome-screen">
+
+                <div class="welcome-logo">
+
+                    {% if logo_url %}
+                        <img
+                            src="{{ logo_url }}"
+                            alt="{{ site_name or 'زولك AI' }}"
+                            class="custom-logo"
+                        >
+                    {% else %}
+                        Z
+                    {% endif %}
+
+                </div>
+
+                <span class="welcome-eyebrow">
+
+                    {{ welcome or ("أهلاً بيك في " ~ (site_name or "زولك AI") ~ " 🇸🇩") }}
+
+                </span>
+
+                <h1>
+                    {{ homepage_title or "كيف أقدر أساعدك اليوم؟" }}
+                </h1>
+
+                <p>
+                    {{ homepage_subtitle or site_description or "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة." }}
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- منطقة كتابة الرسالة -->
+        <div class="composer composer-area">
+
+            <div class="composer-inner">
+
+                <textarea
+                    id="prompt"
+                    placeholder="اكتب رسالتك هنا..."
+                    rows="1"
+                    aria-label="اكتب رسالتك"
+                ></textarea>
+
+                <button
+                    id="send"
+                    type="button"
+                    aria-label="إرسال الرسالة"
+                    title="إرسال"
+                >
+                    <span class="send-icon">↑</span>
+                </button>
+
+            </div>
+
+            <div class="composer-note">
+
+                <span>
+                    {{ site_name or "زولك AI" }}
+                    ممكن يخطئ أحياناً، راجع المعلومات المهمة.
+                </span>
+
+                <span class="composer-flag">
+                    صُنع في السودان 🇸🇩
+                </span>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+
+<script>
+    /*
+     * بدء محادثة جديدة
+     * يتم استخدام الإعدادات التي حددها المدير
+     */
+    const newChatButton = document.getElementById("newChat");
+
+    if (newChatButton) {
+
+        newChatButton.addEventListener("click", function () {
+
+            const messages = document.getElementById("messages");
+            const prompt = document.getElementById("prompt");
+
+            if (messages) {
+
+                messages.innerHTML = `
+                    <div class="welcome-screen">
+
+                        <div class="welcome-logo">
+                            {% if logo_url %}
+                                <img
+                                    src="{{ logo_url }}"
+                                    alt="{{ site_name or 'زولك AI' }}"
+                                    class="custom-logo"
                                 >
-                                    <span class="suggestion-icon">✦</span>
-                                    <span class="suggestion-text">
-                                        <strong>اشرح لي موضوع</strong>
-                                        <small>خلينا نفهم حاجة جديدة</small>
-                                    </span>
-                                    <span class="suggestion-arrow">←</span>
-                                </button>
-
-                                <button
-                                    class="suggestion-card"
-                                    type="button"
-                                    data-prompt="ساعدني أكتب رسالة احترافية"
-                                >
-                                    <span class="suggestion-icon">✎</span>
-                                    <span class="suggestion-text">
-                                        <strong>ساعدني في الكتابة</strong>
-                                        <small>رسائل وأفكار ومحتوى</small>
-                                    </span>
-                                    <span class="suggestion-arrow">←</span>
-                                </button>
-
-                                <button
-                                    class="suggestion-card"
-                                    type="button"
-                                    data-prompt="اقترح لي أفكار لمشروع جديد"
-                                >
-                                    <span class="suggestion-icon">◇</span>
-                                    <span class="suggestion-text">
-                                        <strong>أفكار لمشروع</strong>
-                                        <small>نخطط ونطوّر أفكارك</small>
-                                    </span>
-                                    <span class="suggestion-arrow">←</span>
-                                </button>
-
-                                <button
-                                    class="suggestion-card"
-                                    type="button"
-                                    data-prompt="ساعدني أتعلم مهارة جديدة"
-                                >
-                                    <span class="suggestion-icon">⌘</span>
-                                    <span class="suggestion-text">
-                                        <strong>التعلّم والتطوير</strong>
-                                        <small>خطوات واضحة للتعلّم</small>
-                                    </span>
-                                    <span class="suggestion-arrow">←</span>
-                                </button>
-                            </div>
+                            {% else %}
+                                Z
+                            {% endif %}
                         </div>
-                    `;
 
-                    // إعادة ربط أزرار الاقتراحات بعد إعادة إنشاء محتواها
-                    messages
-                        .querySelectorAll(".suggestion-card")
-                        .forEach(function (card) {
-                            card.addEventListener("click", function () {
-                                const input = document.getElementById("prompt");
-                                const text = card.getAttribute("data-prompt");
+                        <span class="welcome-eyebrow">
+                            {{ welcome or ("أهلاً بيك في " ~ (site_name or "زولك AI") ~ " 🇸🇩") }}
+                        </span>
 
-                                if (input && text) {
-                                    input.value = text;
-                                    input.focus();
+                        <h1>
+                            {{ homepage_title or "كيف أقدر أساعدك اليوم؟" }}
+                        </h1>
 
-                                    input.dispatchEvent(
-                                        new Event("input", {
-                                            bubbles: true
-                                        })
-                                    );
-                                }
-                            });
-                        });
-                }
+                        <p>
+                            {{ homepage_subtitle or site_description or "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة." }}
+                        </p>
 
-                if (prompt) {
-                    prompt.value = "";
-                    prompt.focus();
-                    prompt.dispatchEvent(
-                        new Event("input", {
-                            bubbles: true
-                        })
-                    );
-                }
-            });
-        }
-    </script>
+                    </div>
+                `;
+            }
+
+            if (prompt) {
+
+                prompt.value = "";
+
+                prompt.focus();
+
+                prompt.dispatchEvent(
+                    new Event("input", {
+                        bubbles: true
+                    })
+                );
+            }
+
+        });
+
+    }
+</script>
+
 </body>
-</html>
+                    </html>
