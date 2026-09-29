@@ -2,17 +2,41 @@ import os
 import sqlite3
 import time
 import json
-import logging
 from functools import wraps
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, session, redirect, Response
-from werkzeug.security import generate_password_hash, check_password_hash
+
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    session,
+    redirect,
+    Response
+)
+
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
+
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "change-this-secret-in-production")
-DB = os.getenv("DB_PATH", "/tmp/zolak.db")
 
-logging.basicConfig(level=logging.INFO)
+app.secret_key = os.getenv(
+    "SECRET_KEY",
+    "change-this-secret-in-production"
+)
+
+DB = os.getenv(
+    "DB_PATH",
+    "/tmp/zolak.db"
+)
+
+
+# =========================================================
+# إعدادات الموقع
+# =========================================================
 
 DEFAULT_SETTINGS = {
     "site_name": "زولك AI 🇸🇩",
@@ -47,94 +71,141 @@ DEFAULT_SETTINGS = {
 }
 
 
+# =========================================================
+# قاعدة البيانات
+# =========================================================
+
 def db():
-    c = sqlite3.connect(DB, timeout=20)
-    c.row_factory = sqlite3.Row
-    return c
+    connection = sqlite3.connect(
+        DB,
+        timeout=20
+    )
+
+    connection.row_factory = sqlite3.Row
+
+    return connection
 
 
 def setting(key, default=""):
-    c = db()
+    connection = db()
+
     try:
-        row = c.execute(
+        row = connection.execute(
             "SELECT value FROM settings WHERE key=?",
             (key,)
         ).fetchone()
-        return row["value"] if row else default
+
+        if row:
+            return row["value"]
+
+        return default
+
     finally:
-        c.close()
+        connection.close()
 
 
 def init_db():
-    c = db()
 
-    c.execute("""CREATE TABLE IF NOT EXISTS users(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        credits INTEGER DEFAULT 10,
-        is_admin INTEGER DEFAULT 0,
-        banned INTEGER DEFAULT 0
-    )""")
+    connection = db()
 
-    c.execute("""CREATE TABLE IF NOT EXISTS conversations(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        title TEXT DEFAULT 'محادثة جديدة',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )""")
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            credits INTEGER DEFAULT 10,
+            is_admin INTEGER DEFAULT 0,
+            banned INTEGER DEFAULT 0
+        )
+    """)
 
-    c.execute("""CREATE TABLE IF NOT EXISTS chats(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        conversation_id INTEGER,
-        role TEXT,
-        content TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )""")
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS conversations(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT DEFAULT 'محادثة جديدة',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
 
-    c.execute("""CREATE TABLE IF NOT EXISTS settings(
-        key TEXT PRIMARY KEY,
-        value TEXT
-    )""")
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS chats(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            conversation_id INTEGER,
+            role TEXT,
+            content TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
 
-    user_cols = [
-        x["name"]
-        for x in c.execute("PRAGMA table_info(users)").fetchall()
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS settings(
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
+
+    user_columns = [
+        row["name"]
+        for row in connection.execute(
+            "PRAGMA table_info(users)"
+        ).fetchall()
     ]
 
-    if "banned" not in user_cols:
-        c.execute(
+    if "banned" not in user_columns:
+        connection.execute(
             "ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0"
         )
 
-    chat_cols = [
-        x["name"]
-        for x in c.execute("PRAGMA table_info(chats)").fetchall()
+    chat_columns = [
+        row["name"]
+        for row in connection.execute(
+            "PRAGMA table_info(chats)"
+        ).fetchall()
     ]
 
-    if "conversation_id" not in chat_cols:
-        c.execute(
+    if "conversation_id" not in chat_columns:
+        connection.execute(
             "ALTER TABLE chats ADD COLUMN conversation_id INTEGER"
         )
 
     for key, value in DEFAULT_SETTINGS.items():
-        c.execute(
-            "INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)",
+
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO settings(key,value)
+            VALUES(?,?)
+            """,
             (key, value)
         )
 
-    admin = c.execute(
-        "SELECT id FROM users WHERE is_admin=1 LIMIT 1"
+    admin = connection.execute(
+        """
+        SELECT id
+        FROM users
+        WHERE is_admin=1
+        LIMIT 1
+        """
     ).fetchone()
 
     if not admin:
-        c.execute(
-            """INSERT INTO users
-               (name,email,password,credits,is_admin,banned)
-               VALUES(?,?,?,?,?,?)""",
+
+        connection.execute(
+            """
+            INSERT INTO users
+            (
+                name,
+                email,
+                password,
+                credits,
+                is_admin,
+                banned
+            )
+            VALUES(?,?,?,?,?,?)
+            """,
             (
                 "مدير زولك",
                 "admin@zolak.ai",
@@ -145,160 +216,234 @@ def init_db():
             )
         )
 
-    old_users = c.execute(
-        """SELECT DISTINCT user_id FROM chats
-           WHERE conversation_id IS NULL
-           AND user_id IS NOT NULL"""
+    # ربط المحادثات القديمة
+    old_users = connection.execute(
+        """
+        SELECT DISTINCT user_id
+        FROM chats
+        WHERE conversation_id IS NULL
+        AND user_id IS NOT NULL
+        """
     ).fetchall()
 
     for item in old_users:
-        uid = item["user_id"]
 
-        conv = c.execute(
-            """SELECT id FROM conversations
-               WHERE user_id=?
-               ORDER BY id LIMIT 1""",
-            (uid,)
+        user_id = item["user_id"]
+
+        conversation = connection.execute(
+            """
+            SELECT id
+            FROM conversations
+            WHERE user_id=?
+            ORDER BY id
+            LIMIT 1
+            """,
+            (user_id,)
         ).fetchone()
 
-        if conv:
-            conv_id = conv["id"]
-        else:
-            cur = c.execute(
-                """INSERT INTO conversations(user_id,title)
-                   VALUES(?,?)""",
-                (uid, "المحادثات القديمة")
-            )
-            conv_id = cur.lastrowid
+        if conversation:
 
-        c.execute(
-            """UPDATE chats
-               SET conversation_id=?
-               WHERE user_id=?
-               AND conversation_id IS NULL""",
-            (conv_id, uid)
+            conversation_id = conversation["id"]
+
+        else:
+
+            cursor = connection.execute(
+                """
+                INSERT INTO conversations
+                (user_id,title)
+                VALUES(?,?)
+                """,
+                (
+                    user_id,
+                    "المحادثات القديمة"
+                )
+            )
+
+            conversation_id = cursor.lastrowid
+
+        connection.execute(
+            """
+            UPDATE chats
+            SET conversation_id=?
+            WHERE user_id=?
+            AND conversation_id IS NULL
+            """,
+            (
+                conversation_id,
+                user_id
+            )
         )
 
-    c.commit()
-    c.close()
+    connection.commit()
+    connection.close()
 
 
 init_db()
 
 
+# =========================================================
+# وظائف مساعدة
+# =========================================================
+
 def make_title(message):
-    title = " ".join(str(message).strip().split())
+
+    title = " ".join(
+        str(message).strip().split()
+    )
 
     if not title:
         return "محادثة جديدة"
 
-    return title[:42].rstrip() + (
-        "..." if len(title) > 42 else ""
-    )
+    if len(title) > 42:
+        return title[:42].rstrip() + "..."
+
+    return title
 
 
-def login_required(fn):
-    @wraps(fn)
+def login_required(function):
+
+    @wraps(function)
     def wrapper(*args, **kwargs):
+
         if not session.get("uid"):
+
             return jsonify(
                 error="لازم تسجل دخول أولاً."
             ), 401
 
-        return fn(*args, **kwargs)
+        return function(
+            *args,
+            **kwargs
+        )
 
     return wrapper
 
 
-def admin_required(fn):
-    @wraps(fn)
+def admin_required(function):
+
+    @wraps(function)
     def wrapper(*args, **kwargs):
+
         if (
             not session.get("uid")
             or not session.get("admin")
         ):
+
             return jsonify(
                 error="غير مصرح لك."
             ), 403
 
-        return fn(*args, **kwargs)
+        return function(
+            *args,
+            **kwargs
+        )
 
     return wrapper
 
 
 def current_user():
+
     if not session.get("uid"):
         return None
 
-    c = db()
+    connection = db()
 
     try:
-        return c.execute(
-            "SELECT * FROM users WHERE id=?",
+
+        return connection.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE id=?
+            """,
             (session["uid"],)
         ).fetchone()
-    finally:
-        c.close()
 
+    finally:
+
+        connection.close()
+
+
+# =========================================================
+# الصفحة الرئيسية
+# =========================================================
 
 @app.get("/")
 def home():
+
     return render_template(
         "index.html",
+
         site_name=setting(
             "site_name",
             "زولك AI 🇸🇩"
         ),
+
         site_description=setting(
             "site_description",
             ""
         ),
+
         welcome=setting(
             "welcome",
             ""
         ),
+
         homepage_title=setting(
             "homepage_title",
             "زولك AI 🇸🇩"
         ),
+
         homepage_subtitle=setting(
             "homepage_subtitle",
             ""
         ),
+
         homepage_button=setting(
             "homepage_button",
             "ابدأ الآن"
         ),
+
         primary_color=setting(
             "primary_color",
             "#00c896"
         ),
+
         theme=setting(
             "theme",
             "dark"
         ),
+
         logo_url=setting(
             "logo_url",
             ""
         ),
+
         background_url=setting(
             "background_url",
             ""
         ),
+
         ad_text=setting(
             "ad_text",
             ""
         ),
+
         no_credits_message=setting(
             "no_credits_message",
             ""
         ),
+
         error_message=setting(
             "error_message",
             ""
         )
     )
 
+
+# =========================================================
+# تسجيل الدخول والخروج
+# =========================================================
 
 @app.get("/login")
 def login():
@@ -307,43 +452,86 @@ def login():
 
 @app.get("/logout")
 def logout():
+
     session.clear()
+
     return redirect("/")
 
 
+# =========================================================
+# التسجيل
+# =========================================================
+
 @app.post("/api/register")
 def register():
-    if setting("registration_enabled", "1") != "1":
+
+    if setting(
+        "registration_enabled",
+        "1"
+    ) != "1":
+
         return jsonify(
             error="التسجيل متوقف حالياً."
         ), 403
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
-    name = str(data.get("name", "")).strip()
-    email = str(data.get("email", "")).strip().lower()
-    password = str(data.get("password", ""))
+    name = str(
+        data.get("name", "")
+    ).strip()
 
-    if not name or not email or len(password) < 4:
+    email = str(
+        data.get("email", "")
+    ).strip().lower()
+
+    password = str(
+        data.get("password", "")
+    )
+
+    if (
+        not name
+        or not email
+        or len(password) < 4
+    ):
+
         return jsonify(
             error="أدخل البيانات كاملة، وكلمة المرور 4 أحرف على الأقل."
         ), 400
 
     try:
+
         credits = max(
             0,
-            int(setting("free_credits", "10"))
+            int(
+                setting(
+                    "free_credits",
+                    "10"
+                )
+            )
         )
-    except (ValueError, TypeError):
+
+    except Exception:
+
         credits = 10
 
-    c = db()
+    connection = db()
 
     try:
-        c.execute(
-            """INSERT INTO users
-               (name,email,password,credits,banned)
-               VALUES(?,?,?,?,0)""",
+
+        connection.execute(
+            """
+            INSERT INTO users
+            (
+                name,
+                email,
+                password,
+                credits,
+                banned
+            )
+            VALUES(?,?,?,?,0)
+            """,
             (
                 name,
                 email,
@@ -352,106 +540,166 @@ def register():
             )
         )
 
-        c.commit()
+        connection.commit()
 
-        user = c.execute(
-            "SELECT * FROM users WHERE email=?",
+        user = connection.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE email=?
+            """,
             (email,)
         ).fetchone()
 
     except sqlite3.IntegrityError:
-        c.close()
+
+        connection.close()
 
         return jsonify(
             error="الإيميل مستخدم قبل كده."
         ), 409
 
-    c.close()
+    connection.close()
 
     session.clear()
+
     session["uid"] = user["id"]
     session["name"] = user["name"]
-    session["admin"] = bool(user["is_admin"])
+    session["admin"] = bool(
+        user["is_admin"]
+    )
 
-    return jsonify(ok=True)
+    return jsonify(
+        ok=True
+    )
 
+
+# =========================================================
+# تسجيل الدخول
+# =========================================================
 
 @app.post("/api/login")
 def api_login():
-    if setting("allow_login", "1") != "1":
+
+    if setting(
+        "allow_login",
+        "1"
+    ) != "1":
+
         return jsonify(
             error="تسجيل الدخول متوقف حالياً."
         ), 403
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(
+        silent=True
+    ) or {}
 
-    email = str(data.get("email", "")).strip().lower()
-    password = str(data.get("password", ""))
+    email = str(
+        data.get("email", "")
+    ).strip().lower()
 
-    c = db()
+    password = str(
+        data.get("password", "")
+    )
 
-    user = c.execute(
-        "SELECT * FROM users WHERE email=?",
+    connection = db()
+
+    user = connection.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE email=?
+        """,
         (email,)
     ).fetchone()
 
     if not user:
-        c.close()
+
+        connection.close()
 
         return jsonify(
             error="الإيميل أو كلمة المرور غلط."
         ), 401
 
+    valid = False
+
     try:
+
         valid = check_password_hash(
             user["password"],
             password
         )
+
     except Exception:
+
         valid = False
 
-    if not valid and user["password"] == password:
+    if (
+        not valid
+        and user["password"] == password
+    ):
+
         valid = True
 
-        c.execute(
-            "UPDATE users SET password=? WHERE id=?",
+        connection.execute(
+            """
+            UPDATE users
+            SET password=?
+            WHERE id=?
+            """,
             (
                 generate_password_hash(password),
                 user["id"]
             )
         )
 
-        c.commit()
+        connection.commit()
 
     if not valid:
-        c.close()
+
+        connection.close()
 
         return jsonify(
             error="الإيميل أو كلمة المرور غلط."
         ), 401
 
-    if user["banned"] and not user["is_admin"]:
-        c.close()
+    if (
+        user["banned"]
+        and not user["is_admin"]
+    ):
+
+        connection.close()
 
         return jsonify(
             error="الحساب موقوف حالياً. تواصل مع إدارة زولك."
         ), 403
 
-    c.close()
+    connection.close()
 
     session.clear()
+
     session["uid"] = user["id"]
     session["name"] = user["name"]
-    session["admin"] = bool(user["is_admin"])
+    session["admin"] = bool(
+        user["is_admin"]
+    )
 
-    return jsonify(ok=True)
+    return jsonify(
+        ok=True
+    )
 
+
+# =========================================================
+# بيانات المستخدم
+# =========================================================
 
 @app.get("/api/me")
 def me():
+
     user = current_user()
 
     if not user:
+
         session.clear()
 
         return jsonify(
@@ -468,35 +716,42 @@ def me():
     )
 
 
+# =========================================================
+# المحادثات
+# =========================================================
+
 @app.post("/api/conversations")
 @login_required
 def new_conversation():
-    if setting("chat_history_enabled", "1") != "1":
-        return jsonify(
-            error="حفظ المحادثات متوقف حالياً."
-        ), 403
 
-    c = db()
+    connection = db()
 
-    cur = c.execute(
-        """INSERT INTO conversations(user_id,title)
-           VALUES(?,?)""",
+    cursor = connection.execute(
+        """
+        INSERT INTO conversations
+        (user_id,title)
+        VALUES(?,?)
+        """,
         (
             session["uid"],
             "محادثة جديدة"
         )
     )
 
-    conv_id = cur.lastrowid
+    conversation_id = cursor.lastrowid
 
-    c.commit()
+    connection.commit()
 
-    row = c.execute(
-        "SELECT * FROM conversations WHERE id=?",
-        (conv_id,)
+    row = connection.execute(
+        """
+        SELECT *
+        FROM conversations
+        WHERE id=?
+        """,
+        (conversation_id,)
     ).fetchone()
 
-    c.close()
+    connection.close()
 
     return jsonify(
         ok=True,
@@ -507,156 +762,208 @@ def new_conversation():
 @app.get("/api/conversations")
 @login_required
 def conversations():
-    if setting("chat_history_enabled", "1") != "1":
+
+    if setting(
+        "chat_history_enabled",
+        "1"
+    ) != "1":
+
         return jsonify(
             conversations=[]
         )
 
-    c = db()
+    connection = db()
 
-    rows = c.execute(
-        """SELECT id,title,created_at,updated_at
-           FROM conversations
-           WHERE user_id=?
-           ORDER BY updated_at DESC,id DESC""",
+    rows = connection.execute(
+        """
+        SELECT
+            id,
+            title,
+            created_at,
+            updated_at
+        FROM conversations
+        WHERE user_id=?
+        ORDER BY updated_at DESC,id DESC
+        """,
         (session["uid"],)
     ).fetchall()
 
-    c.close()
+    connection.close()
 
     return jsonify(
         conversations=[
-            dict(x) for x in rows
+            dict(row)
+            for row in rows
         ]
     )
 
 
 @app.get("/api/conversations/<int:conversation_id>")
 @login_required
-def get_conversation_messages(conversation_id):
-    if setting("chat_history_enabled", "1") != "1":
-        return jsonify(
-            error="حفظ المحادثات متوقف حالياً."
-        ), 403
+def get_conversation(conversation_id):
 
-    c = db()
+    connection = db()
 
-    conv = c.execute(
-        """SELECT * FROM conversations
-           WHERE id=? AND user_id=?""",
+    conversation = connection.execute(
+        """
+        SELECT *
+        FROM conversations
+        WHERE id=?
+        AND user_id=?
+        """,
         (
             conversation_id,
             session["uid"]
         )
     ).fetchone()
 
-    if not conv:
-        c.close()
+    if not conversation:
+
+        connection.close()
 
         return jsonify(
             error="المحادثة غير موجودة."
         ), 404
 
-    rows = c.execute(
-        """SELECT id,role,content,created_at
-           FROM chats
-           WHERE user_id=?
-           AND conversation_id=?
-           ORDER BY id""",
+    rows = connection.execute(
+        """
+        SELECT
+            id,
+            role,
+            content,
+            created_at
+        FROM chats
+        WHERE user_id=?
+        AND conversation_id=?
+        ORDER BY id
+        """,
         (
             session["uid"],
             conversation_id
         )
     ).fetchall()
 
-    c.close()
+    connection.close()
 
     return jsonify(
-        conversation=dict(conv),
-        chats=[dict(x) for x in rows]
+        conversation=dict(conversation),
+        chats=[
+            dict(row)
+            for row in rows
+        ]
     )
 
 
 @app.delete("/api/conversations/<int:conversation_id>")
 @login_required
 def delete_conversation(conversation_id):
-    c = db()
 
-    conv = c.execute(
-        """SELECT id FROM conversations
-           WHERE id=? AND user_id=?""",
+    connection = db()
+
+    conversation = connection.execute(
+        """
+        SELECT id
+        FROM conversations
+        WHERE id=?
+        AND user_id=?
+        """,
         (
             conversation_id,
             session["uid"]
         )
     ).fetchone()
 
-    if not conv:
-        c.close()
+    if not conversation:
+
+        connection.close()
 
         return jsonify(
             error="المحادثة غير موجودة."
         ), 404
 
-    c.execute(
-        """DELETE FROM chats
-           WHERE conversation_id=?
-           AND user_id=?""",
+    connection.execute(
+        """
+        DELETE FROM chats
+        WHERE conversation_id=?
+        AND user_id=?
+        """,
         (
             conversation_id,
             session["uid"]
         )
     )
 
-    c.execute(
-        """DELETE FROM conversations
-           WHERE id=? AND user_id=?""",
+    connection.execute(
+        """
+        DELETE FROM conversations
+        WHERE id=?
+        AND user_id=?
+        """,
         (
             conversation_id,
             session["uid"]
         )
     )
 
-    c.commit()
-    c.close()
+    connection.commit()
+    connection.close()
 
     return jsonify(
-        ok=True,
-        message="تم حذف المحادثة."
+        ok=True
     )
 
+
+# =========================================================
+# الذكاء الاصطناعي للمستخدم
+# =========================================================
 
 @app.post("/api/chat")
 @login_required
 def chat():
-    data = request.get_json(silent=True) or {}
+
+    data = request.get_json(
+        silent=True
+    ) or {}
 
     message = str(
         data.get("message", "")
     ).strip()
 
     if not message:
+
         return jsonify(
             error="اكتب رسالتك أولاً."
         ), 400
 
     user_id = session["uid"]
-    c = db()
+
+    connection = db()
 
     try:
-        user = c.execute(
-            """SELECT credits,banned,is_admin
-               FROM users
-               WHERE id=?""",
+
+        user = connection.execute(
+            """
+            SELECT
+                credits,
+                banned,
+                is_admin
+            FROM users
+            WHERE id=?
+            """,
             (user_id,)
         ).fetchone()
 
         if not user:
+
             return jsonify(
                 error="الحساب غير موجود."
             ), 404
 
-        if user["banned"] and not user["is_admin"]:
+        if (
+            user["banned"]
+            and not user["is_admin"]
+        ):
+
             return jsonify(
                 error="حسابك موقوف حالياً."
             ), 403
@@ -665,6 +972,7 @@ def chat():
             user["credits"] <= 0
             and not user["is_admin"]
         ):
+
             return jsonify(
                 error=setting(
                     "no_credits_message",
@@ -672,126 +980,172 @@ def chat():
                 )
             ), 402
 
-        conv_id = data.get("conversation_id")
+        # ---------------------------------------------
+        # المحادثة
+        # ---------------------------------------------
+
+        conversation_id = data.get(
+            "conversation_id"
+        )
 
         try:
-            conv_id = (
-                int(conv_id)
-                if conv_id is not None
+
+            conversation_id = (
+                int(conversation_id)
+                if conversation_id is not None
                 else None
             )
-        except (ValueError, TypeError):
+
+        except Exception:
+
             return jsonify(
                 error="رقم المحادثة غير صحيح."
             ), 400
 
-        if conv_id is None:
-            cur = c.execute(
-                """INSERT INTO conversations
-                   (user_id,title)
-                   VALUES(?,?)""",
+        if conversation_id is None:
+
+            cursor = connection.execute(
+                """
+                INSERT INTO conversations
+                (user_id,title)
+                VALUES(?,?)
+                """,
                 (
                     user_id,
                     make_title(message)
                 )
             )
 
-            conv_id = cur.lastrowid
+            conversation_id = cursor.lastrowid
 
         else:
-            conv = c.execute(
-                """SELECT id
-                   FROM conversations
-                   WHERE id=? AND user_id=?""",
+
+            conversation = connection.execute(
+                """
+                SELECT id
+                FROM conversations
+                WHERE id=?
+                AND user_id=?
+                """,
                 (
-                    conv_id,
+                    conversation_id,
                     user_id
                 )
             ).fetchone()
 
-            if not conv:
+            if not conversation:
+
                 return jsonify(
                     error="المحادثة غير موجودة."
                 ), 404
+
+        # ---------------------------------------------
+        # مفتاح Gemini
+        # ---------------------------------------------
 
         api_key = os.getenv(
             "GEMINI_API_KEY"
         )
 
         if not api_key:
-            app.logger.error(
-                "GEMINI_API_KEY is missing"
-            )
 
-            c.rollback()
+            connection.rollback()
 
             return jsonify(
                 error="خدمة الذكاء الاصطناعي غير متاحة حالياً."
             ), 503
 
         try:
+
             from google import genai
             from google.genai import types
-        except Exception:
-            app.logger.exception(
-                "Failed to import google.genai"
-            )
 
-            c.rollback()
+        except Exception:
+
+            connection.rollback()
 
             return jsonify(
                 error="خدمة الذكاء الاصطناعي غير متاحة حالياً."
             ), 503
 
-        try:
-            client = genai.Client(
-                api_key=api_key
-            )
+        model = setting(
+            "ai_model",
+            "gemini-3.6-flash"
+        ).strip()
 
-            config = types.GenerateContentConfig(
-                system_instruction=(
-                    "أنت زولك AI 🇸🇩، "
-                    "مساعد ذكاء اصطناعي سوداني ودود. "
-                    "أجب بوضوح وباختصار مناسب. "
-                    "استخدم اللهجة السودانية عندما يطلبها المستخدم. "
-                    "لا تدّعي أنك إنسان."
+        if not model:
+
+            model = "gemini-3.6-flash"
+
+        client = genai.Client(
+            api_key=api_key
+        )
+
+        # ---------------------------------------------
+        # محاولة الرد
+        # ---------------------------------------------
+
+        response = None
+        last_error = None
+
+        system_instruction = (
+            "أنت زولك AI 🇸🇩، "
+            "مساعد ذكاء اصطناعي سوداني ودود. "
+            "أجب بوضوح وباختصار مناسب. "
+            "استخدم اللهجة السودانية عندما يطلبها المستخدم. "
+            "لا تدّعي أنك إنسان."
+        )
+
+        for attempt in range(3):
+
+            try:
+
+                # المحاولة الأولى بالإعدادات
+                config = types.GenerateContentConfig(
+                    system_instruction=system_instruction
                 )
-            )
 
-            model = setting(
-                "ai_model",
-                "gemini-3.6-flash"
-            ).strip()
+                response = client.models.generate_content(
+                    model=model,
+                    contents=message,
+                    config=config
+                )
 
-            if not model:
-                model = "gemini-3.6-flash"
+                break
 
-            response = None
-            last_error = None
+            except Exception as exc:
 
-            for attempt in range(3):
+                last_error = exc
+
+                error_text = str(
+                    exc
+                ).upper()
+
+                # -----------------------------------------
+                # إصلاح مهم:
+                # إذا فشل config نجرب الطلب بدونه
+                # -----------------------------------------
+
                 try:
+
                     response = client.models.generate_content(
                         model=model,
-                        contents=message,
-                        config=config
+                        contents=message
                     )
 
                     break
 
-                except Exception as exc:
-                    last_error = exc
-                    error_text = str(exc).upper()
+                except Exception as second_exc:
 
-                    app.logger.error(
-                        "Gemini attempt %s failed: %s",
-                        attempt + 1,
-                        str(exc)
-                    )
+                    last_error = second_exc
+
+                    error_text = str(
+                        second_exc
+                    ).upper()
 
                     temporary = any(
-                        x in error_text
-                        for x in (
+                        word in error_text
+                        for word in (
                             "503",
                             "UNAVAILABLE",
                             "429",
@@ -801,79 +1155,43 @@ def chat():
                         )
                     )
 
-                    if temporary and attempt < 2:
+                    if (
+                        temporary
+                        and attempt < 2
+                    ):
+
                         time.sleep(
                             2 * (attempt + 1)
                         )
+
                         continue
 
                     raise
 
-            if response is None:
-                raise RuntimeError(
-                    str(last_error)
-                    if last_error
-                    else "Gemini returned no response"
-                )
+        if response is None:
 
-        except Exception as exc:
-            app.logger.exception(
-                "Gemini user chat failed | "
-                "user_id=%s | model=%s | error=%s",
-                user_id,
-                model,
-                str(exc)
+            raise RuntimeError(
+                str(last_error)
+                if last_error
+                else "Gemini returned no response"
             )
 
-            c.rollback()
-
-            error_text = str(exc).upper()
-
-            if (
-                "429" in error_text
-                or "RESOURCE_EXHAUSTED" in error_text
-            ):
-                return jsonify(
-                    error="الخدمة عليها ضغط أو وصلت للحد المسموح. جرّب تاني بعد شوية."
-                ), 429
-
-            if (
-                "503" in error_text
-                or "UNAVAILABLE" in error_text
-            ):
-                return jsonify(
-                    error="الخدمة عليها ضغط شديد حالياً. انتظر شوية وجرب تاني يا زول ❤️"
-                ), 503
-
-            if (
-                "404" in error_text
-                or "NOT_FOUND" in error_text
-            ):
-                return jsonify(
-                    error="خدمة الذكاء الاصطناعي غير متاحة حالياً."
-                ), 503
-
-            return jsonify(
-                error=setting(
-                    "error_message",
-                    "حصلت مشكلة، حاول مرة تانية."
-                )
-            ), 500
+        # ---------------------------------------------
+        # استخراج الرد
+        # ---------------------------------------------
 
         answer = (
-            getattr(response, "text", None)
+            getattr(
+                response,
+                "text",
+                None
+            )
             or ""
         ).strip()
 
         if not answer:
-            app.logger.error(
-                "Gemini returned empty answer | "
-                "user_id=%s | model=%s",
-                user_id,
-                model
-            )
 
-            c.rollback()
+            connection.rollback()
 
             return jsonify(
                 error="الذكاء الاصطناعي ما رجّع إجابة. جرّب تاني."
@@ -883,16 +1201,25 @@ def chat():
             "\n\n— تطوير منذر السيد 🇸🇩"
         )
 
+        # ---------------------------------------------
+        # خصم استخدام
+        # ---------------------------------------------
+
         if not user["is_admin"]:
-            c.execute(
-                """UPDATE users
-                   SET credits=credits-1
-                   WHERE id=? AND credits>0""",
+
+            connection.execute(
+                """
+                UPDATE users
+                SET credits=credits-1
+                WHERE id=?
+                AND credits>0
+                """,
                 (user_id,)
             )
 
-            if c.rowcount != 1:
-                c.rollback()
+            if connection.total_changes < 1:
+
+                connection.rollback()
 
                 return jsonify(
                     error=setting(
@@ -901,156 +1228,106 @@ def chat():
                     )
                 ), 402
 
-        c.execute(
-            """INSERT INTO chats
-               (user_id,conversation_id,role,content)
-               VALUES(?,?,?,?)""",
+        # ---------------------------------------------
+        # حفظ الرسائل
+        # ---------------------------------------------
+
+        connection.execute(
+            """
+            INSERT INTO chats
             (
                 user_id,
-                conv_id,
+                conversation_id,
+                role,
+                content
+            )
+            VALUES(?,?,?,?)
+            """,
+            (
+                user_id,
+                conversation_id,
                 "user",
                 message
             )
         )
 
-        c.execute(
-            """INSERT INTO chats
-               (user_id,conversation_id,role,content)
-               VALUES(?,?,?,?)""",
+        connection.execute(
+            """
+            INSERT INTO chats
             (
                 user_id,
-                conv_id,
+                conversation_id,
+                role,
+                content
+            )
+            VALUES(?,?,?,?)
+            """,
+            (
+                user_id,
+                conversation_id,
                 "assistant",
                 answer
             )
         )
 
-        c.execute(
-            """UPDATE conversations
-               SET title=?,
-                   updated_at=CURRENT_TIMESTAMP
-               WHERE id=? AND user_id=?""",
+        connection.execute(
+            """
+            UPDATE conversations
+            SET
+                title=?,
+                updated_at=CURRENT_TIMESTAMP
+            WHERE id=?
+            AND user_id=?
+            """,
             (
                 make_title(message),
-                conv_id,
+                conversation_id,
                 user_id
             )
         )
 
-        c.commit()
+        connection.commit()
 
-        conv = c.execute(
-            """SELECT id,title,created_at,updated_at
-               FROM conversations
-               WHERE id=? AND user_id=?""",
+        conversation = connection.execute(
+            """
+            SELECT
+                id,
+                title,
+                created_at,
+                updated_at
+            FROM conversations
+            WHERE id=?
+            AND user_id=?
+            """,
             (
-                conv_id,
+                conversation_id,
                 user_id
             )
         ).fetchone()
 
         return jsonify(
             answer=answer,
-            conversation_id=conv_id,
-            conversation=dict(conv)
+            conversation_id=conversation_id,
+            conversation=dict(conversation)
         )
 
     except Exception as exc:
-        c.rollback()
 
-        app.logger.exception(
-            "Unexpected /api/chat error | "
-            "user_id=%s | error=%s",
-            user_id,
-            str(exc)
-        )
+        connection.rollback()
 
-        return jsonify(
-            error=setting(
-                "error_message",
-                "حصلت مشكلة، حاول مرة تانية."
-            )
-        ), 500
+        error_text = str(
+            exc
+        ).upper()
 
-    finally:
-        c.close()
+        if (
+            "429" in error_text
+            or "RESOURCE_EXHAUSTED" in error_text
+        ):
 
+            return jsonify(
+                error="الخدمة عليها ضغط أو وصلت للحد المسموح. جرّب تاني بعد شوية."
+            ), 429
 
-@app.get("/api/chats")
-@login_required
-def chats():
-    if setting("chat_history_enabled", "1") != "1":
-        return jsonify(chats=[])
-
-    c = db()
-
-    rows = c.execute(
-        """SELECT role,content,created_at,conversation_id
-           FROM chats
-           WHERE user_id=?
-           ORDER BY id DESC LIMIT 50""",
-        (session["uid"],)
-    ).fetchall()
-
-    c.close()
-
-    return jsonify(
-        chats=[dict(x) for x in rows]
-    )
-
-
-@app.get("/admin")
-@login_required
-@admin_required
-def admin():
-    return render_template(
-        "admin.html"
-    )
-
-
-@app.get("/api/admin/settings")
-@login_required
-@admin_required
-def admin_settings():
-    c = db()
-
-    rows = c.execute(
-        "SELECT key,value FROM settings"
-    ).fetchall()
-
-    c.close()
-
-    values = {
-        x["key"]: x["value"]
-        for x in rows
-    }
-
-    for key, value in DEFAULT_SETTINGS.items():
-        values.setdefault(key, value)
-
-    return jsonify(
-        settings=values
-    )
-
-
-@app.post("/api/admin/settings")
-@login_required
-@admin_required
-def save_admin_settings():
-    data = request.get_json(silent=True) or {}
-
-    allowed = set(
-        DEFAULT_SETTINGS.keys()
-    )
-
-    c = db()
-
-    for key, value in data.items():
-        if key not in allowed:
-            continue
-
-        if isinstance(value, bool):
-            value = "1" if value else "0"
-
-        elif isinstance(value, (dict, list)):
-           
+        if (
+            "503" in error_text
+            or "UNAVAILABLE" in
