@@ -86,7 +86,6 @@ def init_db():
             ADD COLUMN banned INTEGER DEFAULT 0
         """)
 
-    # إنشاء المدير إذا لم يكن موجوداً
     admin = c.execute("""
         SELECT id
         FROM users
@@ -120,58 +119,36 @@ def init_db():
             0
         ))
 
-    # الإعدادات الأساسية
     settings = [
 
-        (
-            "site_name",
-            "زولك AI 🇸🇩"
-        ),
+        ("site_name", "زولك AI 🇸🇩"),
 
         (
             "site_description",
             "مساعد ذكاء اصطناعي سوداني يساعدك في الكتابة والدراسة والترجمة والشغل والدردشة 🇸🇩🤖"
         ),
 
-        (
-            "free_credits",
-            "10"
-        ),
+        ("free_credits", "10"),
 
         (
             "welcome",
             "أها يا زول 👋❤️ زولك جاهز يساعدك في أي حاجة."
         ),
 
-        (
-            "homepage_title",
-            "زولك AI 🇸🇩"
-        ),
+        ("homepage_title", "زولك AI 🇸🇩"),
 
         (
             "homepage_subtitle",
             "مساعد الذكاء الاصطناعي السوداني 🇸🇩"
         ),
 
-        (
-            "homepage_button",
-            "ابدأ الآن"
-        ),
+        ("homepage_button", "ابدأ الآن"),
 
-        (
-            "primary_color",
-            "#00c896"
-        ),
+        ("primary_color", "#00c896"),
 
-        (
-            "theme",
-            "dark"
-        ),
+        ("theme", "dark"),
 
-        (
-            "mobile_ui",
-            "1"
-        ),
+        ("mobile_ui", "1"),
 
         (
             "no_credits_message",
@@ -183,90 +160,39 @@ def init_db():
             "حصلت مشكلة، حاول مرة تانية."
         ),
 
-        (
-            "logo_url",
-            ""
-        ),
+        ("logo_url", ""),
 
-        (
-            "background_url",
-            ""
-        ),
+        ("background_url", ""),
 
-        (
-            "sudan_identity",
-            "1"
-        ),
+        ("sudan_identity", "1"),
 
-        (
-            "ad_text",
-            ""
-        ),
+        ("ad_text", ""),
 
-        (
-            "notifications",
-            "1"
-        ),
+        ("notifications", "1"),
 
-        (
-            "ai_model",
-            "gemini-3.6-flash"
-        ),
+        ("ai_model", "gemini-3.6-flash"),
 
-        (
-            "ai_free_messages",
-            "10"
-        ),
+        ("ai_free_messages", "10"),
 
-        (
-            "feature_writing",
-            "1"
-        ),
+        ("feature_writing", "1"),
 
-        (
-            "feature_translation",
-            "1"
-        ),
+        ("feature_translation", "1"),
 
-        (
-            "feature_study",
-            "1"
-        ),
+        ("feature_study", "1"),
 
-        (
-            "registration_enabled",
-            "1"
-        ),
+        ("registration_enabled", "1"),
 
-        (
-            "chat_history_enabled",
-            "1"
-        ),
+        ("chat_history_enabled", "1"),
 
-        (
-            "email_login_enabled",
-            "1"
-        ),
+        ("email_login_enabled", "1"),
 
-        (
-            "maintenance_mode",
-            "0"
-        ),
+        ("maintenance_mode", "0"),
 
-        (
-            "allow_login",
-            "1"
-        ),
+        ("allow_login", "1"),
 
-        (
-            "admin_protection",
-            "1"
-        ),
+        ("admin_protection", "1"),
 
-        (
-            "packages",
-            "[]"
-        )
+        ("packages", "[]")
     ]
 
     for key, value in settings:
@@ -372,6 +298,11 @@ def home():
             "مساعد ذكاء اصطناعي سوداني 🇸🇩🤖"
         ),
 
+        welcome=setting(
+            "welcome",
+            "أها يا زول 👋❤️ زولك جاهز يساعدك في أي حاجة."
+        ),
+
         homepage_title=setting(
             "homepage_title",
             "زولك AI 🇸🇩"
@@ -405,6 +336,21 @@ def home():
         background_url=setting(
             "background_url",
             ""
+        ),
+
+        ad_text=setting(
+            "ad_text",
+            ""
+        ),
+
+        no_credits_message=setting(
+            "no_credits_message",
+            "رصيدك المجاني خلص."
+        ),
+
+        error_message=setting(
+            "error_message",
+            "حصلت مشكلة، حاول مرة تانية."
         )
     )
 
@@ -1623,459 +1569,4 @@ def admin_users():
             u.is_admin,
             u.banned,
 
-            COUNT(ch.id) AS messages_count,
-
-            COALESCE(
-                SUM(
-                    CASE
-                        WHEN ch.role='user'
-                        THEN 1
-                        ELSE 0
-                    END
-                ),
-                0
-            ) AS user_messages,
-
-            COALESCE(
-                SUM(
-                    CASE
-                        WHEN ch.role='assistant'
-                        THEN 1
-                        ELSE 0
-                    END
-                ),
-                0
-            ) AS ai_messages,
-
-            MAX(ch.created_at) AS last_chat
-
-        FROM users u
-
-        LEFT JOIN chats ch
-            ON ch.user_id=u.id
-    """
-
-    params = []
-
-    if query:
-
-        sql += """
-            WHERE
-                u.name LIKE ?
-                OR u.email LIKE ?
-        """
-
-        params.extend([
-            f"%{query}%",
-            f"%{query}%"
-        ])
-
-    sql += """
-        GROUP BY u.id
-        ORDER BY u.id DESC
-    """
-
-    users = c.execute(
-        sql,
-        params
-    ).fetchall()
-
-    stats = c.execute("""
-        SELECT
-
-            (
-                SELECT COUNT(*)
-                FROM users
-                WHERE is_admin=0
-            ) AS total_users,
-
-            (
-                SELECT COUNT(*)
-                FROM chats
-            ) AS total_messages,
-
-            (
-                SELECT COUNT(*)
-                FROM users
-                WHERE banned=1
-                AND is_admin=0
-            ) AS banned_users,
-
-            (
-                SELECT COALESCE(
-                    SUM(credits),
-                    0
-                )
-                FROM users
-                WHERE is_admin=0
-            ) AS total_credits,
-
-            (
-                SELECT COUNT(DISTINCT user_id)
-                FROM chats
-            ) AS active_chat_users
-
-    """).fetchone()
-
-    c.close()
-
-    return jsonify(
-        users=[
-            dict(user)
-            for user in users
-        ],
-        stats=dict(stats)
-    )
-
-
-# =========================================================
-# إحصائيات الإدارة
-# =========================================================
-
-@app.get("/api/admin/stats")
-@admin_required
-def admin_stats():
-
-    c = db()
-
-    total_users = c.execute("""
-        SELECT COUNT(*)
-        FROM users
-        WHERE is_admin=0
-    """).fetchone()[0]
-
-    total_messages = c.execute("""
-        SELECT COUNT(*)
-        FROM chats
-    """).fetchone()[0]
-
-    banned_users = c.execute("""
-        SELECT COUNT(*)
-        FROM users
-        WHERE banned=1
-        AND is_admin=0
-    """).fetchone()[0]
-
-    total_credits = c.execute("""
-        SELECT COALESCE(
-            SUM(credits),
-            0
-        )
-        FROM users
-        WHERE is_admin=0
-    """).fetchone()[0]
-
-    active_users = c.execute("""
-        SELECT COUNT(DISTINCT user_id)
-        FROM chats
-        WHERE user_id IS NOT NULL
-    """).fetchone()[0]
-
-    c.close()
-
-    return jsonify(
-        ok=True,
-        total_users=total_users,
-        total_messages=total_messages,
-        banned_users=banned_users,
-        total_credits=total_credits,
-        active_users=active_users
-    )
-
-
-# =========================================================
-# مركز الصيانة والفحص
-# =========================================================
-
-@app.get("/api/admin/health")
-@admin_required
-def admin_health():
-
-    checks = []
-    overall_ok = True
-
-    # -------------------------
-    # قاعدة البيانات
-    # -------------------------
-
-    c = None
-
-    try:
-
-        c = db()
-
-        c.execute(
-            "SELECT 1"
-        ).fetchone()
-
-        required_tables = {
-            "users",
-            "chats",
-            "settings"
-        }
-
-        existing_tables = {
-            row["name"]
-            for row in c.execute("""
-                SELECT name
-                FROM sqlite_master
-                WHERE type='table'
-            """).fetchall()
-        }
-
-        missing = (
-            required_tables
-            - existing_tables
-        )
-
-        if missing:
-
-            overall_ok = False
-
-            checks.append({
-                "name": "database",
-                "status": "error",
-                "message": (
-                    "جداول ناقصة: "
-                    + ", ".join(
-                        sorted(missing)
-                    )
-                )
-            })
-
-        else:
-
-            integrity = c.execute(
-                "PRAGMA integrity_check"
-            ).fetchone()[0]
-
-            if integrity == "ok":
-
-                checks.append({
-                    "name": "database",
-                    "status": "ok",
-                    "message": "قاعدة البيانات تعمل وسلامتها جيدة."
-                })
-
-            else:
-
-                overall_ok = False
-
-                checks.append({
-                    "name": "database",
-                    "status": "error",
-                    "message": str(integrity)
-                })
-
-    except Exception as e:
-
-        overall_ok = False
-
-        checks.append({
-            "name": "database",
-            "status": "error",
-            "message": (
-                "فشل الاتصال بقاعدة البيانات: "
-                + str(e)
-            )
-        })
-
-    finally:
-
-        if c:
-            c.close()
-
-    # -------------------------
-    # Gemini API
-    # -------------------------
-
-    gemini_key = os.getenv(
-        "GEMINI_API_KEY"
-    )
-
-    if gemini_key:
-
-        checks.append({
-            "name": "gemini_api",
-            "status": "ok",
-            "message": "مفتاح Gemini موجود في Railway."
-        })
-
-    else:
-
-        overall_ok = False
-
-        checks.append({
-            "name": "gemini_api",
-            "status": "error",
-            "message": "GEMINI_API_KEY غير موجود في متغيرات البيئة."
-        })
-
-    # -------------------------
-    # موديل الذكاء
-    # -------------------------
-
-    model = setting(
-        "ai_model",
-        ""
-    ).strip()
-
-    if model:
-
-        checks.append({
-            "name": "model",
-            "status": "ok",
-            "message": (
-                "الموديل الحالي: "
-                + model
-            )
-        })
-
-    else:
-
-        overall_ok = False
-
-        checks.append({
-            "name": "model",
-            "status": "error",
-            "message": "لم يتم تحديد موديل للذكاء الاصطناعي."
-        })
-
-    # -------------------------
-    # وضع الصيانة
-    # -------------------------
-
-    maintenance = setting(
-        "maintenance_mode",
-        "0"
-    )
-
-    if maintenance == "1":
-
-        checks.append({
-            "name": "maintenance",
-            "status": "warning",
-            "message": "وضع الصيانة مفعّل حالياً."
-        })
-
-    else:
-
-        checks.append({
-            "name": "maintenance",
-            "status": "ok",
-            "message": "وضع الصيانة غير مفعّل."
-        })
-
-    return jsonify(
-        ok=overall_ok,
-        checked_at=time.strftime(
-            "%Y-%m-%d %H:%M:%S"
-        ),
-        db_path=DB,
-        checks=checks
-    )
-
-
-# =========================================================
-# النسخ الاحتياطي
-# =========================================================
-
-@app.get("/api/admin/backup")
-@admin_required
-def admin_backup():
-
-    c = db()
-
-    users = c.execute("""
-        SELECT
-            id,
-            name,
-            email,
-            credits,
-            is_admin,
-            banned
-        FROM users
-        ORDER BY id
-    """).fetchall()
-
-    chats = c.execute("""
-        SELECT
-            id,
-            user_id,
-            role,
-            content,
-            created_at
-        FROM chats
-        ORDER BY id
-    """).fetchall()
-
-    settings_rows = c.execute("""
-        SELECT
-            key,
-            value
-        FROM settings
-        ORDER BY key
-    """).fetchall()
-
-    c.close()
-
-    backup = {
-
-        "backup_created_at":
-            time.strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
-
-        "users": [
-            dict(row)
-            for row in users
-        ],
-
-        "chats": [
-            dict(row)
-            for row in chats
-        ],
-
-        "settings": {
-            row["key"]: row["value"]
-            for row in settings_rows
-        }
-    }
-
-    filename = (
-        "zolak-backup-"
-        + time.strftime("%Y%m%d-%H%M%S")
-        + ".json"
-    )
-
-    return Response(
-        json.dumps(
-            backup,
-            ensure_ascii=False,
-            indent=2
-        ),
-        mimetype="application/json",
-        headers={
-            "Content-Disposition":
-                f'attachment; filename="{filename}"'
-        }
-    )
-
-
-# =========================================================
-# تشغيل التطبيق
-# =========================================================
-
-if __name__ == "__main__":
-
-    port = int(
-        os.getenv(
-            "PORT",
-            "5000"
-        )
-    )
-
-    app.run(
-        host="0.0.0.0",
-        port=port
-    )
+            COUNT(ch.id)
