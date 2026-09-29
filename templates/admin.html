@@ -1,1637 +1,2082 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>لوحة المدير | زولك AI 🇸🇩</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة إدارة زولك AI</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: #181818;
-            color: #f5f5f5;
-        }
+:root{
+    --bg:#07111f;
+    --panel:#0d1b2a;
+    --panel2:#102235;
+    --border:#20364d;
+    --text:#f4f7fb;
+    --muted:#91a4b8;
+    --primary:#00c896;
+    --primary2:#00a87d;
+    --danger:#ff4d67;
+    --warning:#ffb020;
+    --blue:#4c8dff;
+    --shadow:0 12px 35px rgba(0,0,0,.25);
+}
 
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
+body{
+    font-family:Arial,Tahoma,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+}
 
-        button,
-        input,
-        textarea {
-            font: inherit;
-        }
+button,input,textarea,select{
+    font:inherit;
+}
 
-        .admin-page {
-            min-height: 100vh;
-            padding: 20px;
-        }
+button{
+    cursor:pointer;
+}
 
-        .admin-container {
-            width: 100%;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
+.app{
+    display:flex;
+    min-height:100vh;
+}
 
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding: 12px 0 18px;
-            margin-bottom: 22px;
-            border-bottom: 1px solid #383838;
-        }
+/* SIDEBAR */
 
-        .logo {
-            font-size: 20px;
-            font-weight: bold;
-        }
+.sidebar{
+    width:270px;
+    background:#081522;
+    border-left:1px solid var(--border);
+    position:fixed;
+    right:0;
+    top:0;
+    bottom:0;
+    overflow-y:auto;
+    z-index:100;
+    padding:20px 15px;
+}
 
-        .home-link {
-            color: #ddd;
-            padding: 9px 12px;
-            border-radius: 9px;
-            background: #292929;
-        }
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    margin-bottom:25px;
+}
 
-        .home-link:hover {
-            background: #383838;
-        }
+.logo-icon{
+    width:48px;
+    height:48px;
+    border-radius:15px;
+    background:linear-gradient(135deg,#00d19b,#007e65);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    box-shadow:0 8px 25px rgba(0,200,150,.2);
+}
 
-        .admin-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 22px;
-        }
+.logo h2{
+    font-size:19px;
+}
 
-        .admin-title h1 {
-            margin: 0;
-            font-size: 27px;
-        }
+.logo small{
+    color:var(--muted);
+    display:block;
+    margin-top:4px;
+}
 
-        .card {
-            width: 100%;
-            background: #242424;
-            color: #f5f5f5;
-            border: 1px solid #383838;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 18px 0;
-            box-shadow: 0 4px 16px rgba(0,0,0,.15);
-        }
+.menu-title{
+    color:#60758b;
+    font-size:11px;
+    margin:20px 10px 8px;
+}
 
-        .card h2 {
-            color: #fff;
-            font-size: 19px;
-            margin: 0 0 17px;
-        }
+.nav-btn{
+    width:100%;
+    border:0;
+    background:transparent;
+    color:#b6c4d2;
+    padding:13px 14px;
+    border-radius:11px;
+    text-align:right;
+    margin-bottom:4px;
+    transition:.2s;
+}
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
+.nav-btn:hover,
+.nav-btn.active{
+    background:#10283b;
+    color:#fff;
+}
 
-        .stat {
-            min-width: 0;
-            text-align: center;
-            background: #292929;
-            border: 1px solid #3b3b3b;
-            border-radius: 13px;
-            padding: 19px 10px;
-        }
+.nav-btn.active{
+    border-right:3px solid var(--primary);
+}
 
-        .stat-title {
-            color: #c7c7c7;
-            font-size: 14px;
-            line-height: 1.6;
-        }
+.admin-mini{
+    margin-top:25px;
+    background:#0d2031;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px;
+}
 
-        .stat b {
-            display: block;
-            color: #fff;
-            font-size: 27px;
-            margin-top: 8px;
-            overflow-wrap: anywhere;
-        }
+.admin-mini strong{
+    display:block;
+    margin-bottom:5px;
+}
 
-        label {
-            display: block;
-            margin: 0 0 7px;
-            color: #ddd;
-            font-size: 14px;
-        }
+.admin-mini span{
+    color:var(--muted);
+    font-size:12px;
+}
 
-        input,
-        textarea {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin: 0 0 16px;
-            border: 1px solid #4b4b4b;
-            border-radius: 9px;
-            background: #191919;
-            color: #fff;
-            outline: none;
-        }
+/* MAIN */
 
-        input:focus,
-        textarea:focus {
-            border-color: #999;
-        }
+.main{
+    width:calc(100% - 270px);
+    margin-right:270px;
+    padding:25px;
+}
 
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-            line-height: 1.6;
-        }
+.topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:25px;
+}
 
-        button {
-            border: 0;
-            border-radius: 9px;
-            padding: 10px 14px;
-            margin: 3px;
-            cursor: pointer;
-            color: #fff;
-            background: #454545;
-            transition: opacity .15s, transform .15s;
-        }
+.page-title h1{
+    font-size:27px;
+    margin-bottom:7px;
+}
 
-        button:hover {
-            opacity: .86;
-        }
+.page-title p{
+    color:var(--muted);
+    font-size:14px;
+}
 
-        button:active {
-            transform: scale(.98);
-        }
+.top-actions{
+    display:flex;
+    gap:10px;
+}
 
-        button:disabled {
-            opacity: .55;
-            cursor: not-allowed;
-        }
+.btn{
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:#fff;
+    padding:11px 15px;
+    border-radius:10px;
+}
 
-        .primary {
-            background: #f3f3f3;
-            color: #171717;
-            font-weight: bold;
-        }
+.btn:hover{
+    background:var(--panel2);
+}
 
-        .success {
-            background: #198754;
-        }
+.btn-primary{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#00130d;
+    font-weight:bold;
+}
 
-        .danger {
-            background: #c93636;
-        }
+.btn-danger{
+    background:#351522;
+    border-color:#652238;
+    color:#ff8195;
+}
 
-        .chat-btn {
-            background: #1769aa;
-        }
+.btn-warning{
+    background:#342711;
+    border-color:#5b4617;
+    color:#ffc65b;
+}
 
-        .logout-btn {
-            background: #444;
-        }
+.btn-blue{
+    background:#122644;
+    border-color:#234b80;
+    color:#76a9ff;
+}
 
-        .user {
-            background: #1d1d1d;
-            border: 1px solid #3c3c3c;
-            border-radius: 12px;
-            padding: 15px;
-            margin: 11px 0;
-        }
+/* SECTIONS */
 
-        .userhead {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
+.section{
+    display:none;
+}
 
-        .user-name {
-            font-size: 16px;
-            font-weight: bold;
-            overflow-wrap: anywhere;
-        }
+.section.active{
+    display:block;
+}
 
-        .email {
-            margin-top: 6px;
-            color: #aaa;
-            font-size: 13px;
-            overflow-wrap: anywhere;
-        }
+/* CARDS */
 
-        .balance {
-            margin-top: 12px;
-            color: #ddd;
-        }
+.stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+    margin-bottom:20px;
+}
 
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-top: 12px;
-        }
+.stat{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px;
+    box-shadow:var(--shadow);
+}
 
-        .actions button {
-            margin: 0;
-        }
+.stat-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
 
-        .badge {
-            display: inline-block;
-            padding: 5px 9px;
-            border-radius: 8px;
-            background: #414141;
-            color: #fff;
-            font-size: 12px;
-        }
+.stat-icon{
+    width:43px;
+    height:43px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#12293d;
+    font-size:21px;
+}
 
-        .banned {
-            background: #592727;
-            color: #ffc0c0;
-        }
+.stat small{
+    color:var(--muted);
+}
 
-        .rights {
-            padding: 24px 10px 30px;
-            text-align: center;
-            color: #888;
-            font-size: 13px;
-            line-height: 1.8;
-        }
+.stat strong{
+    display:block;
+    font-size:27px;
+    margin-top:6px;
+}
 
-        .empty {
-            padding: 25px 10px;
-            text-align: center;
-            color: #aaa;
-        }
+/* GRID */
 
-        /* =========================
-           نافذة المحادثات
-        ========================= */
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px;
+}
 
-        .chat-panel {
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
-            border: 1px solid #3d3d3d;
-            border-radius: 12px;
-            background: #151515;
-        }
+.card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px;
+    box-shadow:var(--shadow);
+}
 
-        .chat-panel.open {
-            display: block;
-        }
+.card.full{
+    grid-column:1/-1;
+}
 
-        .chat-header {
-            padding-bottom: 12px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid #333;
-        }
+.card-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:18px;
+}
 
-        .chat-user-email {
-            color: #aaa;
-            font-size: 13px;
-            margin-top: 5px;
-        }
+.card-head h2{
+    font-size:18px;
+}
 
-        .chat-message {
-            padding: 12px;
-            margin: 9px 0;
-            border-radius: 10px;
-            line-height: 1.8;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
+.card-head p{
+    color:var(--muted);
+    font-size:12px;
+    margin-top:5px;
+}
 
-        .chat-user {
-            background: #252525;
-            border-right: 3px solid #198754;
-        }
+.form-group{
+    margin-bottom:15px;
+}
 
-        .chat-ai {
-            background: #202936;
-            border-right: 3px solid #1769aa;
-        }
+.form-group label{
+    display:block;
+    color:#b9c8d6;
+    font-size:13px;
+    margin-bottom:7px;
+}
 
-        .chat-role {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #ddd;
-        }
+.form-control{
+    width:100%;
+    background:#081522;
+    color:#fff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    outline:none;
+}
 
-        .chat-time {
-            display: block;
-            margin-top: 8px;
-            color: #777;
-            font-size: 10px;
-        }
+.form-control:focus{
+    border-color:var(--primary);
+}
 
-        .chat-loading {
-            padding: 20px;
-            text-align: center;
-            color: #aaa;
-        }
+textarea.form-control{
+    min-height:120px;
+    resize:vertical;
+}
 
-        @media (max-width: 800px) {
-            .stats {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
+.row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
 
-        @media (max-width: 600px) {
-            .admin-page {
-                padding: 12px;
-            }
+/* QUICK */
 
-            .admin-title h1 {
-                font-size: 22px;
-            }
+.quick-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+}
 
-            .card {
-                padding: 15px;
-                margin: 14px 0;
-            }
+.quick{
+    background:#0a1927;
+    border:1px solid var(--border);
+    border-radius:13px;
+    padding:18px;
+}
 
-            .stat {
-                padding: 15px 7px;
-            }
+.quick strong{
+    display:block;
+    margin-bottom:7px;
+}
 
-            .stat-title {
-                font-size: 13px;
-            }
+.quick span{
+    color:var(--muted);
+    font-size:12px;
+}
 
-            .stat b {
-                font-size: 23px;
-            }
+/* TABLE */
 
-            .actions button {
-                flex: 1 1 120px;
-            }
-        }
+.table-wrap{
+    overflow-x:auto;
+}
 
-        @media (max-width: 350px) {
-            .stats {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:800px;
+}
+
+th,td{
+    padding:13px;
+    border-bottom:1px solid var(--border);
+    text-align:right;
+    font-size:13px;
+}
+
+th{
+    color:#90a5b8;
+    font-weight:normal;
+    background:#0a1724;
+}
+
+td{
+    color:#e7edf3;
+}
+
+.badge{
+    display:inline-block;
+    padding:5px 9px;
+    border-radius:20px;
+    font-size:11px;
+}
+
+.badge-green{
+    background:#0b3028;
+    color:#56e1bd;
+}
+
+.badge-red{
+    background:#35151e;
+    color:#ff7186;
+}
+
+.badge-yellow{
+    background:#352b13;
+    color:#ffd15e;
+}
+
+.actions{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+.small-btn{
+    padding:7px 9px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:#102133;
+    color:#fff;
+    font-size:11px;
+}
+
+/* SEARCH */
+
+.search-box{
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.search-box input{
+    flex:1;
+}
+
+/* CHAT */
+
+.chat-panel{
+    display:none;
+    margin-top:15px;
+    background:#07121d;
+    border:1px solid var(--border);
+    border-radius:13px;
+    padding:15px;
+}
+
+.chat-title{
+    margin-bottom:12px;
+    color:#9fb2c4;
+}
+
+.chat-message{
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:10px;
+    line-height:1.7;
+    white-space:pre-wrap;
+}
+
+.chat-user{
+    background:#10283b;
+    border-right:3px solid var(--blue);
+}
+
+.chat-ai{
+    background:#10291f;
+    border-right:3px solid var(--primary);
+}
+
+.chat-message small{
+    display:block;
+    color:#758b9e;
+    margin-top:7px;
+}
+
+/* TOGGLES */
+
+.toggle-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 0;
+    border-bottom:1px solid var(--border);
+}
+
+.toggle-row:last-child{
+    border-bottom:0;
+}
+
+.toggle-text strong{
+    display:block;
+    margin-bottom:4px;
+}
+
+.toggle-text span{
+    color:var(--muted);
+    font-size:12px;
+}
+
+.switch{
+    position:relative;
+    width:48px;
+    height:26px;
+}
+
+.switch input{
+    display:none;
+}
+
+.slider{
+    position:absolute;
+    inset:0;
+    background:#243648;
+    border-radius:30px;
+}
+
+.slider:before{
+    content:"";
+    position:absolute;
+    width:20px;
+    height:20px;
+    right:3px;
+    top:3px;
+    background:#fff;
+    border-radius:50%;
+    transition:.2s;
+}
+
+.switch input:checked + .slider{
+    background:var(--primary);
+}
+
+.switch input:checked + .slider:before{
+    transform:translateX(-22px);
+}
+
+/* EMPTY */
+
+.empty{
+    text-align:center;
+    padding:35px;
+    color:var(--muted);
+}
+
+/* NOTICE */
+
+.notice{
+    background:#10283b;
+    border:1px solid #234766;
+    border-radius:12px;
+    padding:13px;
+    color:#b9d5ed;
+    font-size:13px;
+    margin-bottom:15px;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1000px){
+    .sidebar{
+        width:220px;
+    }
+
+    .main{
+        width:calc(100% - 220px);
+        margin-right:220px;
+    }
+
+    .stats{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .quick-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:700px){
+    .sidebar{
+        position:relative;
+        width:100%;
+        height:auto;
+        border-left:0;
+        border-bottom:1px solid var(--border);
+    }
+
+    .app{
+        display:block;
+    }
+
+    .main{
+        width:100%;
+        margin-right:0;
+        padding:15px;
+    }
+
+    .topbar{
+        display:block;
+    }
+
+    .top-actions{
+        margin-top:15px;
+    }
+
+    .stats,
+    .grid,
+    .quick-grid{
+        grid-template-columns:1fr;
+    }
+
+    .row{
+        grid-template-columns:1fr;
+    }
+}
+</style>
 </head>
 
 <body>
 
-<div class="admin-page">
+<div class="app">
 
-    <main class="admin-container">
+<!-- SIDEBAR -->
 
-        <header class="admin-header">
-            <div class="logo">
-                زولك AI 🇸🇩
-            </div>
+<aside class="sidebar">
 
-            <a class="home-link" href="/">
-                الرئيسية
-            </a>
-        </header>
-
-        <div class="admin-title">
-
-            <h1>
-                🛡️ لوحة المدير
-            </h1>
-
-            <a href="/logout">
-                <button
-                    type="button"
-                    class="logout-btn"
-                >
-                    تسجيل الخروج
-                </button>
-            </a>
-
+    <div class="logo">
+        <div class="logo-icon">🤖</div>
+        <div>
+            <h2>زولك AI</h2>
+            <small>لوحة الإدارة</small>
         </div>
+    </div>
 
+    <div class="menu-title">الرئيسية</div>
 
-        <!-- =========================
-             الإحصائيات
-        ========================= -->
+    <button class="nav-btn active" onclick="showSection('dashboard',this)">
+        📊 لوحة التحكم
+    </button>
 
-        <section class="stats">
+    <button class="nav-btn" onclick="showSection('users',this)">
+        👥 المستخدمون
+    </button>
 
-            <div class="stat">
-                <div class="stat-title">
-                    👥 المستخدمين
-                </div>
+    <button class="nav-btn" onclick="showSection('chats',this)">
+        💬 المحادثات
+    </button>
 
-                <b>
-                    {{ total }}
-                </b>
-            </div>
+    <div class="menu-title">إدارة الموقع</div>
 
-            <div class="stat">
-                <div class="stat-title">
-                    💬 الرسائل
-                </div>
+    <button class="nav-btn" onclick="showSection('credits',this)">
+        🪙 الرصيد والباقات
+    </button>
 
-                <b>
-                    {{ msgs }}
-                </b>
-            </div>
+    <button class="nav-btn" onclick="showSection('homepage',this)">
+        🏠 الصفحة الرئيسية
+    </button>
 
-            <div class="stat">
-                <div class="stat-title">
-                    🚫 الموقوفين
-                </div>
+    <button class="nav-btn" onclick="showSection('design',this)">
+        🎨 التصميم
+    </button>
 
-                <b>
-                    {{ banned }}
-                </b>
-            </div>
+    <button class="nav-btn" onclick="showSection('content',this)">
+        📝 النصوص والمحتوى
+    </button>
 
-            <div class="stat">
-                <div class="stat-title">
-                    🎁 إجمالي الأرصدة
-                </div>
+    <button class="nav-btn" onclick="showSection('media',this)">
+        🖼️ الصور والهوية
+    </button>
 
-                <b>
-                    {{ total_credits }}
-                </b>
-            </div>
+    <button class="nav-btn" onclick="showSection('ads',this)">
+        📢 الإعلانات والتنبيهات
+    </button>
 
-        </section>
+    <div class="menu-title">الذكاء الاصطناعي</div>
 
+    <button class="nav-btn" onclick="showSection('ai',this)">
+        🤖 إعدادات AI
+    </button>
 
-        <!-- =========================
-             إعدادات الموقع
-        ========================= -->
+    <button class="nav-btn" onclick="showSection('features',this)">
+        ⚙️ المزايا
+    </button>
 
-        <section class="card">
+    <div class="menu-title">النظام</div>
 
-            <h2>
-                ⚙️ إعدادات زولك
-            </h2>
+    <button class="nav-btn" onclick="showSection('analytics',this)">
+        📈 الإحصائيات
+    </button>
 
-            <label for="free">
-                🎁 الرصيد المجاني عند التسجيل
-            </label>
+    <button class="nav-btn" onclick="showSection('security',this)">
+        🔐 الأمان
+    </button>
 
-            <input
-                id="free"
-                type="number"
-                min="0"
-                value="{{ free }}"
-            >
+    <button class="nav-btn" onclick="showSection('system',this)">
+        🛠️ النظام
+    </button>
 
-            <label for="welcome">
-                📝 رسالة الترحيب
-            </label>
+    <div class="admin-mini">
+        <strong>👤 مدير زولك</strong>
+        <span>صلاحيات المدير الكاملة</span>
+    </div>
 
-            <textarea
-                id="welcome"
-                rows="4"
-            >{{ welcome }}</textarea>
+</aside>
 
-            <button
-                type="button"
-                class="primary"
-                id="saveSettingsButton"
-                onclick="saveSettings()"
-            >
-                💾 حفظ الإعدادات
-            </button>
+<!-- MAIN -->
 
-        </section>
+<main class="main">
 
+<!-- TOPBAR -->
 
-        <!-- =========================
-             البحث
-        ========================= -->
+<div class="topbar">
 
-        <section class="card">
+    <div class="page-title">
+        <h1 id="pageTitle">لوحة التحكم</h1>
+        <p>إدارة زولك AI من مكان واحد</p>
+    </div>
 
-            <h2>
-                🔍 البحث عن مستخدم
-            </h2>
-
-            <input
-                id="search"
-                type="search"
-                placeholder="اكتب الاسم أو الإيميل..."
-                oninput="searchUsers()"
-                autocomplete="off"
-            >
-
-        </section>
-
-
-        <!-- =========================
-             المستخدمين
-        ========================= -->
-
-        <section class="card">
-
-            <h2>
-                👥 المستخدمين
-            </h2>
-
-            <div id="users">
-
-                {% for u in users %}
-
-                <div
-                    class="user"
-                    id="user-{{ u['id'] }}"
-                >
-
-                    <div class="userhead">
-
-                        <div>
-
-                            <div class="user-name">
-                                👤 {{ u['name'] }}
-                            </div>
-
-                            <div class="email">
-                                📧 {{ u['email'] }}
-                            </div>
-
-                        </div>
-
-                        <div>
-
-                            {% if u['is_admin'] %}
-
-                                <span class="badge">
-                                    🛡️ مدير
-                                </span>
-
-                            {% elif u['banned'] %}
-
-                                <span class="badge banned">
-                                    🚫 موقوف
-                                </span>
-
-                            {% else %}
-
-                                <span class="badge">
-                                    ✅ نشط
-                                </span>
-
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="balance">
-
-                        🎁 الرصيد:
-                        <strong>
-                            {{ u['credits'] }}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="actions">
-
-                        <button
-                            type="button"
-                            class="chat-btn"
-                            onclick="toggleChats({{ u['id'] }})"
-                        >
-                            💬 محادثات
-                        </button>
-
-
-                        {% if not u['is_admin'] %}
-
-                            <button
-                                type="button"
-                                class="success"
-                                onclick="addCredit({{ u['id'] }})"
-                            >
-                                ➕ إضافة 10
-                            </button>
-
-                            <button
-                                type="button"
-                                onclick="addCustomCredit({{ u['id'] }})"
-                            >
-                                🎁 إضافة رصيد
-                            </button>
-
-
-                            {% if u['banned'] %}
-
-                                <button
-                                    type="button"
-                                    class="primary"
-                                    onclick="unbanUser({{ u['id'] }})"
-                                >
-                                    ✅ إلغاء الحظر
-                                </button>
-
-                            {% else %}
-
-                                <button
-                                    type="button"
-                                    class="danger"
-                                    onclick="banUser({{ u['id'] }})"
-                                >
-                                    🚫 حظر
-                                </button>
-
-                            {% endif %}
-
-
-                            <button
-                                type="button"
-                                class="danger"
-                                onclick="deleteUser({{ u['id'] }})"
-                            >
-                                🗑️ حذف
-                            </button>
-
-                        {% endif %}
-
-                    </div>
-
-
-                    <!-- مكان عرض المحادثات -->
-
-                    <div
-                        class="chat-panel"
-                        id="chat-panel-{{ u['id'] }}"
-                    ></div>
-
-                </div>
-
-                {% else %}
-
-                <div class="empty">
-                    ما في مستخدمين لعرضهم حالياً.
-                </div>
-
-                {% endfor %}
-
-            </div>
-
-        </section>
-
-
-        <footer class="rights">
-
-            © 2026 منذر السيد — جميع الحقوق محفوظة
-            <br>
-
-            زولك AI 🇸🇩
-
-        </footer>
-
-    </main>
+    <div class="top-actions">
+        <button class="btn" onclick="location.reload()">🔄 تحديث</button>
+        <button class="btn btn-danger" onclick="location.href='/logout'">خروج</button>
+    </div>
 
 </div>
 
-
-<script>
-
-    // =========================
-    // قراءة الرد
-    // =========================
-
-    async function readResponse(response) {
-
-        try {
-            return await response.json();
-        }
-
-        catch (error) {
-            return {};
-        }
-
-    }
-
-
-    // =========================
-    // الإعدادات
-    // =========================
-
-    async function saveSettings() {
-
-        const button =
-            document.getElementById(
-                "saveSettingsButton"
-            );
-
-        const free =
-            document.getElementById(
-                "free"
-            ).value;
-
-        const welcome =
-            document.getElementById(
-                "welcome"
-            ).value;
-
-
-        if (
-            free === "" ||
-            Number(free) < 0 ||
-            !Number.isInteger(Number(free))
-        ) {
-
-            alert(
-                "❌ أدخل رصيداً صحيحاً يساوي صفراً أو أكبر."
-            );
-
-            return;
-        }
-
-
-        button.disabled = true;
-        button.textContent = "جارٍ الحفظ...";
-
-
-        try {
-
-            const response =
-                await fetch(
-                    "/api/admin/settings",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            free_credits:
-                                Number(free),
-
-                            welcome:
-                                welcome
-                        })
-                    }
-                );
-
-
-            const data =
-                await readResponse(
-                    response
-                );
-
-
-            if (!response.ok) {
-
-                alert(
-                    "❌ " +
-                    (
-                        data.error ||
-                        "ما قدرنا نحفظ الإعدادات."
-                    )
-                );
-
-                return;
-            }
-
-
-            alert(
-                "✅ اتحفظت الإعدادات بنجاح."
-            );
-
-        }
-
-        catch (error) {
-
-            alert(
-                "❌ حصل خطأ في الاتصال بالسيرفر."
-            );
-
-        }
-
-        finally {
-
-            button.disabled = false;
-
-            button.textContent =
-                "💾 حفظ الإعدادات";
-
-        }
-
-    }
-
-
-    // =========================
-    // عرض محادثات المستخدم
-    // =========================
-
-    async function toggleChats(id) {
-
-        const panel =
-            document.getElementById(
-                "chat-panel-" + id
-            );
-
-
-        if (
-            panel.classList.contains("open")
-        ) {
-
-            panel.classList.remove("open");
-
-            panel.innerHTML = "";
-
-            return;
-        }
-
-
-        panel.classList.add("open");
-
-        panel.innerHTML =
-            '<div class="chat-loading">⏳ جارٍ تحميل المحادثات...</div>';
-
-
-        try {
-
-            const response =
-                await fetch(
-                    "/api/admin/user/" +
-                    id +
-                    "/chats"
-                );
-
-
-            const data =
-                await readResponse(
-                    response
-                );
-
-
-            if (!response.ok) {
-
-                panel.innerHTML =
-                    '<div class="empty">❌ ' +
-                    escapeHtml(
-                        data.error ||
-                        "تعذر تحميل المحادثات."
-                    ) +
-                    "</div>";
-
-                return;
-            }
-
-
-            renderChats(
-                panel,
-                data.user,
-                data.chats || []
-            );
-
-        }
-
-        catch (error) {
-
-            panel.innerHTML =
-                '<div class="empty">❌ حصل خطأ في الاتصال بالسيرفر.</div>';
-
-        }
-
-    }
-
-
-    // =========================
-    // عرض المحادثات
-    // =========================
-
-    function renderChats(
-        panel,
-        user,
-        chats
-    ) {
-
-        let html = "";
-
-
-        html += `
-            <div class="chat-header">
-
-                <strong>
-                    💬 محادثات ${escapeHtml(user.name)}
-                </strong>
-
-                <div class="chat-user-email">
-                    📧 ${escapeHtml(user.email)}
+<!-- DASHBOARD -->
+
+<section id="dashboard" class="section active">
+
+    <div class="stats">
+
+        <div class="stat">
+            <div class="stat-top">
+                <small>المستخدمون</small>
+                <div class="stat-icon">👥</div>
+            </div>
+            <strong id="usersCount">0</strong>
+            <small>إجمالي الحسابات</small>
+        </div>
+
+        <div class="stat">
+            <div class="stat-top">
+                <small>الرسائل</small>
+                <div class="stat-icon">💬</div>
+            </div>
+            <strong id="messagesCount">0</strong>
+            <small>رسائل AI</small>
+        </div>
+
+        <div class="stat">
+            <div class="stat-top">
+                <small>المحظورون</small>
+                <div class="stat-icon">🚫</div>
+            </div>
+            <strong id="bannedCount">0</strong>
+            <small>حساب محظور</small>
+        </div>
+
+        <div class="stat">
+            <div class="stat-top">
+                <small>الأرصدة</small>
+                <div class="stat-icon">🪙</div>
+            </div>
+            <strong id="creditsCount">0</strong>
+            <small>إجمالي الرصيد</small>
+        </div>
+
+    </div>
+
+    <div class="grid">
+
+        <div class="card full">
+            <div class="card-head">
+                <div>
+                    <h2>⚡ التحكم السريع</h2>
+                    <p>الوصول السريع لأهم أقسام الإدارة</p>
+                </div>
+            </div>
+
+            <div class="quick-grid">
+
+                <div class="quick" onclick="showSectionById('users')">
+                    <strong>👥 المستخدمون</strong>
+                    <span>إدارة الحسابات والرصيد والحظر</span>
+                </div>
+
+                <div class="quick" onclick="showSectionById('chats')">
+                    <strong>💬 المحادثات</strong>
+                    <span>عرض رسائل المستخدمين مع الذكاء الاصطناعي</span>
+                </div>
+
+                <div class="quick" onclick="showSectionById('credits')">
+                    <strong>🪙 الرصيد</strong>
+                    <span>إدارة أرصدة المستخدمين</span>
+                </div>
+
+                <div class="quick" onclick="showSectionById('ai')">
+                    <strong>🤖 الذكاء الاصطناعي</strong>
+                    <span>إعدادات نموذج الذكاء الاصطناعي</span>
                 </div>
 
             </div>
+        </div>
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>⚙️ إعدادات عامة</h2>
+                    <p>إعدادات الموقع الأساسية</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>اسم الموقع</label>
+                <input id="siteName" class="form-control" value="زولك AI">
+            </div>
+
+            <div class="form-group">
+                <label>وصف الموقع</label>
+                <textarea id="siteDescription" class="form-control">مساعد ذكاء اصطناعي سوداني يساعدك في الكتابة والدراسة والترجمة والشغل والدردشة 🇸🇩🤖</textarea>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveBasicSettings()">
+                💾 حفظ الإعدادات
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>📌 حالة النظام</h2>
+                    <p>معلومات سريعة</p>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>الموقع يعمل</strong>
+                    <span>حالة الموقع الحالية</span>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>تسجيل المستخدمين</strong>
+                    <span>السماح بإنشاء حسابات جديدة</span>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>المحادثة مع AI</strong>
+                    <span>السماح بإرسال الرسائل</span>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- USERS -->
+
+<section id="users" class="section">
+
+    <div class="card">
+
+        <div class="card-head">
+            <div>
+                <h2>👥 إدارة المستخدمين</h2>
+                <p>البحث وإدارة الحسابات</p>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <input id="userSearch"
+                   class="form-control"
+                   placeholder="ابحث بالاسم أو البريد الإلكتروني..."
+                   oninput="searchUsers()">
+
+            <button class="btn btn-primary" onclick="loadUsers()">
+                🔄 تحديث
+            </button>
+        </div>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>الاسم</th>
+                        <th>البريد</th>
+                        <th>الرصيد</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+
+                <tbody id="usersTable">
+                    <tr>
+                        <td colspan="6" class="empty">جاري تحميل المستخدمين...</td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- CHATS -->
+
+<section id="chats" class="section">
+
+    <div class="card">
+
+        <div class="card-head">
+            <div>
+                <h2>💬 محادثات المستخدمين</h2>
+                <p>عرض الرسائل التي أرسلها المستخدمون وردود الذكاء الاصطناعي</p>
+            </div>
+        </div>
+
+        <div class="notice">
+            اختر مستخدم من قسم المستخدمين واضغط «💬 محادثات» لعرض كامل محادثاته.
+        </div>
+
+        <div id="mainChats" class="empty">
+            لم يتم اختيار مستخدم.
+        </div>
+
+    </div>
+
+</section>
+
+<!-- CREDITS -->
+
+<section id="credits" class="section">
+
+    <div class="grid">
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🪙 نظام الرصيد</h2>
+                    <p>إدارة نظام استخدام الذكاء الاصطناعي</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>الرصيد المجاني عند التسجيل</label>
+                <input class="form-control" type="number" value="10">
+            </div>
+
+            <div class="form-group">
+                <label>تكلفة الرسالة الواحدة</label>
+                <input class="form-control" type="number" value="1">
+            </div>
+
+            <button class="btn btn-primary">
+                💾 حفظ إعدادات الرصيد
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>📦 الباقات</h2>
+                    <p>مكان تجهيز نظام الباقات المدفوعة</p>
+                </div>
+            </div>
+
+            <div class="notice">
+                يمكنك لاحقاً إضافة باقات مثل 100 رسالة، 500 رسالة، 1000 رسالة وربطها بالدفع الإلكتروني.
+            </div>
+
+            <button class="btn btn-blue">
+                ➕ إضافة باقة
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- HOMEPAGE -->
+
+<section id="homepage" class="section">
+
+    <div class="card">
+
+        <div class="card-head">
+            <div>
+                <h2>🏠 الصفحة الرئيسية</h2>
+                <p>إدارة العناصر الرئيسية في واجهة الموقع</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>العنوان الرئيسي</label>
+            <input class="form-control" value="زولك AI">
+        </div>
+
+        <div class="form-group">
+            <label>النص أسفل العنوان</label>
+            <textarea class="form-control">مساعد الذكاء الاصطناعي السوداني 🇸🇩</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>نص زر البدء</label>
+            <input class="form-control" value="ابدأ الآن">
+        </div>
+
+        <button class="btn btn-primary">
+            💾 حفظ الصفحة الرئيسية
+        </button>
+
+    </div>
+
+</section>
+
+<!-- DESIGN -->
+
+<section id="design" class="section">
+
+    <div class="grid">
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🎨 المظهر</h2>
+                    <p>إعدادات شكل الموقع</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>اللون الرئيسي</label>
+                <input class="form-control" value="#00c896">
+            </div>
+
+            <div class="form-group">
+                <label>الخلفية</label>
+                <select class="form-control">
+                    <option>داكن</option>
+                    <option>فاتح</option>
+                    <option>تلقائي</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary">
+                💾 حفظ التصميم
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>📱 توافق الهاتف</h2>
+                    <p>إعدادات واجهة الجوال</p>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>واجهة الهاتف</strong>
+                    <span>تحسين الواجهة للشاشات الصغيرة</span>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- CONTENT -->
+
+<section id="content" class="section">
+
+    <div class="card">
+
+        <div class="card-head">
+            <div>
+                <h2>📝 النصوص والمحتوى</h2>
+                <p>مكان إدارة النصوص الظاهرة للمستخدمين</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>رسالة الترحيب</label>
+            <textarea class="form-control">مرحباً بيك في زولك AI 🇸🇩🤖</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>رسالة عدم وجود رصيد</label>
+            <textarea class="form-control">رصيدك انتهى. يمكنك شحن رصيدك لاحقاً.</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>رسالة الخطأ</label>
+            <textarea class="form-control">حصلت مشكلة، حاول مرة تانية.</textarea>
+        </div>
+
+        <button class="btn btn-primary">
+            💾 حفظ النصوص
+        </button>
+
+    </div>
+
+</section>
+
+<!-- MEDIA -->
+
+<section id="media" class="section">
+
+    <div class="grid">
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🖼️ الهوية البصرية</h2>
+                    <p>الشعار وصور الموقع</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>رابط الشعار</label>
+                <input class="form-control" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+                <label>رابط خلفية الموقع</label>
+                <input class="form-control" value="/static/sudan-flag-background.jpg">
+            </div>
+
+            <button class="btn btn-primary">
+                💾 حفظ الهوية
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🇸🇩 الهوية السودانية</h2>
+                    <p>إعدادات العلامة التجارية</p>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>إظهار الهوية السودانية</strong>
+                    <span>استخدام العناصر السودانية في الموقع</span>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ADS -->
+
+<section id="ads" class="section">
+
+    <div class="grid">
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>📢 الإعلان</h2>
+                    <p>رسالة تظهر للمستخدمين</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>نص الإعلان</label>
+                <textarea class="form-control" placeholder="اكتب الإعلان هنا..."></textarea>
+            </div>
+
+            <button class="btn btn-primary">
+                📢 نشر الإعلان
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🔔 التنبيهات</h2>
+                    <p>التحكم في إشعارات الموقع</p>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>إظهار التنبيهات</strong>
+                    <span>تفعيل رسائل التنبيه</span>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- AI -->
+
+<section id="ai" class="section">
+
+    <div class="grid">
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🤖 إعدادات الذكاء الاصطناعي</h2>
+                    <p>التحكم في نموذج AI</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>اسم النموذج</label>
+                <input class="form-control" value="gemini-3.6-flash">
+            </div>
+
+            <div class="form-group">
+                <label>عدد الرسائل المجانية</label>
+                <input class="form-control" type="number" value="10">
+            </div>
+
+            <button class="btn btn-primary">
+                💾 حفظ إعدادات AI
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🧠 خصائص AI</h2>
+                    <p>الوظائف التي يمكن للمستخدم استعمالها</p>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>الكتابة</strong>
+                    <span>مساعدة المستخدم في كتابة النصوص</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>الترجمة</strong>
+                    <span>ترجمة النصوص</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>الدراسة</strong>
+                    <span>المساعدة في الدراسة</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- FEATURES -->
+
+<section id="features" class="section">
+
+    <div class="card">
+
+        <div class="card-head">
+            <div>
+                <h2>⚙️ مزايا الموقع</h2>
+                <p>تشغيل وإيقاف المزايا</p>
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-text">
+                <strong>تسجيل الحسابات</strong>
+                <span>السماح للمستخدمين بإنشاء حساب</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-text">
+                <strong>سجل المحادثات</strong>
+                <span>حفظ محادثات المستخدمين</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-text">
+                <strong>الدخول بالبريد</strong>
+                <span>تسجيل الدخول باستخدام البريد الإلكتروني</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ANALYTICS -->
+
+<section id="analytics" class="section">
+
+    <div class="grid">
+
+        <div class="card">
+            <div class="card-head">
+                <div>
+                    <h2>📈 المستخدمون</h2>
+                    <p>إجمالي المستخدمين المسجلين</p>
+                </div>
+            </div>
+            <strong id="analyticsUsers" style="font-size:35px">0</strong>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <div>
+                    <h2>💬 الرسائل</h2>
+                    <p>إجمالي رسائل المحادثات</p>
+                </div>
+            </div>
+            <strong id="analyticsMessages" style="font-size:35px">0</strong>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <div>
+                    <h2>🚫 المحظورون</h2>
+                    <p>الحسابات المحظورة</p>
+                </div>
+            </div>
+            <strong id="analyticsBanned" style="font-size:35px">0</strong>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <div>
+                    <h2>🪙 الرصيد</h2>
+                    <p>إجمالي الأرصدة</p>
+                </div>
+            </div>
+            <strong id="analyticsCredits" style="font-size:35px">0</strong>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- SECURITY -->
+
+<section id="security" class="section">
+
+    <div class="grid">
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🔐 أمان الإدارة</h2>
+                    <p>إعدادات الوصول للوحة المدير</p>
+                </div>
+            </div>
+
+            <div class="notice">
+                كلمات مرور المستخدمين يجب أن تبقى محمية ومشفرة، ولا يتم عرضها كنص واضح داخل لوحة الإدارة.
+            </div>
+
+            <div class="form-group">
+                <label>بريد المدير</label>
+                <input class="form-control" value="admin@zolak.ai">
+            </div>
+
+            <button class="btn btn-primary">
+                💾 حفظ
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🛡️ الحماية</h2>
+                    <p>إعدادات حماية الموقع</p>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>حماية لوحة الإدارة</strong>
+                    <span>منع الوصول بدون صلاحية المدير</span>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- SYSTEM -->
+
+<section id="system" class="section">
+
+    <div class="grid">
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>🛠️ النظام</h2>
+                    <p>إعدادات عامة للنظام</p>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>وضع الصيانة</strong>
+                    <span>إيقاف استخدام الموقع مؤقتاً</span>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <strong>السماح بالدخول</strong>
+                    <span>السماح للمستخدمين بالدخول</span>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-head">
+                <div>
+                    <h2>💾 النسخ الاحتياطي</h2>
+                    <p>إعدادات النسخ الاحتياطي المستقبلية</p>
+                </div>
+            </div>
+
+            <div class="notice">
+                يمكن إضافة نظام نسخ احتياطي تلقائي لقاعدة البيانات والملفات في مرحلة لاحقة.
+            </div>
+
+            <button class="btn btn-blue">
+                💾 إنشاء نسخة احتياطية
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+</main>
+</div>
+
+<script>
+
+let allUsers = [];
+
+const titles = {
+    dashboard:"لوحة التحكم",
+    users:"إدارة المستخدمين",
+    chats:"المحادثات",
+    credits:"الرصيد والباقات",
+    homepage:"الصفحة الرئيسية",
+    design:"التصميم",
+    content:"النصوص والمحتوى",
+    media:"الصور والهوية",
+    ads:"الإعلانات والتنبيهات",
+    ai:"إعدادات الذكاء الاصطناعي",
+    features:"المزايا",
+    analytics:"الإحصائيات",
+    security:"الأمان",
+    system:"النظام"
+};
+
+function showSection(id,btn){
+
+    document.querySelectorAll(".section").forEach(x=>{
+        x.classList.remove("active");
+    });
+
+    const section=document.getElementById(id);
+
+    if(section){
+        section.classList.add("active");
+    }
+
+    document.querySelectorAll(".nav-btn").forEach(x=>{
+        x.classList.remove("active");
+    });
+
+    if(btn){
+        btn.classList.add("active");
+    }
+
+    document.getElementById("pageTitle").textContent =
+        titles[id] || "لوحة الإدارة";
+
+    if(id==="users"){
+        loadUsers();
+    }
+
+    if(id==="dashboard"){
+        loadStats();
+    }
+}
+
+function showSectionById(id){
+
+    const btn=[...document.querySelectorAll(".nav-btn")]
+        .find(x=>x.getAttribute("onclick")?.includes("'"+id+"'"));
+
+    showSection(id,btn);
+}
+
+async function loadStats(){
+
+    try{
+
+        const response=await fetch("/api/admin/users");
+
+        if(!response.ok) return;
+
+        const data=await response.json();
+
+        const users=data.users || data || [];
+
+        let messages=0;
+        let banned=0;
+        let credits=0;
+
+        users.forEach(u=>{
+            if(u.banned) banned++;
+            credits+=Number(u.credits || 0);
+        });
+
+        document.getElementById("usersCount").textContent=users.length;
+        document.getElementById("messagesCount").textContent=
+            data.messages_count ?? data.messages ?? 0;
+        document.getElementById("bannedCount").textContent=banned;
+        document.getElementById("creditsCount").textContent=credits;
+
+        document.getElementById("analyticsUsers").textContent=users.length;
+        document.getElementById("analyticsMessages").textContent=
+            data.messages_count ?? data.messages ?? 0;
+        document.getElementById("analyticsBanned").textContent=banned;
+        document.getElementById("analyticsCredits").textContent=credits;
+
+    }catch(e){
+        console.error(e);
+    }
+}
+
+async function loadUsers(){
+
+    const tbody=document.getElementById("usersTable");
+
+    tbody.innerHTML=`
+        <tr>
+            <td colspan="6" class="empty">جاري التحميل...</td>
+        </tr>
+    `;
+
+    try{
+
+        const response=await fetch("/api/admin/users");
+
+        if(!response.ok){
+            throw new Error("failed");
+        }
+
+        const data=await response.json();
+
+        allUsers=data.users || data || [];
+
+        renderUsers(allUsers);
+
+    }catch(error){
+
+        tbody.innerHTML=`
+            <tr>
+                <td colspan="6" class="empty">
+                    حصلت مشكلة في تحميل المستخدمين.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function renderUsers(users){
+
+    const tbody=document.getElementById("usersTable");
+
+    if(!users.length){
+
+        tbody.innerHTML=`
+            <tr>
+                <td colspan="6" class="empty">
+                    ما في مستخدمين.
+                </td>
+            </tr>
         `;
 
+        return;
+    }
 
-        if (!chats.length) {
+    tbody.innerHTML=users.map(user=>{
 
-            html += `
+        const banned=Boolean(user.banned);
+
+        return `
+        <tr>
+
+            <td>${user.id ?? "-"}</td>
+
+            <td>
+                <strong>${escapeHtml(user.name || "بدون اسم")}</strong>
+            </td>
+
+            <td>
+                ${escapeHtml(user.email || "-")}
+            </td>
+
+            <td>
+                <strong>${user.credits ?? 0}</strong> 🪙
+            </td>
+
+            <td>
+                ${
+                    banned
+                    ? `<span class="badge badge-red">محظور</span>`
+                    : `<span class="badge badge-green">نشط</span>`
+                }
+            </td>
+
+            <td>
+
+                <div class="actions">
+
+                    <button class="small-btn"
+                        onclick="toggleChats(${user.id})">
+                        💬 محادثات
+                    </button>
+
+                    <button class="small-btn"
+                        onclick="changeCredits(${user.id})">
+                        🪙 رصيد
+                    </button>
+
+                    ${
+                        banned
+                        ?
+                        `<button class="small-btn"
+                            onclick="unbanUser(${user.id})">
+                            ✅ فك الحظر
+                        </button>`
+                        :
+                        `<button class="small-btn"
+                            onclick="banUser(${user.id})">
+                            🚫 حظر
+                        </button>`
+                    }
+
+                    <button class="small-btn"
+                        onclick="deleteUser(${user.id})">
+                        🗑️ حذف
+                    </button>
+
+                </div>
+
+                <div id="chat-${user.id}" class="chat-panel"></div>
+
+            </td>
+
+        </tr>
+        `;
+
+    }).join("");
+
+}
+
+function searchUsers(){
+
+    const q=document.getElementById("userSearch")
+        .value
+        .trim()
+        .toLowerCase();
+
+    if(!q){
+        renderUsers(allUsers);
+        return;
+    }
+
+    const filtered=allUsers.filter(user=>
+        String(user.id || "").includes(q) ||
+        String(user.name || "").toLowerCase().includes(q) ||
+        String(user.email || "").toLowerCase().includes(q)
+    );
+
+    renderUsers(filtered);
+}
+
+async function toggleChats(id){
+
+    const panel=document.getElementById("chat-"+id);
+
+    if(!panel) return;
+
+    if(panel.style.display==="block"){
+        panel.style.display="none";
+        return;
+    }
+
+    panel.style.display="block";
+    panel.innerHTML=`<div class="empty">جاري تحميل المحادثات...</div>`;
+
+    try{
+
+        const response=
+            await fetch("/api/admin/user/"+id+"/chats");
+
+        const data=await response.json();
+
+        if(!response.ok){
+            throw new Error(data.error || "failed");
+        }
+
+        const chats=data.chats || [];
+
+        if(!chats.length){
+
+            panel.innerHTML=`
                 <div class="empty">
                     المستخدم ما عندو محادثات لحد الآن.
                 </div>
             `;
 
-            panel.innerHTML = html;
-
             return;
         }
 
+        panel.innerHTML=`
+            <div class="chat-title">
+                💬 محادثات ${escapeHtml(data.user?.name || "")}
+            </div>
 
-        chats.forEach(function(chat) {
+            ${chats.map(chat=>{
 
-            const isUser =
-                chat.role === "user";
+                const isUser=chat.role==="user";
 
+                return `
+                <div class="chat-message ${isUser ? "chat-user":"chat-ai"}">
 
-            html += `
-                <div class="chat-message ${
-                    isUser
-                        ? "chat-user"
-                        : "chat-ai"
-                }">
-
-                    <span class="chat-role">
-
-                        ${
-                            isUser
-                                ? "👤 المستخدم"
-                                : "🤖 زولك AI"
-                        }
-
-                    </span>
-
-                    <div>
-                        ${escapeHtml(
-                            chat.content
-                        )}
-                    </div>
-
-                    <span class="chat-time">
-                        🕐 ${escapeHtml(
-                            chat.created_at || ""
-                        )}
-                    </span>
-
-                </div>
-            `;
-
-        });
-
-
-        panel.innerHTML = html;
-
-    }
-
-
-    // =========================
-    // إضافة رصيد
-    // =========================
-
-    async function addCredit(id) {
-
-        await changeCredits(
-            id,
-            10
-        );
-
-    }
-
-
-    async function addCustomCredit(id) {
-
-        const value =
-            prompt(
-                "أدخل عدد الرصيد الداير تضيفو:"
-            );
-
-
-        if (
-            value === null ||
-            value.trim() === ""
-        ) {
-            return;
-        }
-
-
-        const amount =
-            Number(value);
-
-
-        if (
-            !Number.isInteger(amount) ||
-            amount <= 0
-        ) {
-
-            alert(
-                "❌ أدخل رقماً صحيحاً أكبر من صفر."
-            );
-
-            return;
-        }
-
-
-        await changeCredits(
-            id,
-            amount
-        );
-
-    }
-
-
-    async function changeCredits(
-        id,
-        amount
-    ) {
-
-        try {
-
-            const response =
-                await fetch(
-                    "/api/admin/user/" +
-                    id +
-                    "/credits",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            amount:
-                                amount
-                        })
-                    }
-                );
-
-
-            const data =
-                await readResponse(
-                    response
-                );
-
-
-            if (!response.ok) {
-
-                alert(
-                    "❌ " +
-                    (
-                        data.error ||
-                        "ما قدرنا نضيف الرصيد."
-                    )
-                );
-
-                return;
-            }
-
-
-            alert(
-                "✅ تمت إضافة " +
-                amount +
-                " رصيد."
-            );
-
-
-            location.reload();
-
-        }
-
-        catch (error) {
-
-            alert(
-                "❌ حصل خطأ في الاتصال بالسيرفر."
-            );
-
-        }
-
-    }
-
-
-    // =========================
-    // الحظر
-    // =========================
-
-    async function banUser(id) {
-
-        if (
-            !confirm(
-                "متأكد داير توقف المستخدم؟"
-            )
-        ) {
-            return;
-        }
-
-
-        try {
-
-            const response =
-                await fetch(
-                    "/api/admin/user/" +
-                    id +
-                    "/ban",
-                    {
-                        method: "POST"
-                    }
-                );
-
-
-            const data =
-                await readResponse(
-                    response
-                );
-
-
-            if (!response.ok) {
-
-                alert(
-                    "❌ " +
-                    (
-                        data.error ||
-                        "ما قدرنا نوقف المستخدم."
-                    )
-                );
-
-                return;
-            }
-
-
-            alert(
-                "✅ تم إيقاف المستخدم."
-            );
-
-
-            location.reload();
-
-        }
-
-        catch (error) {
-
-            alert(
-                "❌ حصل خطأ في الاتصال بالسيرفر."
-            );
-
-        }
-
-    }
-
-
-    // =========================
-    // إلغاء الحظر
-    // =========================
-
-    async function unbanUser(id) {
-
-        try {
-
-            const response =
-                await fetch(
-                    "/api/admin/user/" +
-                    id +
-                    "/unban",
-                    {
-                        method: "POST"
-                    }
-                );
-
-
-            const data =
-                await readResponse(
-                    response
-                );
-
-
-            if (!response.ok) {
-
-                alert(
-                    "❌ " +
-                    (
-                        data.error ||
-                        "ما قدرنا نلغي الحظر."
-                    )
-                );
-
-                return;
-            }
-
-
-            alert(
-                "✅ تم إلغاء الحظر."
-            );
-
-
-            location.reload();
-
-        }
-
-        catch (error) {
-
-            alert(
-                "❌ حصل خطأ في الاتصال بالسيرفر."
-            );
-
-        }
-
-    }
-
-
-    // =========================
-    // حذف المستخدم
-    // =========================
-
-    async function deleteUser(id) {
-
-        if (
-            !confirm(
-                "⚠️ متأكد داير تحذف المستخدم نهائياً؟"
-            )
-        ) {
-            return;
-        }
-
-
-        try {
-
-            const response =
-                await fetch(
-                    "/api/admin/user/" +
-                    id,
-                    {
-                        method: "DELETE"
-                    }
-                );
-
-
-            const data =
-                await readResponse(
-                    response
-                );
-
-
-            if (!response.ok) {
-
-                alert(
-                    "❌ " +
-                    (
-                        data.error ||
-                        "ما قدرنا نحذف المستخدم."
-                    )
-                );
-
-                return;
-            }
-
-
-            alert(
-                "✅ تم حذف المستخدم."
-            );
-
-
-            location.reload();
-
-        }
-
-        catch (error) {
-
-            alert(
-                "❌ حصل خطأ في الاتصال بالسيرفر."
-            );
-
-        }
-
-    }
-
-
-    // =========================
-    // البحث
-    // =========================
-
-    let searchTimer = null;
-
-
-    function searchUsers() {
-
-        clearTimeout(
-            searchTimer
-        );
-
-
-        searchTimer =
-            setTimeout(
-                async function () {
-
-                    const query =
-                        document.getElementById(
-                            "search"
-                        ).value.trim();
-
-
-                    const box =
-                        document.getElementById(
-                            "users"
-                        );
-
-
-                    box.innerHTML =
-                        '<div class="empty">جارٍ البحث...</div>';
-
-
-                    try {
-
-                        const response =
-                            await fetch(
-                                "/api/admin/users?q=" +
-                                encodeURIComponent(
-                                    query
-                                )
-                            );
-
-
-                        const data =
-                            await readResponse(
-                                response
-                            );
-
-
-                        if (!response.ok) {
-
-                            box.innerHTML =
-                                '<div class="empty">تعذر البحث عن المستخدمين.</div>';
-
-                            return;
-                        }
-
-
-                        renderUsers(
-                            data.users || []
-                        );
-
-                    }
-
-                    catch (error) {
-
-                        box.innerHTML =
-                            '<div class="empty">حصل خطأ في الاتصال أثناء البحث.</div>';
-
-                    }
-
-                },
-                300
-            );
-
-    }
-
-
-    // =========================
-    // حماية HTML
-    // =========================
-
-    function escapeHtml(value) {
-
-        const element =
-            document.createElement(
-                "div"
-            );
-
-
-        element.textContent =
-            value == null
-                ? ""
-                : String(value);
-
-
-        return element.innerHTML;
-
-    }
-
-
-    // =========================
-    // إعادة رسم المستخدمين
-    // =========================
-
-    function renderUsers(users) {
-
-        const box =
-            document.getElementById(
-                "users"
-            );
-
-
-        box.innerHTML = "";
-
-
-        if (!users.length) {
-
-            box.innerHTML =
-                '<div class="empty">ما لقينا مستخدمين مطابقين للبحث.</div>';
-
-            return;
-        }
-
-
-        users.forEach(function(user) {
-
-            let status = "";
-
-
-            if (user.is_admin) {
-
-                status =
-                    '<span class="badge">🛡️ مدير</span>';
-
-            }
-
-            else if (user.banned) {
-
-                status =
-                    '<span class="badge banned">🚫 موقوف</span>';
-
-            }
-
-            else {
-
-                status =
-                    '<span class="badge">✅ نشط</span>';
-
-            }
-
-
-            let actions = "";
-
-
-            if (!user.is_admin) {
-
-                let banButton = "";
-
-
-                if (user.banned) {
-
-                    banButton =
-                        '<button type="button" class="primary" onclick="unbanUser(' +
-                        Number(user.id) +
-                        ')">✅ إلغاء الحظر</button>';
-
-                }
-
-                else {
-
-                    banButton =
-                        '<button type="button" class="danger" onclick="banUser(' +
-                        Number(user.id) +
-                        ')">🚫 حظر</button>';
-
-                }
-
-
-                actions = `
-                    <div class="actions">
-
-                        <button
-                            type="button"
-                            class="chat-btn"
-                            onclick="toggleChats(${Number(user.id)})"
-                        >
-                            💬 محادثات
-                        </button>
-
-                        <button
-                            type="button"
-                            class="success"
-                            onclick="addCredit(${Number(user.id)})"
-                        >
-                            ➕ إضافة 10
-                        </button>
-
-                        <button
-                            type="button"
-                            onclick="addCustomCredit(${Number(user.id)})"
-                        >
-                            🎁 إضافة رصيد
-                        </button>
-
-                        ${banButton}
-
-                        <button
-                            type="button"
-                            class="danger"
-                            onclick="deleteUser(${Number(user.id)})"
-                        >
-                            🗑️ حذف
-                        </button>
-
-                    </div>
-                `;
-
-            }
-
-            else {
-
-                actions = `
-                    <div class="actions">
-
-                        <button
-                            type="button"
-                            class="chat-btn"
-                            onclick="toggleChats(${Number(user.id)})"
-                        >
-                            💬 محادثات
-                        </button>
-
-                    </div>
-                `;
-
-            }
-
-
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-
-            item.className =
-                "user";
-
-
-            item.id =
-                "user-" +
-                Number(user.id);
-
-
-            item.innerHTML = `
-
-                <div class="userhead">
-
-                    <div>
-
-                        <div class="user-name">
-                            👤 ${escapeHtml(user.name)}
-                        </div>
-
-                        <div class="email">
-                            📧 ${escapeHtml(user.email)}
-                        </div>
-
-                    </div>
-
-                    <div>
-                        ${status}
-                    </div>
-
-                </div>
-
-
-                <div class="balance">
-
-                    🎁 الرصيد:
                     <strong>
-                        ${Number(user.credits) || 0}
+                        ${isUser ? "👤 المستخدم":"🤖 زولك AI"}
                     </strong>
 
+                    <div>${escapeHtml(chat.content || "")}</div>
+
+                    <small>
+                        ${escapeHtml(chat.created_at || "")}
+                    </small>
+
                 </div>
+                `;
 
+            }).join("")}
+        `;
 
-                ${actions}
+    }catch(error){
 
-
-                <div
-                    class="chat-panel"
-                    id="chat-panel-${Number(user.id)}"
-                ></div>
-
-            `;
-
-
-            box.appendChild(
-                item
-            );
-
-        });
-
+        panel.innerHTML=`
+            <div class="empty">
+                حصلت مشكلة في تحميل المحادثات.
+            </div>
+        `;
     }
+}
+
+async function changeCredits(id){
+
+    const amount=prompt("اكتب مقدار الرصيد الجديد:");
+
+    if(amount===null) return;
+
+    const value=parseInt(amount);
+
+    if(Number.isNaN(value)){
+        alert("أدخل رقم صحيح.");
+        return;
+    }
+
+    try{
+
+        const response=await fetch(
+            "/api/admin/user/"+id+"/credits",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    credits:value
+                })
+            }
+        );
+
+        const data=await response.json();
+
+        if(!response.ok){
+            alert(data.error || "حصلت مشكلة.");
+            return;
+        }
+
+        alert("تم تحديث الرصيد.");
+        loadUsers();
+        loadStats();
+
+    }catch(error){
+
+        alert("حصل خطأ في الاتصال.");
+    }
+}
+
+async function banUser(id){
+
+    if(!confirm("متأكد داير تحظر المستخدم؟")) return;
+
+    try{
+
+        const response=await fetch(
+            "/api/admin/user/"+id+"/ban",
+            {
+                method:"POST"
+            }
+        );
+
+        const data=await response.json();
+
+        if(!response.ok){
+            alert(data.error || "حصلت مشكلة.");
+            return;
+        }
+
+        loadUsers();
+        loadStats();
+
+    }catch(error){
+
+        alert("حصل خطأ.");
+    }
+}
+
+async function unbanUser(id){
+
+    try{
+
+        const response=await fetch(
+            "/api/admin/user/"+id+"/unban",
+            {
+                method:"POST"
+            }
+        );
+
+        const data=await response.json();
+
+        if(!response.ok){
+            alert(data.error || "حصلت مشكلة.");
+            return;
+        }
+
+        loadUsers();
+        loadStats();
+
+    }catch(error){
+
+        alert("حصل خطأ.");
+    }
+}
+
+async function deleteUser(id){
+
+    if(!confirm(
+        "⚠️ متأكد داير تحذف المستخدم نهائياً؟"
+    )) return;
+
+    try{
+
+        const response=await fetch(
+            "/api/admin/user/"+id,
+            {
+                method:"DELETE"
+            }
+        );
+
+        const data=await response.json();
+
+        if(!response.ok){
+            alert(data.error || "حصلت مشكلة.");
+            return;
+        }
+
+        alert("تم حذف المستخدم.");
+
+        loadUsers();
+        loadStats();
+
+    }catch(error){
+
+        alert("حصل خطأ.");
+    }
+}
+
+async function saveBasicSettings(){
+
+    const siteName=
+        document.getElementById("siteName").value;
+
+    const siteDescription=
+        document.getElementById("siteDescription").value;
+
+    try{
+
+        const response=await fetch(
+            "/api/admin/settings",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    site_name:siteName,
+                    site_description:siteDescription
+                })
+            }
+        );
+
+        const data=await response.json();
+
+        if(!response.ok){
+            alert(data.error || "حصلت مشكلة.");
+            return;
+        }
+
+        alert("تم حفظ الإعدادات.");
+
+    }catch(error){
+
+        alert("حصل خطأ في الاتصال.");
+    }
+}
+
+function escapeHtml(value){
+
+    return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+    loadStats();
+    loadUsers();
+
+});
 
 </script>
 
 </body>
-    </html>
+        </html>
