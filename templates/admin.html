@@ -18,18 +18,41 @@
 --green:#00c896;
 --red:#ef4444;
 --yellow:#f59e0b;
---blue:#3b82f6
+--blue:#3b82f6;
+--input:#071522;
+--header:#081522;
+--soft:#091827;
 }
 
 body{
 background:var(--bg);
 color:var(--text);
 font-family:Arial,Tahoma,sans-serif;
-min-height:100vh
+min-height:100vh;
+background-size:cover;
+background-position:center;
+background-attachment:fixed;
 }
 
-button,input,textarea,select{font:inherit}
-button{cursor:pointer}
+body.light{
+--bg:#f4f7fb;
+--panel:#ffffff;
+--panel2:#eef3f8;
+--border:#d5dde7;
+--text:#17202a;
+--muted:#64748b;
+--input:#ffffff;
+--header:#ffffff;
+--soft:#f1f5f9;
+}
+
+button,input,textarea,select{
+font:inherit
+}
+
+button{
+cursor:pointer
+}
 
 .container{
 width:min(1200px,94%);
@@ -39,7 +62,7 @@ margin:auto
 header{
 padding:20px 0;
 border-bottom:1px solid var(--border);
-background:#081522;
+background:var(--header);
 position:sticky;
 top:0;
 z-index:20
@@ -57,7 +80,9 @@ font-size:25px;
 font-weight:bold
 }
 
-.logo span{color:var(--green)}
+.logo span{
+color:var(--green)
+}
 
 .header-actions{
 display:flex;
@@ -69,23 +94,55 @@ flex-wrap:wrap
 border:0;
 border-radius:9px;
 padding:10px 15px;
-color:white;
+color:var(--text);
 background:var(--panel2)
 }
 
-.btn:hover{opacity:.85}
-.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:hover{
+opacity:.85
+}
 
-.btn.green{background:var(--green);color:#001b14}
-.btn.red{background:var(--red)}
-.btn.blue{background:var(--blue)}
-.btn.yellow{background:var(--yellow);color:#111}
+.btn:disabled{
+opacity:.5;
+cursor:not-allowed
+}
 
-main{padding:25px 0 50px}
+.btn.green{
+background:var(--green);
+color:#001b14
+}
 
-.title{margin-bottom:20px}
-.title h1{font-size:28px;margin-bottom:7px}
-.title p{color:var(--muted)}
+.btn.red{
+background:var(--red);
+color:white
+}
+
+.btn.blue{
+background:var(--blue);
+color:white
+}
+
+.btn.yellow{
+background:var(--yellow);
+color:#111
+}
+
+main{
+padding:25px 0 50px
+}
+
+.title{
+margin-bottom:20px
+}
+
+.title h1{
+font-size:28px;
+margin-bottom:7px
+}
+
+.title p{
+color:var(--muted)
+}
 
 .stats{
 display:grid;
@@ -101,7 +158,9 @@ border-radius:14px;
 padding:20px
 }
 
-.stat small{color:var(--muted)}
+.stat small{
+color:var(--muted)
+}
 
 .stat strong{
 display:block;
@@ -140,7 +199,10 @@ padding:20px;
 margin-bottom:18px
 }
 
-.panel h2{margin-bottom:16px;font-size:20px}
+.panel h2{
+margin-bottom:16px;
+font-size:20px
+}
 
 .grid{
 display:grid;
@@ -154,18 +216,20 @@ flex-direction:column;
 gap:7px
 }
 
-.field.full{grid-column:1/-1}
+.field.full{
+grid-column:1/-1
+}
 
 label{
-color:#cbd5e1;
+color:var(--muted);
 font-size:14px
 }
 
 input,textarea,select{
 width:100%;
 border:1px solid var(--border);
-background:#071522;
-color:white;
+background:var(--input);
+color:var(--text);
 border-radius:9px;
 padding:11px;
 outline:none
@@ -176,7 +240,9 @@ min-height:100px;
 resize:vertical
 }
 
-input:focus,textarea:focus,select:focus{
+input:focus,
+textarea:focus,
+select:focus{
 border-color:var(--green)
 }
 
@@ -193,9 +259,13 @@ gap:8px;
 margin-bottom:15px
 }
 
-.users-search input{flex:1}
+.users-search input{
+flex:1
+}
 
-.table-wrap{overflow-x:auto}
+.table-wrap{
+overflow-x:auto
+}
 
 table{
 width:100%;
@@ -210,11 +280,13 @@ text-align:right
 }
 
 th{
-color:#cbd5e1;
-background:#0a1725
+color:var(--muted);
+background:var(--soft)
 }
 
-td{color:#e2e8f0}
+td{
+color:var(--text)
+}
 
 .badge{
 display:inline-block;
@@ -238,7 +310,9 @@ background:#47330b;
 color:#ffd166
 }
 
-.hidden{display:none!important}
+.hidden{
+display:none!important
+}
 
 .message{
 padding:12px;
@@ -247,7 +321,9 @@ margin-bottom:15px;
 display:none
 }
 
-.message.show{display:block}
+.message.show{
+display:block
+}
 
 .message.success{
 background:#063d32;
@@ -259,20 +335,28 @@ background:#451515;
 color:#ff9a9a
 }
 
-.section{display:none}
-.section.active{display:block}
+.section{
+display:none
+}
+
+.section.active{
+display:block
+}
 
 .checkbox-row{
 display:flex;
 align-items:center;
 gap:10px;
-background:#091827;
+background:var(--soft);
 border:1px solid var(--border);
 border-radius:10px;
-padding:13px
+padding:13px;
+color:var(--text)
 }
 
-.checkbox-row input{width:auto}
+.checkbox-row input{
+width:auto
+}
 
 .modal{
 position:fixed;
@@ -285,7 +369,9 @@ padding:20px;
 z-index:100
 }
 
-.modal.show{display:flex}
+.modal.show{
+display:flex
+}
 
 .modal-box{
 width:min(800px,100%);
@@ -301,12 +387,17 @@ padding:20px
 padding:12px;
 border-radius:10px;
 margin-bottom:10px;
-background:#081725;
+background:var(--soft);
 border:1px solid var(--border)
 }
 
-.chat-message.user{border-right:3px solid var(--blue)}
-.chat-message.assistant{border-right:3px solid var(--green)}
+.chat-message.user{
+border-right:3px solid var(--blue)
+}
+
+.chat-message.assistant{
+border-right:3px solid var(--green)
+}
 
 .chat-role{
 font-size:12px;
@@ -321,7 +412,7 @@ gap:12px
 }
 
 .health-card{
-background:#091827;
+background:var(--soft);
 border:1px solid var(--border);
 border-radius:12px;
 padding:15px
@@ -338,12 +429,20 @@ font-size:18px;
 font-weight:bold
 }
 
-.health-status.ok{color:var(--green)}
-.health-status.warning{color:var(--yellow)}
-.health-status.error{color:var(--red)}
+.health-status.ok{
+color:var(--green)
+}
+
+.health-status.warning{
+color:var(--yellow)
+}
+
+.health-status.error{
+color:var(--red)
+}
 
 .health-message{
-color:#cbd5e1;
+color:var(--muted);
 font-size:13px;
 margin-top:6px;
 line-height:1.6
@@ -383,7 +482,7 @@ color:#ff9a9a
 margin-top:15px;
 padding:12px;
 border-radius:10px;
-background:#081522;
+background:var(--soft);
 border:1px solid var(--border);
 color:var(--muted);
 font-size:13px;
@@ -391,19 +490,41 @@ line-height:1.8
 }
 
 @media(max-width:800px){
-.stats{grid-template-columns:repeat(2,1fr)}
-.grid,.health-grid{grid-template-columns:1fr}
-.field.full{grid-column:auto}
+
+.stats{
+grid-template-columns:repeat(2,1fr)
+}
+
+.grid,
+.health-grid{
+grid-template-columns:1fr
+}
+
+.field.full{
+grid-column:auto
+}
+
 .header-inner{
 align-items:flex-start;
 flex-direction:column
 }
+
 }
 
 @media(max-width:500px){
-.stats{grid-template-columns:1fr}
-.title h1{font-size:23px}
-.panel{padding:15px}
+
+.stats{
+grid-template-columns:1fr
+}
+
+.title h1{
+font-size:23px
+}
+
+.panel{
+padding:15px
+}
+
 }
 </style>
 </head>
@@ -411,9 +532,10 @@ flex-direction:column
 <body>
 
 <header>
+
 <div class="container header-inner">
 
-<div class="logo">
+<div class="logo" id="adminLogo">
 زولك <span>AI 🇸🇩</span>
 </div>
 
@@ -428,17 +550,28 @@ flex-direction:column
 </button>
 
 </div>
+
 </div>
+
 </header>
+
 
 <main class="container">
 
 <div class="title">
-<h1>لوحة إدارة زولك AI</h1>
-<p>إدارة المستخدمين والموقع والذكاء الاصطناعي والإعدادات</p>
+
+<h1 id="adminTitle">
+لوحة إدارة زولك AI
+</h1>
+
+<p id="adminDescription">
+إدارة المستخدمين والموقع والذكاء الاصطناعي والإعدادات
+</p>
+
 </div>
 
 <div id="message" class="message"></div>
+
 
 <div class="stats">
 
@@ -464,45 +597,56 @@ flex-direction:column
 
 </div>
 
+
 <div class="tabs">
 
-<button class="tab active" onclick="showSection('users',this)">
+<button class="tab active"
+onclick="showSection('users',this)">
 المستخدمون
 </button>
 
-<button class="tab" onclick="showSection('homepage',this)">
+<button class="tab"
+onclick="showSection('homepage',this)">
 الصفحة الرئيسية
 </button>
 
-<button class="tab" onclick="showSection('design',this)">
+<button class="tab"
+onclick="showSection('design',this)">
 التصميم
 </button>
 
-<button class="tab" onclick="showSection('content',this)">
+<button class="tab"
+onclick="showSection('content',this)">
 المحتوى
 </button>
 
-<button class="tab" onclick="showSection('ai',this)">
+<button class="tab"
+onclick="showSection('ai',this)">
 الذكاء الاصطناعي
 </button>
 
-<button class="tab" onclick="showSection('features',this)">
+<button class="tab"
+onclick="showSection('features',this)">
 المميزات
 </button>
 
-<button class="tab" onclick="showSection('security',this)">
+<button class="tab"
+onclick="showSection('security',this)">
 الأمان
 </button>
 
-<button class="tab" onclick="showSection('backup',this)">
+<button class="tab"
+onclick="showSection('backup',this)">
 النسخ الاحتياطي
 </button>
 
-<button class="tab" onclick="showSection('maintenance',this)">
+<button class="tab"
+onclick="showSection('maintenance',this)">
 🛠️ الصيانة والفحص
 </button>
 
 </div>
+
 
 <section id="users" class="section active">
 
@@ -517,7 +661,8 @@ id="userSearch"
 placeholder="ابحث بالاسم أو الإيميل..."
 >
 
-<button class="btn green" onclick="loadUsers()">
+<button class="btn green"
+onclick="loadUsers()">
 بحث
 </button>
 
@@ -528,6 +673,7 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <table>
 
 <thead>
+
 <tr>
 <th>الاسم</th>
 <th>الإيميل</th>
@@ -536,12 +682,15 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <th>الرسائل</th>
 <th>الإجراءات</th>
 </tr>
+
 </thead>
 
 <tbody id="usersTable">
 
 <tr>
-<td colspan="6">جاري التحميل...</td>
+<td colspan="6">
+جاري التحميل...
+</td>
 </tr>
 
 </tbody>
@@ -549,8 +698,11 @@ placeholder="ابحث بالاسم أو الإيميل..."
 </table>
 
 </div>
+
 </div>
+
 </section>
+
 
 <section id="homepage" class="section">
 
@@ -561,45 +713,74 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <div class="grid">
 
 <div class="field">
+
 <label>اسم الموقع</label>
+
 <input id="site_name">
+
 </div>
 
+
 <div class="field">
+
 <label>عنوان الصفحة</label>
+
 <input id="homepage_title">
+
 </div>
 
+
 <div class="field full">
+
 <label>الوصف</label>
+
 <textarea id="site_description"></textarea>
+
 </div>
 
+
 <div class="field">
+
 <label>العنوان الفرعي</label>
+
 <input id="homepage_subtitle">
+
 </div>
 
+
 <div class="field">
+
 <label>نص الزر</label>
+
 <input id="homepage_button">
+
 </div>
+
 
 <div class="field full">
+
 <label>رسالة الترحيب</label>
+
 <textarea id="welcome"></textarea>
+
 </div>
 
 </div>
+
 
 <div class="actions">
-<button class="btn green" onclick="saveSettings()">
+
+<button class="btn green"
+onclick="saveSettings()">
 حفظ إعدادات الصفحة
 </button>
+
 </div>
 
 </div>
+
 </section>
+
 
 <section id="design" class="section">
 
@@ -610,40 +791,69 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <div class="grid">
 
 <div class="field">
+
 <label>اللون الأساسي</label>
-<input id="primary_color" placeholder="#00c896">
+
+<input
+id="primary_color"
+placeholder="#00c896"
+>
+
 </div>
 
+
 <div class="field">
+
 <label>النمط</label>
 
 <select id="theme">
-<option value="dark">داكن</option>
-<option value="light">فاتح</option>
+
+<option value="dark">
+داكن
+</option>
+
+<option value="light">
+فاتح
+</option>
+
 </select>
 
 </div>
 
+
 <div class="field full">
+
 <label>رابط الشعار</label>
+
 <input id="logo_url">
+
 </div>
+
 
 <div class="field full">
+
 <label>رابط الخلفية</label>
+
 <input id="background_url">
+
 </div>
 
 </div>
+
 
 <div class="actions">
-<button class="btn green" onclick="saveSettings()">
+
+<button class="btn green"
+onclick="saveSettings()">
 حفظ التصميم
 </button>
+
 </div>
 
 </div>
+
 </section>
+
 
 <section id="content" class="section">
 
@@ -654,30 +864,47 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <div class="grid">
 
 <div class="field full">
+
 <label>النص الإعلاني</label>
+
 <textarea id="ad_text"></textarea>
+
 </div>
 
+
 <div class="field full">
+
 <label>رسالة انتهاء الرصيد</label>
+
 <textarea id="no_credits_message"></textarea>
+
 </div>
+
 
 <div class="field full">
+
 <label>رسالة الخطأ العامة</label>
+
 <textarea id="error_message"></textarea>
+
 </div>
 
 </div>
+
 
 <div class="actions">
-<button class="btn green" onclick="saveSettings()">
+
+<button class="btn green"
+onclick="saveSettings()">
 حفظ المحتوى
 </button>
+
 </div>
 
 </div>
+
 </section>
+
 
 <section id="ai" class="section">
 
@@ -688,25 +915,42 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <div class="grid">
 
 <div class="field">
+
 <label>موديل الذكاء الاصطناعي</label>
+
 <input id="ai_model">
+
 </div>
+
 
 <div class="field">
+
 <label>عدد الرسائل المجانية</label>
-<input id="ai_free_messages" type="number" min="0">
+
+<input
+id="ai_free_messages"
+type="number"
+min="0"
+>
+
 </div>
 
 </div>
+
 
 <div class="actions">
-<button class="btn green" onclick="saveSettings()">
+
+<button class="btn green"
+onclick="saveSettings()">
 حفظ إعدادات الذكاء
 </button>
+
 </div>
 
 </div>
+
 </section>
+
 
 <section id="features" class="section">
 
@@ -717,35 +961,68 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <div class="grid">
 
 <label class="checkbox-row">
-<input id="feature_writing" type="checkbox">
+
+<input
+id="feature_writing"
+type="checkbox"
+>
+
 الكتابة
+
 </label>
 
+
 <label class="checkbox-row">
-<input id="feature_translation" type="checkbox">
+
+<input
+id="feature_translation"
+type="checkbox"
+>
+
 الترجمة
+
 </label>
 
+
 <label class="checkbox-row">
-<input id="feature_study" type="checkbox">
+
+<input
+id="feature_study"
+type="checkbox"
+>
+
 الدراسة
+
 </label>
 
+
 <label class="checkbox-row">
-<input id="chat_history_enabled" type="checkbox">
+
+<input
+id="chat_history_enabled"
+type="checkbox"
+>
+
 حفظ سجل المحادثات
+
 </label>
 
 </div>
+
 
 <div class="actions">
-<button class="btn green" onclick="saveSettings()">
+
+<button class="btn green"
+onclick="saveSettings()">
 حفظ المميزات
 </button>
+
 </div>
 
 </div>
+
 </section>
+
 
 <section id="security" class="section">
 
@@ -756,35 +1033,68 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <div class="grid">
 
 <label class="checkbox-row">
-<input id="registration_enabled" type="checkbox">
+
+<input
+id="registration_enabled"
+type="checkbox"
+>
+
 السماح بالتسجيل الجديد
+
 </label>
 
+
 <label class="checkbox-row">
-<input id="allow_login" type="checkbox">
+
+<input
+id="allow_login"
+type="checkbox"
+>
+
 السماح بتسجيل الدخول
+
 </label>
 
+
 <label class="checkbox-row">
-<input id="admin_protection" type="checkbox">
+
+<input
+id="admin_protection"
+type="checkbox"
+>
+
 حماية لوحة الإدارة
+
 </label>
 
+
 <label class="checkbox-row">
-<input id="maintenance_mode" type="checkbox">
+
+<input
+id="maintenance_mode"
+type="checkbox"
+>
+
 وضع الصيانة
+
 </label>
 
 </div>
+
 
 <div class="actions">
-<button class="btn green" onclick="saveSettings()">
+
+<button class="btn green"
+onclick="saveSettings()">
 حفظ إعدادات الأمان
 </button>
+
 </div>
 
 </div>
+
 </section>
+
 
 <section id="backup" class="section">
 
@@ -793,19 +1103,26 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <h2>النسخ الاحتياطي</h2>
 
 <p style="color:var(--muted);margin-bottom:15px">
+
 يمكنك تحميل نسخة JSON من المستخدمين والمحادثات والإعدادات.
+
 </p>
 
 <div class="actions">
 
-<button class="btn blue" onclick="downloadBackup()">
+<button class="btn blue"
+onclick="downloadBackup()">
+
 تحميل النسخة الاحتياطية
+
 </button>
 
 </div>
 
 </div>
+
 </section>
+
 
 <section id="maintenance" class="section">
 
@@ -814,29 +1131,46 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <div class="health-top">
 
 <div>
+
 <h2 style="margin-bottom:5px">
 🛠️ مركز الصيانة والفحص
 </h2>
 
 <p style="color:var(--muted);font-size:14px">
+
 افحص الموقع وقاعدة البيانات والذكاء الاصطناعي من مكان واحد.
+
 </p>
+
 </div>
+
 
 <button
 class="btn green"
 id="healthButton"
 onclick="runHealthCheck()">
+
 🔍 فحص الآن
+
 </button>
 
 </div>
 
-<div id="healthOverall" class="health-overall warning">
+
+<div
+id="healthOverall"
+class="health-overall warning">
+
 لم يتم إجراء الفحص بعد
+
 </div>
 
-<div id="healthGrid" class="health-grid" style="margin-top:15px">
+
+<div
+id="healthGrid"
+class="health-grid"
+style="margin-top:15px">
+
 
 <div class="health-card">
 
@@ -844,15 +1178,24 @@ onclick="runHealthCheck()">
 حالة قاعدة البيانات
 </div>
 
-<div id="healthDatabase" class="health-status warning">
+<div
+id="healthDatabase"
+class="health-status warning">
+
 لم يتم الفحص
+
 </div>
 
-<div id="healthDatabaseMessage" class="health-message">
+<div
+id="healthDatabaseMessage"
+class="health-message">
+
 اضغط على «فحص الآن».
+
 </div>
 
 </div>
+
 
 <div class="health-card">
 
@@ -860,15 +1203,24 @@ onclick="runHealthCheck()">
 Gemini API
 </div>
 
-<div id="healthGemini" class="health-status warning">
+<div
+id="healthGemini"
+class="health-status warning">
+
 لم يتم الفحص
+
 </div>
 
-<div id="healthGeminiMessage" class="health-message">
+<div
+id="healthGeminiMessage"
+class="health-message">
+
 اضغط على «فحص الآن».
+
 </div>
 
 </div>
+
 
 <div class="health-card">
 
@@ -876,15 +1228,24 @@ Gemini API
 موديل الذكاء الاصطناعي
 </div>
 
-<div id="healthModel" class="health-status warning">
+<div
+id="healthModel"
+class="health-status warning">
+
 لم يتم الفحص
+
 </div>
 
-<div id="healthModelMessage" class="health-message">
+<div
+id="healthModelMessage"
+class="health-message">
+
 اضغط على «فحص الآن».
+
 </div>
 
 </div>
+
 
 <div class="health-card">
 
@@ -892,47 +1253,76 @@ Gemini API
 وضع الصيانة
 </div>
 
-<div id="healthMaintenance" class="health-status warning">
+<div
+id="healthMaintenance"
+class="health-status warning">
+
 لم يتم الفحص
+
 </div>
 
-<div id="healthMaintenanceMessage" class="health-message">
+<div
+id="healthMaintenanceMessage"
+class="health-message">
+
 اضغط على «فحص الآن».
-</div>
 
 </div>
 
 </div>
+
+</div>
+
 
 <div class="health-info">
 
 <div>
+
 <strong>آخر فحص:</strong>
-<span id="healthCheckedAt">—</span>
+
+<span id="healthCheckedAt">
+—
+</span>
+
 </div>
+
 
 <div>
+
 <strong>مسار قاعدة البيانات:</strong>
-<span id="healthDbPath">—</span>
-</div>
+
+<span id="healthDbPath">
+—
+</span>
 
 </div>
 
 </div>
+
+</div>
+
 </section>
 
 </main>
+
 
 <div id="userModal" class="modal">
 
 <div class="modal-box">
 
-<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:15px">
+<div
+style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:15px">
 
-<h2 id="modalTitle">المستخدم</h2>
+<h2 id="modalTitle">
+المستخدم
+</h2>
 
-<button class="btn red" onclick="closeModal()">
+<button
+class="btn red"
+onclick="closeModal()">
+
 إغلاق
+
 </button>
 
 </div>
@@ -940,67 +1330,251 @@ Gemini API
 <div id="modalContent"></div>
 
 </div>
+
 </div>
+
 
 <script>
 
 let settings = {};
 
+
+/* =========================
+   الرسائل
+========================= */
+
 function showMessage(text,type="success"){
+
 const box=document.getElementById("message");
+
 box.textContent=text;
+
 box.className="message show "+type;
 
 setTimeout(()=>{
+
 box.className="message";
+
 },4000);
+
 }
+
+
+/* =========================
+   تطبيق إعدادات الموقع على لوحة المدير
+========================= */
+
+function applyAdminSettings(){
+
+const siteName =
+settings.site_name ||
+"زولك AI";
+
+const description =
+settings.site_description ||
+"إدارة المستخدمين والموقع والذكاء الاصطناعي والإعدادات";
+
+const primary =
+settings.primary_color ||
+"#00c896";
+
+const theme =
+settings.theme ||
+"dark";
+
+const logoUrl =
+settings.logo_url ||
+"";
+
+const backgroundUrl =
+settings.background_url ||
+"";
+
+
+/* اسم الموقع */
+
+document.title =
+"لوحة إدارة " + siteName;
+
+
+const logo =
+document.getElementById("adminLogo");
+
+if(logo){
+
+if(logoUrl){
+
+logo.innerHTML =
+'<img src="' +
+escapeHtml(logoUrl) +
+'" style="height:38px;max-width:180px;object-fit:contain;vertical-align:middle;margin-left:8px" onerror="this.style.display=\'none\'">' +
+'<span>' +
+escapeHtml(siteName) +
+'</span>';
+
+}else{
+
+logo.innerHTML =
+escapeHtml(siteName) +
+' <span>🇸🇩</span>';
+
+}
+
+}
+
+
+/* عنوان لوحة المدير */
+
+const title =
+document.getElementById("adminTitle");
+
+if(title){
+
+title.textContent =
+"لوحة إدارة " +
+siteName;
+
+}
+
+
+/* وصف اللوحة */
+
+const adminDescription =
+document.getElementById("adminDescription");
+
+if(adminDescription){
+
+adminDescription.textContent =
+description;
+
+}
+
+
+/* اللون الأساسي */
+
+document.documentElement
+.style.setProperty(
+"--green",
+primary
+);
+
+
+/* الوضع الفاتح / الداكن */
+
+if(theme==="light"){
+
+document.body.classList.add("light");
+
+}else{
+
+document.body.classList.remove("light");
+
+}
+
+
+/* الخلفية */
+
+if(backgroundUrl){
+
+document.body.style.backgroundImage =
+"url('" +
+backgroundUrl.replace(/'/g,"\\'") +
+"')";
+
+}else{
+
+document.body.style.backgroundImage =
+"none";
+
+}
+
+}
+
+
+/* =========================
+   الأقسام
+========================= */
 
 function showSection(id,button){
 
 document.querySelectorAll(".section")
-.forEach(x=>x.classList.remove("active"));
+.forEach(x=>
+x.classList.remove("active")
+);
 
 document.querySelectorAll(".tab")
-.forEach(x=>x.classList.remove("active"));
+.forEach(x=>
+x.classList.remove("active")
+);
 
-const section=document.getElementById(id);
+const section =
+document.getElementById(id);
 
 if(section){
+
 section.classList.add("active");
+
 }
 
 if(button){
+
 button.classList.add("active");
+
 }
 
 if(id==="maintenance"){
+
 runHealthCheck();
+
 }
+
 }
+
+
+/* =========================
+   API
+========================= */
 
 async function api(url,options={}){
 
-const response=await fetch(url,{
+const response =
+await fetch(url,{
+
 credentials:"same-origin",
+
 ...options,
+
 headers:{
+
 "Content-Type":"application/json",
+
 ...(options.headers||{})
+
 }
+
 });
+
 
 let data={};
 
 try{
+
 data=await response.json();
+
 }catch(e){}
 
+
 if(!response.ok){
-throw new Error(data.error||"حصل خطأ.");
+
+throw new Error(
+data.error ||
+"حصل خطأ."
+);
+
 }
 
 return data;
+
 }
 
 
@@ -1010,94 +1584,145 @@ return data;
 
 function healthStatusText(status){
 
-if(status==="ok") return "سليم";
-if(status==="warning") return "تحذير";
+if(status==="ok")
+return "سليم";
+
+if(status==="warning")
+return "تحذير";
 
 return "مشكلة";
+
 }
 
-function setHealthCard(statusId,messageId,status,message){
 
-const statusEl=document.getElementById(statusId);
-const messageEl=document.getElementById(messageId);
+function setHealthCard(
+statusId,
+messageId,
+status,
+message
+){
 
-if(!statusEl||!messageEl)return;
+const statusEl =
+document.getElementById(statusId);
 
-statusEl.textContent=healthStatusText(status);
+const messageEl =
+document.getElementById(messageId);
 
-statusEl.className=
-"health-status "+(status||"warning");
+if(!statusEl||!messageEl)
+return;
 
-messageEl.textContent=message||"";
+statusEl.textContent =
+healthStatusText(status);
+
+statusEl.className =
+"health-status "+
+(status||"warning");
+
+messageEl.textContent =
+message||"";
+
 }
+
 
 async function runHealthCheck(){
 
-const button=document.getElementById("healthButton");
+const button =
+document.getElementById(
+"healthButton"
+);
 
 if(button){
+
 button.disabled=true;
-button.textContent="⏳ جاري الفحص...";
+
+button.textContent =
+"⏳ جاري الفحص...";
+
 }
 
 try{
 
-const data=await api("/api/admin/health");
+const data =
+await api(
+"/api/admin/health"
+);
 
-const checks=data.checks||[];
+const checks =
+data.checks||[];
+
 
 let database={
 status:"warning",
 message:"لم يتم العثور على نتيجة."
 };
 
+
 let gemini={
 status:"warning",
 message:"لم يتم العثور على نتيجة."
 };
+
 
 let model={
 status:"warning",
 message:"لم يتم العثور على نتيجة."
 };
 
+
 let maintenance={
 status:"warning",
 message:"لم يتم العثور على نتيجة."
 };
 
+
 checks.forEach(check=>{
 
-const name=String(check.name||"").toLowerCase();
+const name =
+String(
+check.name||""
+).toLowerCase();
+
 
 if(
 name.includes("database")||
 name.includes("db")||
 name.includes("قاعدة")
 ){
+
 database=check;
+
 }
+
 else if(
 name.includes("gemini")||
 name.includes("api")
 ){
+
 gemini=check;
+
 }
+
 else if(
 name.includes("model")||
 name.includes("موديل")||
 name.includes("نموذج")
 ){
+
 model=check;
+
 }
+
 else if(
 name.includes("maintenance")||
 name.includes("صيانة")
 ){
+
 maintenance=check;
+
 }
 
 });
+
 
 setHealthCard(
 "healthDatabase",
@@ -1106,12 +1731,14 @@ database.status,
 database.message
 );
 
+
 setHealthCard(
 "healthGemini",
 "healthGeminiMessage",
 gemini.status,
 gemini.message
 );
+
 
 setHealthCard(
 "healthModel",
@@ -1120,6 +1747,7 @@ model.status,
 model.message
 );
 
+
 setHealthCard(
 "healthMaintenance",
 "healthMaintenanceMessage",
@@ -1127,55 +1755,96 @@ maintenance.status,
 maintenance.message
 );
 
-const overall=document.getElementById("healthOverall");
+
+const overall =
+document.getElementById(
+"healthOverall"
+);
 
 if(overall){
 
-const status=data.overall_status||"warning";
+const status =
+data.overall_status||
+"warning";
 
-overall.textContent=
+overall.textContent =
 status==="ok"
 ?"الموقع سليم"
-:status==="warning"
+:
+status==="warning"
 ?"يوجد تحذير"
-:"توجد مشكلة";
+:
+"توجد مشكلة";
 
-overall.className="health-overall "+status;
+overall.className =
+"health-overall "+
+status;
+
 }
 
-const checked=document.getElementById("healthCheckedAt");
+
+const checked =
+document.getElementById(
+"healthCheckedAt"
+);
 
 if(checked){
-checked.textContent=
+
+checked.textContent =
 data.checked_at||
-new Date().toLocaleString("ar-SD");
+new Date()
+.toLocaleString("ar-SD");
+
 }
 
-const dbPath=document.getElementById("healthDbPath");
+
+const dbPath =
+document.getElementById(
+"healthDbPath"
+);
 
 if(dbPath){
-dbPath.textContent=data.db_path||"—";
+
+dbPath.textContent =
+data.db_path||"—";
+
 }
 
 }catch(error){
 
-const overall=document.getElementById("healthOverall");
+const overall =
+document.getElementById(
+"healthOverall"
+);
 
 if(overall){
-overall.textContent="فشل الفحص";
-overall.className="health-overall error";
+
+overall.textContent =
+"فشل الفحص";
+
+overall.className =
+"health-overall error";
+
 }
 
-showMessage(error.message,"error");
+showMessage(
+error.message,
+"error"
+);
 
 }finally{
 
 if(button){
+
 button.disabled=false;
-button.textContent="🔍 فحص الآن";
+
+button.textContent =
+"🔍 فحص الآن";
+
 }
 
 }
+
 }
 
 
@@ -1185,13 +1854,16 @@ button.textContent="🔍 فحص الآن";
 
 function setField(id,value){
 
-const el=document.getElementById(id);
+const el =
+document.getElementById(id);
 
-if(!el)return;
+if(!el)
+return;
+
 
 if(el.type==="checkbox"){
 
-el.checked=
+el.checked =
 value===true||
 value===1||
 value==="1"||
@@ -1199,96 +1871,181 @@ value==="true";
 
 }else{
 
-el.value=value??"";
+el.value =
+value??"";
 
 }
+
 }
+
 
 async function loadSettings(){
 
 try{
 
-const data=await api("/api/admin/settings");
+const data =
+await api(
+"/api/admin/settings"
+);
 
-settings=data.settings||{};
+settings =
+data.settings||{};
 
-Object.keys(settings).forEach(key=>{
-setField(key,settings[key]);
+
+/* تعبئة الحقول */
+
+Object.keys(settings)
+.forEach(key=>{
+
+setField(
+key,
+settings[key]
+);
+
 });
+
+
+/* تطبيق الإعدادات على لوحة المدير */
+
+applyAdminSettings();
+
 
 }catch(error){
 
-showMessage(error.message,"error");
+showMessage(
+error.message,
+"error"
+);
 
 }
+
 }
+
 
 function collectSettings(){
 
 const ids=[
+
 "site_name",
+
 "homepage_title",
+
 "site_description",
+
 "homepage_subtitle",
+
 "homepage_button",
+
 "welcome",
+
 "primary_color",
+
 "theme",
+
 "logo_url",
+
 "background_url",
+
 "ad_text",
+
 "no_credits_message",
+
 "error_message",
+
 "ai_model",
+
 "ai_free_messages",
+
 "feature_writing",
+
 "feature_translation",
+
 "feature_study",
+
 "chat_history_enabled",
+
 "registration_enabled",
+
 "allow_login",
+
 "admin_protection",
+
 "maintenance_mode"
+
 ];
+
 
 const data={};
 
+
 ids.forEach(id=>{
 
-const el=document.getElementById(id);
+const el =
+document.getElementById(id);
 
-if(!el)return;
+if(!el)
+return;
 
-data[id]=
+
+data[id] =
 el.type==="checkbox"
 ?el.checked
 :el.value;
 
 });
 
+
 return data;
+
 }
+
 
 async function saveSettings(){
 
 try{
 
-const data=collectSettings();
+const data =
+collectSettings();
 
-await api("/api/admin/settings",{
+
+await api(
+"/api/admin/settings",
+{
+
 method:"POST",
-body:JSON.stringify(data)
-});
 
-settings={...settings,...data};
+body:
+JSON.stringify(data)
 
-showMessage("تم حفظ الإعدادات بنجاح.");
+}
+);
+
+
+/* تحديث الإعدادات داخل لوحة المدير فوراً */
+
+settings={
+...settings,
+...data
+};
+
+
+applyAdminSettings();
+
+
+showMessage(
+"تم حفظ الإعدادات بنجاح."
+);
+
 
 }catch(error){
 
-showMessage(error.message,"error");
+showMessage(
+error.message,
+"error"
+);
 
 }
+
 }
 
 
@@ -1299,403 +2056,49 @@ showMessage(error.message,"error");
 function escapeHtml(value){
 
 return String(value??"")
+
 .replace(/&/g,"&amp;")
+
 .replace(/</g,"&lt;")
+
 .replace(/>/g,"&gt;")
+
 .replace(/"/g,"&quot;")
+
 .replace(/'/g,"&#039;");
+
 }
+
 
 async function loadStats(){
 
 try{
 
-const data=await api("/api/admin/stats");
+const data =
+await api(
+"/api/admin/stats"
+);
 
-document.getElementById("statUsers").textContent=
+
+document.getElementById(
+"statUsers"
+).textContent =
 data.total_users??0;
 
-document.getElementById("statMessages").textContent=
+
+document.getElementById(
+"statMessages"
+).textContent =
 data.total_messages??0;
 
-document.getElementById("statBanned").textContent=
+
+document.getElementById(
+"statBanned"
+).textContent =
 data.banned_users??0;
 
-document.getElementById("statCredits").textContent=
-data.total_credits??0;
 
-}catch(error){
-
-showMessage(error.message,"error");
-
-}
-}
-
-function userActions(user){
-
-if(user.is_admin){
-return '<span class="badge green">مدير</span>';
-}
-
-const id=Number(user.id);
-
-const ban=user.banned
-?
-'<button class="btn green" onclick="unbanUser('+id+')">فك الحظر</button>'
-:
-'<button class="btn yellow" onclick="banUser('+id+')">حظر</button>';
-
-return ban+
-'<button class="btn blue" onclick="viewUserChats('+id+')">المحادثات</button>'+
-'<button class="btn" onclick="addCredits('+id+')">الرصيد</button>'+
-'<button class="btn red" onclick="deleteUser('+id+')">حذف</button>';
-}
-
-async function loadUsers(){
-
-try{
-
-const q=
-document.getElementById("userSearch")?.value.trim()||"";
-
-const data=
-await api(
-"/api/admin/users?q="+encodeURIComponent(q)
-);
-
-const users=data.users||[];
-
-const table=document.getElementById("usersTable");
-
-if(!users.length){
-
-table.innerHTML=
-'<tr><td colspan="6">ما في مستخدمين.</td></tr>';
-
-return;
-}
-
-table.innerHTML=users.map(user=>{
-
-const status=
-user.is_admin
-?
-'<span class="badge green">مدير</span>'
-:
-user.banned
-?
-'<span class="badge red">محظور</span>'
-:
-'<span class="badge green">نشط</span>';
-
-return '<tr>'+
-'<td>'+escapeHtml(user.name)+'</td>'+
-'<td>'+escapeHtml(user.email)+'</td>'+
-'<td>'+Number(user.credits||0)+'</td>'+
-'<td>'+status+'</td>'+
-'<td>'+Number(user.messages_count||0)+'</td>'+
-'<td><div class="actions" style="margin-top:0">'+
-userActions(user)+
-'</div></td>'+
-'</tr>';
-
-}).join("");
-
-}catch(error){
-
-showMessage(error.message,"error");
-
-}
-}
-
-async function banUser(id){
-
-if(!confirm("متأكد داير تحظر المستخدم؟"))return;
-
-try{
-
-await api(
-"/api/admin/user/"+id+"/ban",
-{
-method:"POST",
-body:"{}"
-}
-);
-
-showMessage("تم حظر المستخدم.");
-
-await loadUsers();
-await loadStats();
-
-}catch(error){
-
-showMessage(error.message,"error");
-
-}
-}
-
-async function unbanUser(id){
-
-if(!confirm("متأكد داير تفك الحظر؟"))return;
-
-try{
-
-await api(
-"/api/admin/user/"+id+"/unban",
-{
-method:"POST",
-body:"{}"
-}
-);
-
-showMessage("تم فك الحظر.");
-
-await loadUsers();
-await loadStats();
-
-}catch(error){
-
-showMessage(error.message,"error");
-
-}
-}
-
-async function addCredits(id){
-
-const value=
-prompt("أدخل الرصيد الجديد للمستخدم:");
-
-if(value===null)return;
-
-const credits=Number(value);
-
-if(!Number.isInteger(credits)||credits<0){
-
-showMessage(
-"أدخل رقم صحيح للرصيد.",
-"error"
-);
-
-return;
-}
-
-try{
-
-await api(
-"/api/admin/user/"+id+"/credits",
-{
-method:"POST",
-body:JSON.stringify({
-credits:credits
-})
-}
-);
-
-showMessage("تم تحديث الرصيد.");
-
-await loadUsers();
-await loadStats();
-
-}catch(error){
-
-showMessage(error.message,"error");
-
-}
-}
-
-async function deleteUser(id){
-
-if(!confirm(
-"متأكد داير تحذف المستخدم وكل محادثاته؟"
-))return;
-
-try{
-
-await api(
-"/api/admin/user/"+id,
-{
-method:"DELETE"
-}
-);
-
-showMessage("تم حذف المستخدم.");
-
-await loadUsers();
-await loadStats();
-
-}catch(error){
-
-showMessage(error.message,"error");
-
-}
-}
-
-async function viewUserChats(id){
-
-try{
-
-const data=
-await api(
-"/api/admin/user/"+id+"/chats"
-);
-
-document.getElementById("modalTitle").textContent=
-data.user?.name||
-"محادثات المستخدم";
-
-const chats=data.chats||[];
-
-document.getElementById("modalContent").innerHTML=
-chats.length
-?
-chats.map(chat=>
-'<div class="chat-message '+
-(chat.role==="user"?"user":"assistant")+
-'">'+
-
-'<div class="chat-role">'+
-(chat.role==="user"?"المستخدم":"زولك AI")+
-" • "+
-escapeHtml(chat.created_at||"")+
-"</div>"+
-
-"<div>"+
-escapeHtml(chat.content||"")+
-"</div>"+
-
-"</div>"
-).join("")
-:
-'<p style="color:var(--muted)">ما في محادثات.</p>';
-
-document.getElementById("userModal")
-.classList.add("show");
-
-}catch(error){
-
-showMessage(error.message,"error");
-
-}
-}
-
-function closeModal(){
-
-document.getElementById("userModal")
-.classList.remove("show");
-
-}
-
-
-/* =========================
-   النسخ الاحتياطي
-========================= */
-
-async function downloadBackup(){
-
-try{
-
-const response=
-await fetch(
-"/api/admin/backup",
-{
-credentials:"same-origin"
-}
-);
-
-if(!response.ok){
-
-let data={};
-
-try{
-data=await response.json();
-}catch(e){}
-
-throw new Error(
-data.error||
-"تعذر تحميل النسخة الاحتياطية."
-);
-
-}
-
-const blob=await response.blob();
-
-const url=
-URL.createObjectURL(blob);
-
-const a=
-document.createElement("a");
-
-a.href=url;
-
-a.download=
-"zolak-backup-"+
-new Date()
-.toISOString()
-.slice(0,19)
-.replace(/[:T]/g,"-")+
-".json";
-
-document.body.appendChild(a);
-
-a.click();
-
-a.remove();
-
-URL.revokeObjectURL(url);
-
-showMessage(
-"تم تجهيز النسخة الاحتياطية."
-);
-
-}catch(error){
-
-showMessage(
-error.message,
-"error"
-);
-
-}
-}
-
-
-/* =========================
-   تسجيل الخروج
-========================= */
-
-async function logout(){
-
-try{
-
-await api(
-"/api/logout",
-{
-method:"POST",
-body:"{}"
-}
-);
-
-}catch(e){}
-
-location.href="/login";
-}
-
-
-/* =========================
-   تشغيل اللوحة
-========================= */
-
-document.addEventListener(
-"DOMContentLoaded",
-async()=>{
-
-await loadSettings();
-await loadStats();
-await loadUsers();
-
-}
-);
-
-</script>
-
-</body>
-    </html>
+document.getElementById(
+"statCredits"
+).textContent =
+data.total_credits
