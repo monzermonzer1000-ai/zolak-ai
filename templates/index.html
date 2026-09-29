@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -10,8 +11,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        /* 🇸🇩 خلفية علم السودان - مباشرة داخل الصفحة */
+        /* إخفاء العناصر التي تحمل hidden حتى لو تعارض معها CSS */
+        [hidden] {
+            display: none !important;
+        }
 
+        /* 🇸🇩 خلفية علم السودان */
         .app.chatgpt-layout {
             background-image: url("/static/sudan-flag-background.jpg") !important;
             background-position: center center !important;
@@ -99,7 +104,6 @@
 
             <!-- الشريط العلوي -->
             <header class="topbar chat-navbar">
-
                 <div class="topbar-right">
 
                     <button
@@ -117,21 +121,18 @@
                         <strong>زولك AI</strong>
                         <span class="sudan-badge">🇸🇩</span>
                     </div>
-
                 </div>
 
                 <div class="topbar-left">
                     <span class="online-indicator"></span>
                     <span class="assistant-status">مساعدك الذكي</span>
                 </div>
-
             </header>
 
             <!-- مساحة المحادثة -->
             <section class="messages" id="messages" aria-live="polite">
 
                 <div class="welcome-screen">
-
                     <div class="welcome-logo">Z</div>
 
                     <span class="welcome-eyebrow">
@@ -154,12 +155,10 @@
                             data-prompt="اشرح لي موضوع الذكاء الاصطناعي بطريقة بسيطة"
                         >
                             <span class="suggestion-icon">✦</span>
-
                             <span class="suggestion-text">
                                 <strong>اشرح لي موضوع</strong>
                                 <small>خلينا نفهم حاجة جديدة</small>
                             </span>
-
                             <span class="suggestion-arrow">←</span>
                         </button>
 
@@ -169,12 +168,10 @@
                             data-prompt="ساعدني أكتب رسالة احترافية"
                         >
                             <span class="suggestion-icon">✎</span>
-
                             <span class="suggestion-text">
                                 <strong>ساعدني في الكتابة</strong>
                                 <small>رسائل وأفكار ومحتوى</small>
                             </span>
-
                             <span class="suggestion-arrow">←</span>
                         </button>
 
@@ -184,12 +181,10 @@
                             data-prompt="اقترح لي أفكار لمشروع جديد"
                         >
                             <span class="suggestion-icon">◇</span>
-
                             <span class="suggestion-text">
                                 <strong>أفكار لمشروع</strong>
                                 <small>نخطط ونطوّر أفكارك</small>
                             </span>
-
                             <span class="suggestion-arrow">←</span>
                         </button>
 
@@ -199,23 +194,19 @@
                             data-prompt="ساعدني أتعلم مهارة جديدة"
                         >
                             <span class="suggestion-icon">⌘</span>
-
                             <span class="suggestion-text">
                                 <strong>التعلّم والتطوير</strong>
                                 <small>خطوات واضحة للتعلّم</small>
                             </span>
-
                             <span class="suggestion-arrow">←</span>
                         </button>
 
                     </div>
                 </div>
-
             </section>
 
             <!-- منطقة كتابة الرسالة -->
             <div class="composer composer-area">
-
                 <div class="composer-inner">
 
                     <textarea
@@ -233,7 +224,6 @@
                     >
                         <span class="send-icon">↑</span>
                     </button>
-
                 </div>
 
                 <div class="composer-note">
@@ -245,35 +235,25 @@
                         صُنع في السودان 🇸🇩
                     </span>
                 </div>
-
             </div>
 
         </main>
-
     </div>
 
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 
     <script>
-
         // تعبئة مربع الكتابة عند اختيار أحد الاقتراحات
-
         document
             .querySelectorAll(".suggestion-card")
             .forEach(function (card) {
 
                 card.addEventListener("click", function () {
-
-                    const prompt =
-                        document.getElementById("prompt");
-
-                    const text =
-                        card.getAttribute("data-prompt");
+                    const prompt = document.getElementById("prompt");
+                    const text = card.getAttribute("data-prompt");
 
                     if (prompt && text) {
-
                         prompt.value = text;
-
                         prompt.focus();
 
                         prompt.dispatchEvent(
@@ -281,73 +261,124 @@
                                 bubbles: true
                             })
                         );
-
                     }
-
                 });
-
             });
 
-
-        // بدء محادثة جديدة
-
-        const newChatButton =
-            document.getElementById("newChat");
+        // بدء محادثة جديدة في الواجهة
+        const newChatButton = document.getElementById("newChat");
 
         if (newChatButton) {
+            newChatButton.addEventListener("click", function () {
+                const messages = document.getElementById("messages");
+                const prompt = document.getElementById("prompt");
 
-            newChatButton.addEventListener(
-                "click",
-                function () {
+                if (messages) {
+                    messages.innerHTML = `
+                        <div class="welcome-screen">
+                            <div class="welcome-logo">Z</div>
 
-                    const messages =
-                        document.getElementById("messages");
+                            <span class="welcome-eyebrow">
+                                أهلاً بيك في زولك AI 🇸🇩
+                            </span>
 
-                    const prompt =
-                        document.getElementById("prompt");
+                            <h1>كيف أقدر أساعدك اليوم؟</h1>
 
-                    if (messages) {
+                            <p>
+                                اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
+                                <br>
+                                أنا هنا عشان أساعدك.
+                            </p>
 
-                        messages.innerHTML = `
-                            <div class="welcome-screen">
+                            <div class="welcome-suggestions">
+                                <button
+                                    class="suggestion-card"
+                                    type="button"
+                                    data-prompt="اشرح لي موضوع الذكاء الاصطناعي بطريقة بسيطة"
+                                >
+                                    <span class="suggestion-icon">✦</span>
+                                    <span class="suggestion-text">
+                                        <strong>اشرح لي موضوع</strong>
+                                        <small>خلينا نفهم حاجة جديدة</small>
+                                    </span>
+                                    <span class="suggestion-arrow">←</span>
+                                </button>
 
-                                <div class="welcome-logo">
-                                    Z
-                                </div>
+                                <button
+                                    class="suggestion-card"
+                                    type="button"
+                                    data-prompt="ساعدني أكتب رسالة احترافية"
+                                >
+                                    <span class="suggestion-icon">✎</span>
+                                    <span class="suggestion-text">
+                                        <strong>ساعدني في الكتابة</strong>
+                                        <small>رسائل وأفكار ومحتوى</small>
+                                    </span>
+                                    <span class="suggestion-arrow">←</span>
+                                </button>
 
-                                <span class="welcome-eyebrow">
-                                    أهلاً بيك في زولك AI 🇸🇩
-                                </span>
+                                <button
+                                    class="suggestion-card"
+                                    type="button"
+                                    data-prompt="اقترح لي أفكار لمشروع جديد"
+                                >
+                                    <span class="suggestion-icon">◇</span>
+                                    <span class="suggestion-text">
+                                        <strong>أفكار لمشروع</strong>
+                                        <small>نخطط ونطوّر أفكارك</small>
+                                    </span>
+                                    <span class="suggestion-arrow">←</span>
+                                </button>
 
-                                <h1>
-                                    كيف أقدر أساعدك اليوم؟
-                                </h1>
-
-                                <p>
-                                    اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
-                                    <br>
-                                    أنا هنا عشان أساعدك.
-                                </p>
-
+                                <button
+                                    class="suggestion-card"
+                                    type="button"
+                                    data-prompt="ساعدني أتعلم مهارة جديدة"
+                                >
+                                    <span class="suggestion-icon">⌘</span>
+                                    <span class="suggestion-text">
+                                        <strong>التعلّم والتطوير</strong>
+                                        <small>خطوات واضحة للتعلّم</small>
+                                    </span>
+                                    <span class="suggestion-arrow">←</span>
+                                </button>
                             </div>
-                        `;
+                        </div>
+                    `;
 
-                    }
+                    // إعادة ربط أزرار الاقتراحات بعد إعادة إنشاء محتواها
+                    messages
+                        .querySelectorAll(".suggestion-card")
+                        .forEach(function (card) {
+                            card.addEventListener("click", function () {
+                                const input = document.getElementById("prompt");
+                                const text = card.getAttribute("data-prompt");
 
-                    if (prompt) {
+                                if (input && text) {
+                                    input.value = text;
+                                    input.focus();
 
-                        prompt.value = "";
-
-                        prompt.focus();
-
-                    }
-
+                                    input.dispatchEvent(
+                                        new Event("input", {
+                                            bubbles: true
+                                        })
+                                    );
+                                }
+                            });
+                        });
                 }
-            );
 
+                if (prompt) {
+                    prompt.value = "";
+                    prompt.focus();
+                    prompt.dispatchEvent(
+                        new Event("input", {
+                            bubbles: true
+                        })
+                    );
+                }
+            });
         }
-
     </script>
-
 </body>
 </html>
