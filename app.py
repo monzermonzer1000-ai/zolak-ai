@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import time
+import json
 from functools import wraps
 
 from flask import (
@@ -9,7 +10,8 @@ from flask import (
     request,
     jsonify,
     session,
-    redirect
+    redirect,
+    Response
 )
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -33,11 +35,8 @@ DB = os.getenv(
 # =========================================================
 
 def db():
-
     c = sqlite3.connect(DB)
-
     c.row_factory = sqlite3.Row
-
     return c
 
 
@@ -82,16 +81,12 @@ def init_db():
     ]
 
     if "banned" not in columns:
-
         c.execute("""
             ALTER TABLE users
             ADD COLUMN banned INTEGER DEFAULT 0
         """)
 
-    # -----------------------------------------------------
     # إنشاء المدير إذا لم يكن موجوداً
-    # -----------------------------------------------------
-
     admin = c.execute("""
         SELECT id
         FROM users
@@ -125,10 +120,7 @@ def init_db():
             0
         ))
 
-    # -----------------------------------------------------
     # الإعدادات الأساسية
-    # -----------------------------------------------------
-
     settings = [
 
         (
@@ -275,7 +267,6 @@ def init_db():
             "packages",
             "[]"
         )
-
     ]
 
     for key, value in settings:
@@ -293,14 +284,10 @@ def init_db():
         ))
 
     c.commit()
-
     c.close()
 
 
-def setting(
-    key,
-    default=""
-):
+def setting(key, default=""):
 
     c = db()
 
@@ -315,7 +302,6 @@ def setting(
     c.close()
 
     if row:
-
         return row["value"]
 
     return default
@@ -367,7 +353,7 @@ def admin_required(fn):
 
 
 # =========================================================
-# الصفحات
+# الصفحة الرئيسية
 # =========================================================
 
 @app.get("/")
@@ -423,12 +409,13 @@ def home():
     )
 
 
+# =========================================================
+# تسجيل الدخول والخروج
+# =========================================================
+
 @app.get("/login")
 def login():
-
-    return render_template(
-        "login.html"
-    )
+    return render_template("login.html")
 
 
 @app.get("/logout")
@@ -553,9 +540,7 @@ def register():
     c.close()
 
     session["uid"] = user["id"]
-
     session["name"] = user["name"]
-
     session["admin"] = bool(
         user["is_admin"]
     )
@@ -674,9 +659,7 @@ def api_login():
         ), 403
 
     session["uid"] = user["id"]
-
     session["name"] = user["name"]
-
     session["admin"] = bool(
         user["is_admin"]
     )
@@ -733,7 +716,7 @@ def me():
 
 
 # =========================================================
-# المحادثة مع Gemini
+# الذكاء الاصطناعي
 # =========================================================
 
 @app.post("/api/chat")
@@ -1059,32 +1042,24 @@ def admin():
 
     return render_template(
         "admin.html",
-
         users=users,
-
         total=total,
-
         msgs=messages,
-
         banned=banned,
-
         total_credits=total_credits,
-
         free=setting(
             "free_credits",
             "10"
         ),
-
         welcome=setting(
             "welcome"
         ),
-
         rights="© 2026 منذر السيد — جميع الحقوق محفوظة"
     )
 
 
 # =========================================================
-# محادثات مستخدم للأدمن
+# محادثات مستخدم
 # =========================================================
 
 @app.get("/api/admin/user/<int:uid>/chats")
@@ -1128,7 +1103,6 @@ def admin_user_chats(uid):
 
     return jsonify(
         user=dict(user),
-
         chats=[
             dict(row)
             for row in rows
@@ -1137,7 +1111,7 @@ def admin_user_chats(uid):
 
 
 # =========================================================
-# إعدادات لوحة الإدارة
+# إعدادات الإدارة
 # =========================================================
 
 ADMIN_SETTING_KEYS = {
@@ -1184,10 +1158,6 @@ ADMIN_SETTING_KEYS = {
 }
 
 
-# =========================================================
-# جلب إعدادات الإدارة
-# =========================================================
-
 @app.get("/api/admin/settings")
 @admin_required
 def get_admin_settings():
@@ -1210,10 +1180,6 @@ def get_admin_settings():
         }
     )
 
-
-# =========================================================
-# حفظ إعدادات الإدارة
-# =========================================================
 
 @app.post("/api/admin/settings")
 @admin_required
@@ -1243,7 +1209,6 @@ def admin_settings():
     }
 
     number_keys = {
-
         "free_credits",
         "ai_free_messages"
     }
@@ -1270,8 +1235,6 @@ def admin_settings():
                     ValueError,
                     TypeError
                 ):
-
-                    c.close()
 
                     return jsonify(
                         error="القيمة الرقمية غير صحيحة."
@@ -1339,22 +1302,9 @@ def add_credits(uid):
         silent=True
     ) or {}
 
-    has_amount = "amount" in data
+    if "credits" in data:
 
-    has_credits = "credits" in data
-
-    if (
-        not has_amount
-        and not has_credits
-    ):
-
-        return jsonify(
-            error="أدخل قيمة الرصيد."
-        ), 400
-
-    try:
-
-        if has_credits:
+        try:
 
             new_credits = int(
                 data.get(
@@ -1363,15 +1313,26 @@ def add_credits(uid):
                 )
             )
 
-            if new_credits < 0:
+        except (
+            ValueError,
+            TypeError
+        ):
 
-                return jsonify(
-                    error="الرصيد لا يمكن أن يكون سالباً."
-                ), 400
+            return jsonify(
+                error="قيمة الرصيد غير صحيحة."
+            ), 400
 
-            mode = "set"
+        if new_credits < 0:
 
-        else:
+            return jsonify(
+                error="الرصيد لا يمكن أن يكون سالباً."
+            ), 400
+
+        mode = "set"
+
+    elif "amount" in data:
+
+        try:
 
             amount = int(
                 data.get(
@@ -1380,21 +1341,27 @@ def add_credits(uid):
                 )
             )
 
-            if amount <= 0:
+        except (
+            ValueError,
+            TypeError
+        ):
 
-                return jsonify(
-                    error="أدخل رقم أكبر من صفر."
-                ), 400
+            return jsonify(
+                error="قيمة الرصيد غير صحيحة."
+            ), 400
 
-            mode = "add"
+        if amount <= 0:
 
-    except (
-        ValueError,
-        TypeError
-    ):
+            return jsonify(
+                error="أدخل رقم أكبر من صفر."
+            ), 400
+
+        mode = "add"
+
+    else:
 
         return jsonify(
-            error="قيمة الرصيد غير صحيحة."
+            error="أدخل قيمة الرصيد."
         ), 400
 
     c = db()
@@ -1402,8 +1369,6 @@ def add_credits(uid):
     user = c.execute("""
         SELECT
             id,
-            name,
-            email,
             credits,
             is_admin
         FROM users
@@ -1452,16 +1417,6 @@ def add_credits(uid):
             uid
         ))
 
-    if c.rowcount != 1:
-
-        c.rollback()
-
-        c.close()
-
-        return jsonify(
-            error="لم يتم تحديث الرصيد."
-        ), 500
-
     updated = c.execute("""
         SELECT credits
         FROM users
@@ -1471,14 +1426,11 @@ def add_credits(uid):
     )).fetchone()
 
     c.commit()
-
     c.close()
 
     return jsonify(
         ok=True,
-
         message="تم تحديث الرصيد بنجاح.",
-
         credits=updated["credits"]
     )
 
@@ -1527,7 +1479,6 @@ def ban_user(uid):
     ))
 
     c.commit()
-
     c.close()
 
     return jsonify(
@@ -1581,7 +1532,6 @@ def unban_user(uid):
     ))
 
     c.commit()
-
     c.close()
 
     return jsonify(
@@ -1641,7 +1591,6 @@ def delete_user(uid):
     ))
 
     c.commit()
-
     c.close()
 
     return jsonify(
@@ -1651,7 +1600,7 @@ def delete_user(uid):
 
 
 # =========================================================
-# المستخدمون + الإحصائيات
+# المستخدمون
 # =========================================================
 
 @app.get("/api/admin/users")
@@ -1665,7 +1614,7 @@ def admin_users():
 
     c = db()
 
-    base_sql = """
+    sql = """
         SELECT
             u.id,
             u.name,
@@ -1706,39 +1655,30 @@ def admin_users():
             ON ch.user_id=u.id
     """
 
+    params = []
+
     if query:
 
-        users = c.execute(
-            base_sql
-            + """
-                WHERE
-                    u.name LIKE ?
-                    OR u.email LIKE ?
+        sql += """
+            WHERE
+                u.name LIKE ?
+                OR u.email LIKE ?
+        """
 
-                GROUP BY
-                    u.id
+        params.extend([
+            f"%{query}%",
+            f"%{query}%"
+        ])
 
-                ORDER BY
-                    u.id DESC
-            """,
-            (
-                f"%{query}%",
-                f"%{query}%"
-            )
-        ).fetchall()
+    sql += """
+        GROUP BY u.id
+        ORDER BY u.id DESC
+    """
 
-    else:
-
-        users = c.execute(
-            base_sql
-            + """
-                GROUP BY
-                    u.id
-
-                ORDER BY
-                    u.id DESC
-            """
-        ).fetchall()
+    users = c.execute(
+        sql,
+        params
+    ).fetchall()
 
     stats = c.execute("""
         SELECT
@@ -1780,14 +1720,11 @@ def admin_users():
     c.close()
 
     return jsonify(
-
         users=[
             dict(user)
             for user in users
         ],
-
         stats=dict(stats)
-
     )
 
 
@@ -1796,4 +1733,349 @@ def admin_users():
 # =========================================================
 
 @app.get("/api/admin/stats")
-@admin
+@admin_required
+def admin_stats():
+
+    c = db()
+
+    total_users = c.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE is_admin=0
+    """).fetchone()[0]
+
+    total_messages = c.execute("""
+        SELECT COUNT(*)
+        FROM chats
+    """).fetchone()[0]
+
+    banned_users = c.execute("""
+        SELECT COUNT(*)
+        FROM users
+        WHERE banned=1
+        AND is_admin=0
+    """).fetchone()[0]
+
+    total_credits = c.execute("""
+        SELECT COALESCE(
+            SUM(credits),
+            0
+        )
+        FROM users
+        WHERE is_admin=0
+    """).fetchone()[0]
+
+    active_users = c.execute("""
+        SELECT COUNT(DISTINCT user_id)
+        FROM chats
+        WHERE user_id IS NOT NULL
+    """).fetchone()[0]
+
+    c.close()
+
+    return jsonify(
+        ok=True,
+        total_users=total_users,
+        total_messages=total_messages,
+        banned_users=banned_users,
+        total_credits=total_credits,
+        active_users=active_users
+    )
+
+
+# =========================================================
+# مركز الصيانة والفحص
+# =========================================================
+
+@app.get("/api/admin/health")
+@admin_required
+def admin_health():
+
+    checks = []
+    overall_ok = True
+
+    # -------------------------
+    # قاعدة البيانات
+    # -------------------------
+
+    c = None
+
+    try:
+
+        c = db()
+
+        c.execute(
+            "SELECT 1"
+        ).fetchone()
+
+        required_tables = {
+            "users",
+            "chats",
+            "settings"
+        }
+
+        existing_tables = {
+            row["name"]
+            for row in c.execute("""
+                SELECT name
+                FROM sqlite_master
+                WHERE type='table'
+            """).fetchall()
+        }
+
+        missing = (
+            required_tables
+            - existing_tables
+        )
+
+        if missing:
+
+            overall_ok = False
+
+            checks.append({
+                "name": "database",
+                "status": "error",
+                "message": (
+                    "جداول ناقصة: "
+                    + ", ".join(
+                        sorted(missing)
+                    )
+                )
+            })
+
+        else:
+
+            integrity = c.execute(
+                "PRAGMA integrity_check"
+            ).fetchone()[0]
+
+            if integrity == "ok":
+
+                checks.append({
+                    "name": "database",
+                    "status": "ok",
+                    "message": "قاعدة البيانات تعمل وسلامتها جيدة."
+                })
+
+            else:
+
+                overall_ok = False
+
+                checks.append({
+                    "name": "database",
+                    "status": "error",
+                    "message": str(integrity)
+                })
+
+    except Exception as e:
+
+        overall_ok = False
+
+        checks.append({
+            "name": "database",
+            "status": "error",
+            "message": (
+                "فشل الاتصال بقاعدة البيانات: "
+                + str(e)
+            )
+        })
+
+    finally:
+
+        if c:
+            c.close()
+
+    # -------------------------
+    # Gemini API
+    # -------------------------
+
+    gemini_key = os.getenv(
+        "GEMINI_API_KEY"
+    )
+
+    if gemini_key:
+
+        checks.append({
+            "name": "gemini_api",
+            "status": "ok",
+            "message": "مفتاح Gemini موجود في Railway."
+        })
+
+    else:
+
+        overall_ok = False
+
+        checks.append({
+            "name": "gemini_api",
+            "status": "error",
+            "message": "GEMINI_API_KEY غير موجود في متغيرات البيئة."
+        })
+
+    # -------------------------
+    # موديل الذكاء
+    # -------------------------
+
+    model = setting(
+        "ai_model",
+        ""
+    ).strip()
+
+    if model:
+
+        checks.append({
+            "name": "model",
+            "status": "ok",
+            "message": (
+                "الموديل الحالي: "
+                + model
+            )
+        })
+
+    else:
+
+        overall_ok = False
+
+        checks.append({
+            "name": "model",
+            "status": "error",
+            "message": "لم يتم تحديد موديل للذكاء الاصطناعي."
+        })
+
+    # -------------------------
+    # وضع الصيانة
+    # -------------------------
+
+    maintenance = setting(
+        "maintenance_mode",
+        "0"
+    )
+
+    if maintenance == "1":
+
+        checks.append({
+            "name": "maintenance",
+            "status": "warning",
+            "message": "وضع الصيانة مفعّل حالياً."
+        })
+
+    else:
+
+        checks.append({
+            "name": "maintenance",
+            "status": "ok",
+            "message": "وضع الصيانة غير مفعّل."
+        })
+
+    return jsonify(
+        ok=overall_ok,
+        checked_at=time.strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        db_path=DB,
+        checks=checks
+    )
+
+
+# =========================================================
+# النسخ الاحتياطي
+# =========================================================
+
+@app.get("/api/admin/backup")
+@admin_required
+def admin_backup():
+
+    c = db()
+
+    users = c.execute("""
+        SELECT
+            id,
+            name,
+            email,
+            credits,
+            is_admin,
+            banned
+        FROM users
+        ORDER BY id
+    """).fetchall()
+
+    chats = c.execute("""
+        SELECT
+            id,
+            user_id,
+            role,
+            content,
+            created_at
+        FROM chats
+        ORDER BY id
+    """).fetchall()
+
+    settings_rows = c.execute("""
+        SELECT
+            key,
+            value
+        FROM settings
+        ORDER BY key
+    """).fetchall()
+
+    c.close()
+
+    backup = {
+
+        "backup_created_at":
+            time.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+
+        "users": [
+            dict(row)
+            for row in users
+        ],
+
+        "chats": [
+            dict(row)
+            for row in chats
+        ],
+
+        "settings": {
+            row["key"]: row["value"]
+            for row in settings_rows
+        }
+    }
+
+    filename = (
+        "zolak-backup-"
+        + time.strftime("%Y%m%d-%H%M%S")
+        + ".json"
+    )
+
+    return Response(
+        json.dumps(
+            backup,
+            ensure_ascii=False,
+            indent=2
+        ),
+        mimetype="application/json",
+        headers={
+            "Content-Disposition":
+                f'attachment; filename="{filename}"'
+        }
+    )
+
+
+# =========================================================
+# تشغيل التطبيق
+# =========================================================
+
+if __name__ == "__main__":
+
+    port = int(
+        os.getenv(
+            "PORT",
+            "5000"
+        )
+    )
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
