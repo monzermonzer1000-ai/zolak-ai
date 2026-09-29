@@ -1,4 +1,3 @@
-
 "use strict";
 
 // عناصر واجهة المحادثة
@@ -122,13 +121,14 @@ if (promptBox) {
     });
 }
 
-// التعامل مع بطاقات الاقتراح، حتى البطاقات التي تظهر بعد محادثة جديدة
+// التعامل مع بطاقات الاقتراح
 document.addEventListener("click", function (event) {
     const card = event.target.closest(".suggestion-card");
 
     if (!card || !promptBox) return;
 
     const text = card.getAttribute("data-prompt");
+
     if (!text) return;
 
     event.preventDefault();
@@ -144,7 +144,9 @@ function showWelcome() {
         <div class="welcome-screen">
             <div class="welcome-logo">Z</div>
             <span class="welcome-eyebrow">أهلاً بيك في زولك AI 🇸🇩</span>
+
             <h1>كيف أقدر أساعدك اليوم؟</h1>
+
             <p>
                 اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
                 <br>
@@ -152,82 +154,180 @@ function showWelcome() {
             </p>
 
             <div class="welcome-suggestions">
+
                 <button class="suggestion-card" type="button"
                     data-prompt="اشرح لي موضوع الذكاء الاصطناعي بطريقة بسيطة">
+
                     <span class="suggestion-icon">✦</span>
+
                     <span class="suggestion-text">
                         <strong>اشرح لي موضوع</strong>
                         <small>خلينا نفهم حاجة جديدة</small>
                     </span>
+
                     <span class="suggestion-arrow">←</span>
                 </button>
 
                 <button class="suggestion-card" type="button"
                     data-prompt="ساعدني أكتب رسالة احترافية">
+
                     <span class="suggestion-icon">✎</span>
+
                     <span class="suggestion-text">
                         <strong>ساعدني في الكتابة</strong>
                         <small>رسائل وأفكار ومحتوى</small>
                     </span>
+
                     <span class="suggestion-arrow">←</span>
                 </button>
 
                 <button class="suggestion-card" type="button"
                     data-prompt="اقترح لي أفكار لمشروع جديد">
+
                     <span class="suggestion-icon">◇</span>
+
                     <span class="suggestion-text">
                         <strong>أفكار لمشروع</strong>
                         <small>نخطط ونطوّر أفكارك</small>
                     </span>
+
                     <span class="suggestion-arrow">←</span>
                 </button>
 
                 <button class="suggestion-card" type="button"
                     data-prompt="ساعدني أتعلم مهارة جديدة">
+
                     <span class="suggestion-icon">⌘</span>
+
                     <span class="suggestion-text">
                         <strong>التعلّم والتطوير</strong>
                         <small>خطوات واضحة للتعلّم</small>
                     </span>
+
                     <span class="suggestion-arrow">←</span>
                 </button>
+
             </div>
         </div>
     `;
 
     promptBox.value = "";
     promptBox.focus();
+
+    closeSidebar();
 }
+
+// =========================
+// القائمة الجانبية
+// =========================
+
+const mobileMenu = document.querySelector(".mobile-menu");
+const sidebar = document.querySelector(".sidebar");
+
+// إنشاء طبقة خلفية للقائمة
+let sidebarOverlay = document.querySelector(".sidebar-overlay");
+
+if (!sidebarOverlay) {
+    sidebarOverlay = document.createElement("div");
+    sidebarOverlay.className = "sidebar-overlay";
+
+    sidebarOverlay.style.position = "fixed";
+    sidebarOverlay.style.inset = "0";
+    sidebarOverlay.style.zIndex = "40";
+    sidebarOverlay.style.background = "rgba(0, 0, 0, 0.35)";
+    sidebarOverlay.style.backdropFilter = "blur(2px)";
+    sidebarOverlay.style.opacity = "0";
+    sidebarOverlay.style.pointerEvents = "none";
+    sidebarOverlay.style.transition = "opacity 0.25s ease";
+
+    document.body.appendChild(sidebarOverlay);
+}
+
+// فتح القائمة
+function openSidebar() {
+    if (!sidebar) return;
+
+    sidebar.classList.add("open");
+
+    sidebarOverlay.style.opacity = "1";
+    sidebarOverlay.style.pointerEvents = "auto";
+
+    document.body.style.overflow = "hidden";
+}
+
+// إغلاق القائمة
+function closeSidebar() {
+    if (!sidebar) return;
+
+    sidebar.classList.remove("open");
+
+    sidebarOverlay.style.opacity = "0";
+    sidebarOverlay.style.pointerEvents = "none";
+
+    document.body.style.overflow = "";
+}
+
+// تبديل القائمة
+function toggleSidebar() {
+    if (!sidebar) return;
+
+    if (sidebar.classList.contains("open")) {
+        closeSidebar();
+    } else {
+        openSidebar();
+    }
+}
+
+// زر القائمة ☰
+if (mobileMenu) {
+    mobileMenu.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (window.innerWidth <= 800) {
+            toggleSidebar();
+        }
+    });
+}
+
+// الضغط على المنطقة خارج القائمة
+if (sidebarOverlay) {
+    sidebarOverlay.addEventListener("click", function () {
+        closeSidebar();
+    });
+}
+
+// الضغط على روابط القائمة
+document.querySelectorAll(".sidebar .sidebar-link").forEach(function (link) {
+    link.addEventListener("click", function () {
+        if (window.innerWidth <= 800) {
+            closeSidebar();
+        }
+    });
+});
 
 // زر محادثة جديدة
 const newChatButton = document.querySelector(".new-chat");
 
 if (newChatButton) {
-    newChatButton.addEventListener("click", showWelcome);
-}
-
-// فتح وإغلاق القائمة الجانبية
-const mobileMenu = document.querySelector(".mobile-menu");
-
-if (mobileMenu) {
-    mobileMenu.addEventListener("click", function () {
-        const sidebar = document.querySelector(".sidebar");
-
-        if (!sidebar) return;
-
-        sidebar.classList.toggle("open");
+    newChatButton.addEventListener("click", function () {
+        showWelcome();
+        closeSidebar();
     });
 }
 
-// إغلاق القائمة عند الضغط على رابط فيها على الهاتف
-document.querySelectorAll(".sidebar .sidebar-link").forEach(function (link) {
-    link.addEventListener("click", function () {
-        const sidebar = document.querySelector(".sidebar");
+// زر Escape يقفل القائمة
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        closeSidebar();
+    }
+});
 
-        if (sidebar && window.innerWidth <= 760) {
-            sidebar.classList.remove("open");
-        }
-    });
+// لو انتقلنا لشاشة كبيرة، نقفل القائمة
+window.addEventListener("resize", function () {
+    if (window.innerWidth > 800) {
+        closeSidebar();
+    }
 });
 
 // تحميل بيانات الحساب عند فتح الصفحة
