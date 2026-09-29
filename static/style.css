@@ -1,3 +1,4 @@
+
 * {
     box-sizing: border-box;
 }
@@ -367,10 +368,11 @@ textarea {
     overflow-y: auto;
     padding: 30px 20px 22px;
 
+    /* خلفية علم السودان بوضوح أعلى */
     background-image:
         linear-gradient(
-            rgba(11, 16, 32, 0.32),
-            rgba(11, 16, 32, 0.32)
+            rgba(11, 16, 32, 0.16),
+            rgba(11, 16, 32, 0.16)
         ),
         url("/static/sudan-flag-background.jpg");
 
@@ -875,4 +877,4 @@ textarea {
         transition-duration: 0.01ms !important;
         animation-duration: 0.01ms !important;
     }
-    }
+}
