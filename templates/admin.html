@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
@@ -24,7 +23,9 @@
             text-decoration: none;
         }
 
-        button, input, textarea {
+        button,
+        input,
+        textarea {
             font: inherit;
         }
 
@@ -134,7 +135,8 @@
             font-size: 14px;
         }
 
-        input, textarea {
+        input,
+        textarea {
             display: block;
             width: 100%;
             padding: 12px;
@@ -146,7 +148,8 @@
             outline: none;
         }
 
-        input:focus, textarea:focus {
+        input:focus,
+        textarea:focus {
             border-color: #999;
         }
 
@@ -192,6 +195,10 @@
 
         .danger {
             background: #c93636;
+        }
+
+        .chat-btn {
+            background: #1769aa;
         }
 
         .logout-btn {
@@ -271,6 +278,75 @@
             color: #aaa;
         }
 
+        /* =========================
+           نافذة المحادثات
+        ========================= */
+
+        .chat-panel {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #3d3d3d;
+            border-radius: 12px;
+            background: #151515;
+        }
+
+        .chat-panel.open {
+            display: block;
+        }
+
+        .chat-header {
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #333;
+        }
+
+        .chat-user-email {
+            color: #aaa;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .chat-message {
+            padding: 12px;
+            margin: 9px 0;
+            border-radius: 10px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .chat-user {
+            background: #252525;
+            border-right: 3px solid #198754;
+        }
+
+        .chat-ai {
+            background: #202936;
+            border-right: 3px solid #1769aa;
+        }
+
+        .chat-role {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #ddd;
+        }
+
+        .chat-time {
+            display: block;
+            margin-top: 8px;
+            color: #777;
+            font-size: 10px;
+        }
+
+        .chat-loading {
+            padding: 20px;
+            text-align: center;
+            color: #aaa;
+        }
+
         @media (max-width: 800px) {
             .stats {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -317,62 +393,140 @@
 </head>
 
 <body>
+
 <div class="admin-page">
+
     <main class="admin-container">
 
         <header class="admin-header">
-            <div class="logo">زولك AI 🇸🇩</div>
-            <a class="home-link" href="/">الرئيسية</a>
+            <div class="logo">
+                زولك AI 🇸🇩
+            </div>
+
+            <a class="home-link" href="/">
+                الرئيسية
+            </a>
         </header>
 
         <div class="admin-title">
-            <h1>🛡️ لوحة المدير</h1>
+
+            <h1>
+                🛡️ لوحة المدير
+            </h1>
+
             <a href="/logout">
-                <button type="button" class="logout-btn">تسجيل الخروج</button>
+                <button
+                    type="button"
+                    class="logout-btn"
+                >
+                    تسجيل الخروج
+                </button>
             </a>
+
         </div>
 
-        <!-- الإحصائيات -->
+
+        <!-- =========================
+             الإحصائيات
+        ========================= -->
+
         <section class="stats">
+
             <div class="stat">
-                <div class="stat-title">👥 المستخدمين</div>
-                <b>{{ total }}</b>
+                <div class="stat-title">
+                    👥 المستخدمين
+                </div>
+
+                <b>
+                    {{ total }}
+                </b>
             </div>
 
             <div class="stat">
-                <div class="stat-title">💬 الرسائل</div>
-                <b>{{ msgs }}</b>
+                <div class="stat-title">
+                    💬 الرسائل
+                </div>
+
+                <b>
+                    {{ msgs }}
+                </b>
             </div>
 
             <div class="stat">
-                <div class="stat-title">🚫 الموقوفين</div>
-                <b>{{ banned }}</b>
+                <div class="stat-title">
+                    🚫 الموقوفين
+                </div>
+
+                <b>
+                    {{ banned }}
+                </b>
             </div>
 
             <div class="stat">
-                <div class="stat-title">🎁 إجمالي الأرصدة</div>
-                <b>{{ total_credits }}</b>
+                <div class="stat-title">
+                    🎁 إجمالي الأرصدة
+                </div>
+
+                <b>
+                    {{ total_credits }}
+                </b>
             </div>
+
         </section>
 
-        <!-- إعدادات الموقع -->
+
+        <!-- =========================
+             إعدادات الموقع
+        ========================= -->
+
         <section class="card">
-            <h2>⚙️ إعدادات زولك</h2>
 
-            <label for="free">🎁 الرصيد المجاني عند التسجيل</label>
-            <input id="free" type="number" min="0" value="{{ free }}">
+            <h2>
+                ⚙️ إعدادات زولك
+            </h2>
 
-            <label for="welcome">📝 رسالة الترحيب</label>
-            <textarea id="welcome" rows="4">{{ welcome }}</textarea>
+            <label for="free">
+                🎁 الرصيد المجاني عند التسجيل
+            </label>
 
-            <button type="button" class="primary" id="saveSettingsButton" onclick="saveSettings()">
+            <input
+                id="free"
+                type="number"
+                min="0"
+                value="{{ free }}"
+            >
+
+            <label for="welcome">
+                📝 رسالة الترحيب
+            </label>
+
+            <textarea
+                id="welcome"
+                rows="4"
+            >{{ welcome }}</textarea>
+
+            <button
+                type="button"
+                class="primary"
+                id="saveSettingsButton"
+                onclick="saveSettings()"
+            >
                 💾 حفظ الإعدادات
             </button>
+
         </section>
 
-        <!-- البحث -->
+
+        <!-- =========================
+             البحث
+        ========================= -->
+
         <section class="card">
-            <h2>🔍 البحث عن مستخدم</h2>
+
+            <h2>
+                🔍 البحث عن مستخدم
+            </h2>
+
             <input
                 id="search"
                 type="search"
@@ -380,336 +534,1104 @@
                 oninput="searchUsers()"
                 autocomplete="off"
             >
+
         </section>
 
-        <!-- قائمة المستخدمين -->
+
+        <!-- =========================
+             المستخدمين
+        ========================= -->
+
         <section class="card">
-            <h2>👥 المستخدمين</h2>
+
+            <h2>
+                👥 المستخدمين
+            </h2>
+
             <div id="users">
+
                 {% for u in users %}
-                <div class="user">
+
+                <div
+                    class="user"
+                    id="user-{{ u['id'] }}"
+                >
+
                     <div class="userhead">
+
                         <div>
-                            <div class="user-name">👤 {{ u['name'] }}</div>
-                            <div class="email">📧 {{ u['email'] }}</div>
+
+                            <div class="user-name">
+                                👤 {{ u['name'] }}
+                            </div>
+
+                            <div class="email">
+                                📧 {{ u['email'] }}
+                            </div>
+
                         </div>
 
                         <div>
+
                             {% if u['is_admin'] %}
-                                <span class="badge">🛡️ مدير</span>
+
+                                <span class="badge">
+                                    🛡️ مدير
+                                </span>
+
                             {% elif u['banned'] %}
-                                <span class="badge banned">🚫 موقوف</span>
+
+                                <span class="badge banned">
+                                    🚫 موقوف
+                                </span>
+
                             {% else %}
-                                <span class="badge">✅ نشط</span>
+
+                                <span class="badge">
+                                    ✅ نشط
+                                </span>
+
                             {% endif %}
+
                         </div>
+
                     </div>
+
 
                     <div class="balance">
-                        🎁 الرصيد: <strong>{{ u['credits'] }}</strong>
+
+                        🎁 الرصيد:
+                        <strong>
+                            {{ u['credits'] }}
+                        </strong>
+
                     </div>
 
-                    {% if not u['is_admin'] %}
+
                     <div class="actions">
-                        <button type="button" class="success" onclick="addCredit({{ u['id'] }})">
-                            ➕ إضافة 10
+
+                        <button
+                            type="button"
+                            class="chat-btn"
+                            onclick="toggleChats({{ u['id'] }})"
+                        >
+                            💬 محادثات
                         </button>
 
-                        <button type="button" onclick="addCustomCredit({{ u['id'] }})">
-                            🎁 إضافة رصيد
-                        </button>
 
-                        {% if u['banned'] %}
-                        <button type="button" class="primary" onclick="unbanUser({{ u['id'] }})">
-                            ✅ إلغاء الحظر
-                        </button>
-                        {% else %}
-                        <button type="button" class="danger" onclick="banUser({{ u['id'] }})">
-                            🚫 حظر
-                        </button>
+                        {% if not u['is_admin'] %}
+
+                            <button
+                                type="button"
+                                class="success"
+                                onclick="addCredit({{ u['id'] }})"
+                            >
+                                ➕ إضافة 10
+                            </button>
+
+                            <button
+                                type="button"
+                                onclick="addCustomCredit({{ u['id'] }})"
+                            >
+                                🎁 إضافة رصيد
+                            </button>
+
+
+                            {% if u['banned'] %}
+
+                                <button
+                                    type="button"
+                                    class="primary"
+                                    onclick="unbanUser({{ u['id'] }})"
+                                >
+                                    ✅ إلغاء الحظر
+                                </button>
+
+                            {% else %}
+
+                                <button
+                                    type="button"
+                                    class="danger"
+                                    onclick="banUser({{ u['id'] }})"
+                                >
+                                    🚫 حظر
+                                </button>
+
+                            {% endif %}
+
+
+                            <button
+                                type="button"
+                                class="danger"
+                                onclick="deleteUser({{ u['id'] }})"
+                            >
+                                🗑️ حذف
+                            </button>
+
                         {% endif %}
 
-                        <button type="button" class="danger" onclick="deleteUser({{ u['id'] }})">
-                            🗑️ حذف
-                        </button>
                     </div>
-                    {% endif %}
+
+
+                    <!-- مكان عرض المحادثات -->
+
+                    <div
+                        class="chat-panel"
+                        id="chat-panel-{{ u['id'] }}"
+                    ></div>
+
                 </div>
+
                 {% else %}
-                <div class="empty">ما في مستخدمين لعرضهم حالياً.</div>
+
+                <div class="empty">
+                    ما في مستخدمين لعرضهم حالياً.
+                </div>
+
                 {% endfor %}
+
             </div>
+
         </section>
 
+
         <footer class="rights">
-            © 2026 منذر السيد — جميع الحقوق محفوظة<br>
+
+            © 2026 منذر السيد — جميع الحقوق محفوظة
+            <br>
+
             زولك AI 🇸🇩
+
         </footer>
+
     </main>
+
 </div>
 
+
 <script>
+
+    // =========================
+    // قراءة الرد
+    // =========================
+
     async function readResponse(response) {
+
         try {
             return await response.json();
-        } catch (error) {
+        }
+
+        catch (error) {
             return {};
         }
+
     }
 
-    async function saveSettings() {
-        const button = document.getElementById("saveSettingsButton");
-        const free = document.getElementById("free").value;
-        const welcome = document.getElementById("welcome").value;
 
-        if (free === "" || Number(free) < 0 || !Number.isInteger(Number(free))) {
-            alert("❌ أدخل رصيداً صحيحاً يساوي صفراً أو أكبر.");
+    // =========================
+    // الإعدادات
+    // =========================
+
+    async function saveSettings() {
+
+        const button =
+            document.getElementById(
+                "saveSettingsButton"
+            );
+
+        const free =
+            document.getElementById(
+                "free"
+            ).value;
+
+        const welcome =
+            document.getElementById(
+                "welcome"
+            ).value;
+
+
+        if (
+            free === "" ||
+            Number(free) < 0 ||
+            !Number.isInteger(Number(free))
+        ) {
+
+            alert(
+                "❌ أدخل رصيداً صحيحاً يساوي صفراً أو أكبر."
+            );
+
             return;
         }
+
 
         button.disabled = true;
         button.textContent = "جارٍ الحفظ...";
 
-        try {
-            const response = await fetch("/api/admin/settings", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    free_credits: Number(free),
-                    welcome: welcome
-                })
-            });
 
-            const data = await readResponse(response);
+        try {
+
+            const response =
+                await fetch(
+                    "/api/admin/settings",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            free_credits:
+                                Number(free),
+
+                            welcome:
+                                welcome
+                        })
+                    }
+                );
+
+
+            const data =
+                await readResponse(
+                    response
+                );
+
 
             if (!response.ok) {
-                alert("❌ " + (data.error || "ما قدرنا نحفظ الإعدادات."));
+
+                alert(
+                    "❌ " +
+                    (
+                        data.error ||
+                        "ما قدرنا نحفظ الإعدادات."
+                    )
+                );
+
                 return;
             }
 
-            alert("✅ اتحفظت الإعدادات بنجاح.");
-        } catch (error) {
-            alert("❌ حصل خطأ في الاتصال بالسيرفر.");
-        } finally {
-            button.disabled = false;
-            button.textContent = "💾 حفظ الإعدادات";
+
+            alert(
+                "✅ اتحفظت الإعدادات بنجاح."
+            );
+
         }
+
+        catch (error) {
+
+            alert(
+                "❌ حصل خطأ في الاتصال بالسيرفر."
+            );
+
+        }
+
+        finally {
+
+            button.disabled = false;
+
+            button.textContent =
+                "💾 حفظ الإعدادات";
+
+        }
+
     }
 
-    async function addCredit(id) {
-        await changeCredits(id, 10);
-    }
 
-    async function addCustomCredit(id) {
-        const value = prompt("أدخل عدد الرصيد الداير تضيفو:");
-        if (value === null || value.trim() === "") return;
+    // =========================
+    // عرض محادثات المستخدم
+    // =========================
 
-        const amount = Number(value);
-        if (!Number.isInteger(amount) || amount <= 0) {
-            alert("❌ أدخل رقماً صحيحاً أكبر من صفر.");
+    async function toggleChats(id) {
+
+        const panel =
+            document.getElementById(
+                "chat-panel-" + id
+            );
+
+
+        if (
+            panel.classList.contains("open")
+        ) {
+
+            panel.classList.remove("open");
+
+            panel.innerHTML = "";
+
             return;
         }
 
-        await changeCredits(id, amount);
-    }
 
-    async function changeCredits(id, amount) {
+        panel.classList.add("open");
+
+        panel.innerHTML =
+            '<div class="chat-loading">⏳ جارٍ تحميل المحادثات...</div>';
+
+
         try {
-            const response = await fetch("/api/admin/user/" + id + "/credits", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({amount: amount})
-            });
 
-            const data = await readResponse(response);
+            const response =
+                await fetch(
+                    "/api/admin/user/" +
+                    id +
+                    "/chats"
+                );
+
+
+            const data =
+                await readResponse(
+                    response
+                );
+
 
             if (!response.ok) {
-                alert("❌ " + (data.error || "ما قدرنا نضيف الرصيد."));
+
+                panel.innerHTML =
+                    '<div class="empty">❌ ' +
+                    escapeHtml(
+                        data.error ||
+                        "تعذر تحميل المحادثات."
+                    ) +
+                    "</div>";
+
                 return;
             }
 
-            alert("✅ تمت إضافة " + amount + " رصيد.");
-            location.reload();
-        } catch (error) {
-            alert("❌ حصل خطأ في الاتصال بالسيرفر.");
+
+            renderChats(
+                panel,
+                data.user,
+                data.chats || []
+            );
+
         }
+
+        catch (error) {
+
+            panel.innerHTML =
+                '<div class="empty">❌ حصل خطأ في الاتصال بالسيرفر.</div>';
+
+        }
+
     }
+
+
+    // =========================
+    // عرض المحادثات
+    // =========================
+
+    function renderChats(
+        panel,
+        user,
+        chats
+    ) {
+
+        let html = "";
+
+
+        html += `
+            <div class="chat-header">
+
+                <strong>
+                    💬 محادثات ${escapeHtml(user.name)}
+                </strong>
+
+                <div class="chat-user-email">
+                    📧 ${escapeHtml(user.email)}
+                </div>
+
+            </div>
+        `;
+
+
+        if (!chats.length) {
+
+            html += `
+                <div class="empty">
+                    المستخدم ما عندو محادثات لحد الآن.
+                </div>
+            `;
+
+            panel.innerHTML = html;
+
+            return;
+        }
+
+
+        chats.forEach(function(chat) {
+
+            const isUser =
+                chat.role === "user";
+
+
+            html += `
+                <div class="chat-message ${
+                    isUser
+                        ? "chat-user"
+                        : "chat-ai"
+                }">
+
+                    <span class="chat-role">
+
+                        ${
+                            isUser
+                                ? "👤 المستخدم"
+                                : "🤖 زولك AI"
+                        }
+
+                    </span>
+
+                    <div>
+                        ${escapeHtml(
+                            chat.content
+                        )}
+                    </div>
+
+                    <span class="chat-time">
+                        🕐 ${escapeHtml(
+                            chat.created_at || ""
+                        )}
+                    </span>
+
+                </div>
+            `;
+
+        });
+
+
+        panel.innerHTML = html;
+
+    }
+
+
+    // =========================
+    // إضافة رصيد
+    // =========================
+
+    async function addCredit(id) {
+
+        await changeCredits(
+            id,
+            10
+        );
+
+    }
+
+
+    async function addCustomCredit(id) {
+
+        const value =
+            prompt(
+                "أدخل عدد الرصيد الداير تضيفو:"
+            );
+
+
+        if (
+            value === null ||
+            value.trim() === ""
+        ) {
+            return;
+        }
+
+
+        const amount =
+            Number(value);
+
+
+        if (
+            !Number.isInteger(amount) ||
+            amount <= 0
+        ) {
+
+            alert(
+                "❌ أدخل رقماً صحيحاً أكبر من صفر."
+            );
+
+            return;
+        }
+
+
+        await changeCredits(
+            id,
+            amount
+        );
+
+    }
+
+
+    async function changeCredits(
+        id,
+        amount
+    ) {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/admin/user/" +
+                    id +
+                    "/credits",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            amount:
+                                amount
+                        })
+                    }
+                );
+
+
+            const data =
+                await readResponse(
+                    response
+                );
+
+
+            if (!response.ok) {
+
+                alert(
+                    "❌ " +
+                    (
+                        data.error ||
+                        "ما قدرنا نضيف الرصيد."
+                    )
+                );
+
+                return;
+            }
+
+
+            alert(
+                "✅ تمت إضافة " +
+                amount +
+                " رصيد."
+            );
+
+
+            location.reload();
+
+        }
+
+        catch (error) {
+
+            alert(
+                "❌ حصل خطأ في الاتصال بالسيرفر."
+            );
+
+        }
+
+    }
+
+
+    // =========================
+    // الحظر
+    // =========================
 
     async function banUser(id) {
-        if (!confirm("متأكد داير توقف المستخدم؟")) return;
+
+        if (
+            !confirm(
+                "متأكد داير توقف المستخدم؟"
+            )
+        ) {
+            return;
+        }
+
 
         try {
-            const response = await fetch("/api/admin/user/" + id + "/ban", {
-                method: "POST"
-            });
 
-            const data = await readResponse(response);
+            const response =
+                await fetch(
+                    "/api/admin/user/" +
+                    id +
+                    "/ban",
+                    {
+                        method: "POST"
+                    }
+                );
+
+
+            const data =
+                await readResponse(
+                    response
+                );
+
 
             if (!response.ok) {
-                alert("❌ " + (data.error || "ما قدرنا نوقف المستخدم."));
+
+                alert(
+                    "❌ " +
+                    (
+                        data.error ||
+                        "ما قدرنا نوقف المستخدم."
+                    )
+                );
+
                 return;
             }
 
-            alert("✅ تم إيقاف المستخدم.");
+
+            alert(
+                "✅ تم إيقاف المستخدم."
+            );
+
+
             location.reload();
-        } catch (error) {
-            alert("❌ حصل خطأ في الاتصال بالسيرفر.");
+
         }
+
+        catch (error) {
+
+            alert(
+                "❌ حصل خطأ في الاتصال بالسيرفر."
+            );
+
+        }
+
     }
+
+
+    // =========================
+    // إلغاء الحظر
+    // =========================
 
     async function unbanUser(id) {
-        try {
-            const response = await fetch("/api/admin/user/" + id + "/unban", {
-                method: "POST"
-            });
 
-            const data = await readResponse(response);
+        try {
+
+            const response =
+                await fetch(
+                    "/api/admin/user/" +
+                    id +
+                    "/unban",
+                    {
+                        method: "POST"
+                    }
+                );
+
+
+            const data =
+                await readResponse(
+                    response
+                );
+
 
             if (!response.ok) {
-                alert("❌ " + (data.error || "ما قدرنا نلغي الحظر."));
+
+                alert(
+                    "❌ " +
+                    (
+                        data.error ||
+                        "ما قدرنا نلغي الحظر."
+                    )
+                );
+
                 return;
             }
 
-            alert("✅ تم إلغاء الحظر.");
+
+            alert(
+                "✅ تم إلغاء الحظر."
+            );
+
+
             location.reload();
-        } catch (error) {
-            alert("❌ حصل خطأ في الاتصال بالسيرفر.");
+
         }
+
+        catch (error) {
+
+            alert(
+                "❌ حصل خطأ في الاتصال بالسيرفر."
+            );
+
+        }
+
     }
+
+
+    // =========================
+    // حذف المستخدم
+    // =========================
 
     async function deleteUser(id) {
-        if (!confirm("⚠️ متأكد داير تحذف المستخدم نهائياً؟")) return;
+
+        if (
+            !confirm(
+                "⚠️ متأكد داير تحذف المستخدم نهائياً؟"
+            )
+        ) {
+            return;
+        }
+
 
         try {
-            const response = await fetch("/api/admin/user/" + id, {
-                method: "DELETE"
-            });
 
-            const data = await readResponse(response);
+            const response =
+                await fetch(
+                    "/api/admin/user/" +
+                    id,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            const data =
+                await readResponse(
+                    response
+                );
+
 
             if (!response.ok) {
-                alert("❌ " + (data.error || "ما قدرنا نحذف المستخدم."));
+
+                alert(
+                    "❌ " +
+                    (
+                        data.error ||
+                        "ما قدرنا نحذف المستخدم."
+                    )
+                );
+
                 return;
             }
 
-            alert("✅ تم حذف المستخدم.");
+
+            alert(
+                "✅ تم حذف المستخدم."
+            );
+
+
             location.reload();
-        } catch (error) {
-            alert("❌ حصل خطأ في الاتصال بالسيرفر.");
+
         }
+
+        catch (error) {
+
+            alert(
+                "❌ حصل خطأ في الاتصال بالسيرفر."
+            );
+
+        }
+
     }
+
+
+    // =========================
+    // البحث
+    // =========================
 
     let searchTimer = null;
 
+
     function searchUsers() {
-        clearTimeout(searchTimer);
 
-        searchTimer = setTimeout(async function () {
-            const query = document.getElementById("search").value.trim();
-            const box = document.getElementById("users");
+        clearTimeout(
+            searchTimer
+        );
 
-            box.innerHTML = '<div class="empty">جارٍ البحث...</div>';
 
-            try {
-                const response = await fetch(
-                    "/api/admin/users?q=" + encodeURIComponent(query)
-                );
+        searchTimer =
+            setTimeout(
+                async function () {
 
-                const data = await readResponse(response);
+                    const query =
+                        document.getElementById(
+                            "search"
+                        ).value.trim();
 
-                if (!response.ok) {
-                    box.innerHTML = '<div class="empty">تعذر البحث عن المستخدمين.</div>';
-                    return;
-                }
 
-                renderUsers(data.users || []);
-            } catch (error) {
-                box.innerHTML = '<div class="empty">حصل خطأ في الاتصال أثناء البحث.</div>';
-            }
-        }, 300);
+                    const box =
+                        document.getElementById(
+                            "users"
+                        );
+
+
+                    box.innerHTML =
+                        '<div class="empty">جارٍ البحث...</div>';
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                "/api/admin/users?q=" +
+                                encodeURIComponent(
+                                    query
+                                )
+                            );
+
+
+                        const data =
+                            await readResponse(
+                                response
+                            );
+
+
+                        if (!response.ok) {
+
+                            box.innerHTML =
+                                '<div class="empty">تعذر البحث عن المستخدمين.</div>';
+
+                            return;
+                        }
+
+
+                        renderUsers(
+                            data.users || []
+                        );
+
+                    }
+
+                    catch (error) {
+
+                        box.innerHTML =
+                            '<div class="empty">حصل خطأ في الاتصال أثناء البحث.</div>';
+
+                    }
+
+                },
+                300
+            );
+
     }
+
+
+    // =========================
+    // حماية HTML
+    // =========================
 
     function escapeHtml(value) {
-        const element = document.createElement("div");
-        element.textContent = value == null ? "" : String(value);
+
+        const element =
+            document.createElement(
+                "div"
+            );
+
+
+        element.textContent =
+            value == null
+                ? ""
+                : String(value);
+
+
         return element.innerHTML;
+
     }
 
+
+    // =========================
+    // إعادة رسم المستخدمين
+    // =========================
+
     function renderUsers(users) {
-        const box = document.getElementById("users");
+
+        const box =
+            document.getElementById(
+                "users"
+            );
+
+
         box.innerHTML = "";
 
+
         if (!users.length) {
-            box.innerHTML = '<div class="empty">ما لقينا مستخدمين مطابقين للبحث.</div>';
+
+            box.innerHTML =
+                '<div class="empty">ما لقينا مستخدمين مطابقين للبحث.</div>';
+
             return;
         }
 
-        users.forEach(function (user) {
+
+        users.forEach(function(user) {
+
             let status = "";
 
+
             if (user.is_admin) {
-                status = '<span class="badge">🛡️ مدير</span>';
-            } else if (user.banned) {
-                status = '<span class="badge banned">🚫 موقوف</span>';
-            } else {
-                status = '<span class="badge">✅ نشط</span>';
+
+                status =
+                    '<span class="badge">🛡️ مدير</span>';
+
             }
+
+            else if (user.banned) {
+
+                status =
+                    '<span class="badge banned">🚫 موقوف</span>';
+
+            }
+
+            else {
+
+                status =
+                    '<span class="badge">✅ نشط</span>';
+
+            }
+
 
             let actions = "";
 
+
             if (!user.is_admin) {
+
                 let banButton = "";
 
+
                 if (user.banned) {
+
                     banButton =
                         '<button type="button" class="primary" onclick="unbanUser(' +
                         Number(user.id) +
                         ')">✅ إلغاء الحظر</button>';
-                } else {
+
+                }
+
+                else {
+
                     banButton =
                         '<button type="button" class="danger" onclick="banUser(' +
                         Number(user.id) +
                         ')">🚫 حظر</button>';
+
                 }
+
 
                 actions = `
                     <div class="actions">
-                        <button type="button" class="success" onclick="addCredit(${Number(user.id)})">
+
+                        <button
+                            type="button"
+                            class="chat-btn"
+                            onclick="toggleChats(${Number(user.id)})"
+                        >
+                            💬 محادثات
+                        </button>
+
+                        <button
+                            type="button"
+                            class="success"
+                            onclick="addCredit(${Number(user.id)})"
+                        >
                             ➕ إضافة 10
                         </button>
-                        <button type="button" onclick="addCustomCredit(${Number(user.id)})">
+
+                        <button
+                            type="button"
+                            onclick="addCustomCredit(${Number(user.id)})"
+                        >
                             🎁 إضافة رصيد
                         </button>
+
                         ${banButton}
-                        <button type="button" class="danger" onclick="deleteUser(${Number(user.id)})">
+
+                        <button
+                            type="button"
+                            class="danger"
+                            onclick="deleteUser(${Number(user.id)})"
+                        >
                             🗑️ حذف
                         </button>
+
                     </div>
                 `;
+
             }
 
-            const item = document.createElement("div");
-            item.className = "user";
+            else {
+
+                actions = `
+                    <div class="actions">
+
+                        <button
+                            type="button"
+                            class="chat-btn"
+                            onclick="toggleChats(${Number(user.id)})"
+                        >
+                            💬 محادثات
+                        </button>
+
+                    </div>
+                `;
+
+            }
+
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "user";
+
+
+            item.id =
+                "user-" +
+                Number(user.id);
+
 
             item.innerHTML = `
+
                 <div class="userhead">
+
                     <div>
-                        <div class="user-name">👤 ${escapeHtml(user.name)}</div>
-                        <div class="email">📧 ${escapeHtml(user.email)}</div>
+
+                        <div class="user-name">
+                            👤 ${escapeHtml(user.name)}
+                        </div>
+
+                        <div class="email">
+                            📧 ${escapeHtml(user.email)}
+                        </div>
+
                     </div>
-                    <div>${status}</div>
+
+                    <div>
+                        ${status}
+                    </div>
+
                 </div>
+
 
                 <div class="balance">
-                    🎁 الرصيد: <strong>${Number(user.credits) || 0}</strong>
+
+                    🎁 الرصيد:
+                    <strong>
+                        ${Number(user.credits) || 0}
+                    </strong>
+
                 </div>
 
+
                 ${actions}
+
+
+                <div
+                    class="chat-panel"
+                    id="chat-panel-${Number(user.id)}"
+                ></div>
+
             `;
 
-            box.appendChild(item);
+
+            box.appendChild(
+                item
+            );
+
         });
+
     }
+
 </script>
+
 </body>
-</html>
+    </html>
