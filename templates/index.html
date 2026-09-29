@@ -1,34 +1,62 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="theme-color" content="{{ primary_color or '#00c896' }}">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="{{ primary_color or '#00c896' }}"
+    >
+
     <meta
         name="description"
         content="{{ site_description or 'مساعد ذكاء اصطناعي سوداني 🇸🇩🤖' }}"
     >
 
-    <title>{{ site_name or "زولك AI 🇸🇩" }}</title>
+    <title>
+        {{ site_name or "زولك AI 🇸🇩" }}
+    </title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 
     <style>
+
         [hidden] {
             display: none !important;
         }
 
         :root {
-            --zolak-primary: {{ primary_color or '#00c896' }};
+            --zolak-primary:
+                {{ primary_color or '#00c896' }};
         }
 
-        /* الخلفية */
+
+        /* =========================
+           الخلفية
+        ========================= */
+
         .app.chatgpt-layout {
+
             {% if background_url %}
-            background-image: url("{{ background_url }}") !important;
+
+            background-image:
+                url("{{ background_url }}") !important;
+
             {% else %}
-            background-image: url("/static/sudan-flag-background.jpg") !important;
+
+            background-image:
+                url("/static/sudan-flag-background.jpg") !important;
+
             {% endif %}
 
             background-position: center center !important;
@@ -36,176 +64,606 @@
             background-repeat: no-repeat !important;
         }
 
+
         .main.main-chat,
         .messages {
-            background: rgba(11, 16, 32, 0.12) !important;
+
+            background:
+                rgba(11, 16, 32, 0.12) !important;
         }
 
-        /* اللون الذي يختاره المدير */
+
+        /* =========================
+           اللون الرئيسي
+        ========================= */
+
         .brand-logo,
         .welcome-logo,
         .mobile-brand-logo {
-            background: var(--zolak-primary) !important;
+
+            background:
+                var(--zolak-primary) !important;
         }
 
+
         .new-chat {
-            border-color: var(--zolak-primary) !important;
+
+            border-color:
+                var(--zolak-primary) !important;
         }
+
 
         .online-indicator,
         .account-status {
-            background: var(--zolak-primary) !important;
+
+            background:
+                var(--zolak-primary) !important;
         }
+
 
         .sidebar-link.active {
-            border-right-color: var(--zolak-primary) !important;
+
+            border-right-color:
+                var(--zolak-primary) !important;
         }
+
 
         #send {
-            background: var(--zolak-primary) !important;
+
+            background:
+                var(--zolak-primary) !important;
+
+            /*
+             * زر الإرسال في اليسار
+             */
+            left: 12px !important;
+            right: auto !important;
         }
 
-        /* الوضع الفاتح */
-        body.theme-light {
-            background: #f5f7fa !important;
+
+        #prompt {
+
+            /*
+             * مساحة كافية للزر في اليسار
+             */
+            padding-left: 64px !important;
+            padding-right: 8px !important;
         }
+
+
+        /* =========================
+           الوضع الفاتح
+        ========================= */
+
+        body.theme-light {
+
+            background:
+                #f5f7fa !important;
+        }
+
 
         body.theme-light .sidebar {
-            background: rgba(255,255,255,0.96) !important;
-            color: #172033 !important;
+
+            background:
+                rgba(255,255,255,0.96) !important;
+
+            color:
+                #172033 !important;
         }
+
 
         body.theme-light .main,
         body.theme-light .messages {
-            background: rgba(255,255,255,0.20) !important;
-            color: #172033 !important;
+
+            background:
+                rgba(255,255,255,0.20) !important;
+
+            color:
+                #172033 !important;
         }
+
 
         body.theme-light .composer-inner {
-            background: rgba(255,255,255,0.95) !important;
-            border-color: rgba(0,0,0,0.12) !important;
+
+            background:
+                rgba(255,255,255,0.95) !important;
+
+            border-color:
+                rgba(0,0,0,0.12) !important;
         }
 
+
         body.theme-light textarea {
-            color: #172033 !important;
+
+            color:
+                #172033 !important;
         }
+
 
         body.theme-light .welcome-screen h1,
         body.theme-light .welcome-screen p {
-            color: #172033 !important;
+
+            color:
+                #172033 !important;
         }
 
-        /* الشعار إذا وضع المدير صورة */
+
+        /* =========================
+           الشعار
+        ========================= */
+
         .custom-logo {
+
             width: 100%;
             height: 100%;
             object-fit: cover;
             border-radius: inherit;
         }
+
+
+        /* =========================
+           قائمة المحادثات
+        ========================= */
+
+        .conversation-list {
+
+            margin-top: 12px;
+            padding: 0 10px;
+
+            max-height: 42vh;
+
+            overflow-y: auto;
+        }
+
+
+        .conversation-list-title {
+
+            font-size: 13px;
+
+            opacity: 0.65;
+
+            padding:
+                8px 6px;
+
+            font-weight:
+                600;
+        }
+
+
+        .conversation-items {
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            gap:
+                5px;
+        }
+
+
+        .conversation-item {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                5px;
+
+            width:
+                100%;
+
+            padding:
+                9px 8px;
+
+            border-radius:
+                10px;
+
+            cursor:
+                pointer;
+
+            transition:
+                background 0.2s ease,
+                opacity 0.2s ease;
+
+            box-sizing:
+                border-box;
+        }
+
+
+        .conversation-item:hover {
+
+            background:
+                rgba(0, 200, 150, 0.10);
+        }
+
+
+        .conversation-item.active {
+
+            background:
+                rgba(0, 200, 150, 0.15);
+        }
+
+
+        .conversation-title {
+
+            flex:
+                1;
+
+            min-width:
+                0;
+
+            overflow:
+                hidden;
+
+            text-overflow:
+                ellipsis;
+
+            white-space:
+                nowrap;
+
+            font-size:
+                14px;
+        }
+
+
+        .conversation-delete {
+
+            border:
+                0;
+
+            background:
+                transparent;
+
+            cursor:
+                pointer;
+
+            opacity:
+                0.55;
+
+            font-size:
+                18px;
+
+            padding:
+                0 4px;
+        }
+
+
+        .conversation-delete:hover {
+
+            opacity:
+                1;
+        }
+
+
+        /* =========================
+           الهاتف
+        ========================= */
+
+        @media (max-width: 800px) {
+
+            #send {
+
+                left:
+                    9px !important;
+
+                right:
+                    auto !important;
+
+                bottom:
+                    9px !important;
+            }
+
+
+            #prompt {
+
+                padding-left:
+                    58px !important;
+
+                padding-right:
+                    8px !important;
+            }
+
+
+            .conversation-list {
+
+                max-height:
+                    38vh;
+            }
+
+        }
+
     </style>
+
 </head>
 
-<body class="{% if theme == 'light' %}theme-light{% else %}theme-dark{% endif %}">
+
+<body
+    class="{% if theme == 'light' %}theme-light{% else %}theme-dark{% endif %}"
+>
+
 
 <div class="app chatgpt-layout">
 
-    <!-- القائمة الجانبية -->
+
+    <!-- =========================================
+         القائمة الجانبية
+    ========================================== -->
+
     <aside class="sidebar">
+
+
+        <!-- الشعار -->
 
         <div class="brand">
 
             <div class="brand-logo brand-icon">
+
                 {% if logo_url %}
+
                     <img
                         src="{{ logo_url }}"
                         alt="{{ site_name or 'زولك AI' }}"
                         class="custom-logo"
                     >
+
                 {% else %}
+
                     Z
+
                 {% endif %}
+
             </div>
 
+
             <div class="brand-text">
-                <strong>{{ site_name or "زولك AI" }}</strong>
+
+                <strong>
+                    {{ site_name or "زولك AI" }}
+                </strong>
+
                 <span>
-                    {{ homepage_subtitle or site_description or "مساعدك السوداني 🇸🇩" }}
+
+                    {{
+                        homepage_subtitle
+                        or
+                        site_description
+                        or
+                        "مساعدك السوداني 🇸🇩"
+                    }}
+
                 </span>
+
             </div>
 
         </div>
 
-        <button class="new-chat" id="newChat" type="button">
-            <span class="new-chat-icon">＋</span>
-            <span>محادثة جديدة</span>
+
+
+        <!-- =====================================
+             محادثة جديدة
+        ====================================== -->
+
+        <button
+            class="new-chat"
+            id="newChat"
+            type="button"
+        >
+
+            <span class="new-chat-icon">
+                ＋
+            </span>
+
+            <span>
+                محادثة جديدة
+            </span>
+
         </button>
+
+
+
+        <!-- =====================================
+             قائمة المحادثات القديمة
+             app.js سيملأها تلقائياً
+        ====================================== -->
+
+        <div
+            class="conversation-list"
+            id="conversationList"
+        >
+
+            <div class="conversation-list-title">
+                محادثاتك
+            </div>
+
+            <div
+                class="conversation-items"
+                id="conversationItems"
+            >
+            </div>
+
+        </div>
+
+
+
+        <!-- =====================================
+             القائمة الرئيسية
+        ====================================== -->
 
         <div class="sidebar-section">
 
-            <span class="sidebar-heading">القائمة الرئيسية</span>
+            <span class="sidebar-heading">
+                القائمة الرئيسية
+            </span>
+
 
             <nav class="sidebar-links">
 
-                <a href="/" class="sidebar-link active">
-                    <span class="nav-icon">⌂</span>
-                    <span>الرئيسية</span>
+
+                <a
+                    href="/"
+                    class="sidebar-link active"
+                >
+
+                    <span class="nav-icon">
+                        ⌂
+                    </span>
+
+                    <span>
+                        الرئيسية
+                    </span>
+
                 </a>
 
-                <a href="/login" id="loginLink" class="sidebar-link">
-                    <span class="nav-icon">♙</span>
-                    <span>تسجيل الدخول</span>
+
+
+                <a
+                    href="/login"
+                    id="loginLink"
+                    class="sidebar-link"
+                >
+
+                    <span class="nav-icon">
+                        ♙
+                    </span>
+
+                    <span>
+                        تسجيل الدخول
+                    </span>
+
                 </a>
 
-                <a href="/admin" id="adminLink" class="sidebar-link" hidden>
-                    <span class="nav-icon">⚙</span>
-                    <span>لوحة المدير</span>
+
+
+                <a
+                    href="/admin"
+                    id="adminLink"
+                    class="sidebar-link"
+                    hidden
+                >
+
+                    <span class="nav-icon">
+                        ⚙
+                    </span>
+
+                    <span>
+                        لوحة المدير
+                    </span>
+
                 </a>
 
-                <a href="/logout" id="logout" class="sidebar-link" hidden>
-                    <span class="nav-icon">⇥</span>
-                    <span>تسجيل الخروج</span>
+
+
+                <a
+                    href="/logout"
+                    id="logout"
+                    class="sidebar-link"
+                    hidden
+                >
+
+                    <span class="nav-icon">
+                        ⇥
+                    </span>
+
+                    <span>
+                        تسجيل الخروج
+                    </span>
+
                 </a>
+
 
             </nav>
+
         </div>
+
+
 
         <div class="sidebar-spacer"></div>
 
-        <div class="account-box account sidebar-bottom">
 
-            <div class="account-avatar">ز</div>
+
+        <!-- =====================================
+             الحساب
+        ====================================== -->
+
+        <div
+            class="account-box account sidebar-bottom"
+        >
+
+            <div class="account-avatar">
+                ز
+            </div>
+
 
             <div class="account-info">
-                <div id="who" class="account-name">
+
+                <div
+                    id="who"
+                    class="account-name"
+                >
                     يا زول 👋
                 </div>
 
-                <div id="credits" class="account-credits">
+
+                <div
+                    id="credits"
+                    class="account-credits"
+                >
                     سجّل دخولك للبدء
                 </div>
+
             </div>
 
-            <span class="account-status" aria-hidden="true"></span>
+
+            <span
+                class="account-status"
+                aria-hidden="true"
+            ></span>
 
         </div>
+
+
 
         <div class="sidebar-footer">
+
             <span>
-                {{ site_name or "زولك AI" }} — صُنع في السودان
+
+                {{ site_name or "زولك AI" }}
+                — صُنع في السودان
+
             </span>
-            <span>🇸🇩</span>
+
+            <span>
+                🇸🇩
+            </span>
+
         </div>
+
 
     </aside>
 
 
-    <!-- المحتوى الرئيسي -->
+
+    <!-- =========================================
+         المحتوى الرئيسي
+    ========================================== -->
+
     <main class="main main-chat">
 
-        <!-- الشريط العلوي -->
+
+        <!-- =====================================
+             الشريط العلوي
+        ====================================== -->
+
         <header class="topbar chat-navbar">
 
+
             <div class="topbar-right">
+
 
                 <button
                     class="mobile-menu"
@@ -217,35 +675,55 @@
                     ☰
                 </button>
 
+
+
                 <div class="mobile-brand">
 
-                    <span class="mobile-brand-logo">
+
+                    <span
+                        class="mobile-brand-logo"
+                    >
 
                         {% if logo_url %}
+
                             <img
                                 src="{{ logo_url }}"
                                 alt="{{ site_name or 'زولك AI' }}"
                                 class="custom-logo"
                             >
+
                         {% else %}
+
                             Z
+
                         {% endif %}
 
                     </span>
 
+
                     <strong>
+
                         {{ site_name or "زولك AI" }}
+
                     </strong>
 
-                    <span class="sudan-badge">🇸🇩</span>
+
+                    <span class="sudan-badge">
+                        🇸🇩
+                    </span>
 
                 </div>
 
+
             </div>
+
+
 
             <div class="topbar-left">
 
-                <span class="online-indicator"></span>
+                <span
+                    class="online-indicator"
+                ></span>
 
                 <span class="assistant-status">
                     مساعدك الذكي
@@ -253,55 +731,104 @@
 
             </div>
 
+
         </header>
 
 
-        <!-- مساحة المحادثة -->
+
+        <!-- =====================================
+             الرسائل
+        ====================================== -->
+
         <section
             class="messages"
             id="messages"
             aria-live="polite"
         >
 
+
             <div class="welcome-screen">
+
 
                 <div class="welcome-logo">
 
                     {% if logo_url %}
+
                         <img
                             src="{{ logo_url }}"
                             alt="{{ site_name or 'زولك AI' }}"
                             class="custom-logo"
                         >
+
                     {% else %}
+
                         Z
+
                     {% endif %}
 
                 </div>
 
+
+
                 <span class="welcome-eyebrow">
 
-                    {{ welcome or ("أهلاً بيك في " ~ (site_name or "زولك AI") ~ " 🇸🇩") }}
+                    {{
+                        welcome
+                        or
+                        (
+                            "أهلاً بيك في "
+                            ~
+                            (site_name or "زولك AI")
+                            ~
+                            " 🇸🇩"
+                        )
+                    }}
 
                 </span>
 
+
+
                 <h1>
-                    {{ homepage_title or "كيف أقدر أساعدك اليوم؟" }}
+
+                    {{
+                        homepage_title
+                        or
+                        "كيف أقدر أساعدك اليوم؟"
+                    }}
+
                 </h1>
 
+
+
                 <p>
-                    {{ homepage_subtitle or site_description or "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة." }}
+
+                    {{
+                        homepage_subtitle
+                        or
+                        site_description
+                        or
+                        "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة."
+                    }}
+
                 </p>
 
+
             </div>
+
 
         </section>
 
 
-        <!-- منطقة كتابة الرسالة -->
+
+        <!-- =====================================
+             كتابة الرسالة
+        ====================================== -->
+
         <div class="composer composer-area">
 
+
             <div class="composer-inner">
+
 
                 <textarea
                     id="prompt"
@@ -310,103 +837,67 @@
                     aria-label="اكتب رسالتك"
                 ></textarea>
 
+
+
                 <button
                     id="send"
                     type="button"
                     aria-label="إرسال الرسالة"
                     title="إرسال"
                 >
-                    <span class="send-icon">↑</span>
+
+                    <span class="send-icon">
+                        ↑
+                    </span>
+
                 </button>
 
+
             </div>
+
+
 
             <div class="composer-note">
 
+
                 <span>
+
                     {{ site_name or "زولك AI" }}
-                    ممكن يخطئ أحياناً، راجع المعلومات المهمة.
+
+                    ممكن يخطئ أحياناً،
+                    راجع المعلومات المهمة.
+
                 </span>
 
+
                 <span class="composer-flag">
+
                     صُنع في السودان 🇸🇩
+
                 </span>
+
 
             </div>
 
+
         </div>
+
 
     </main>
 
 </div>
 
 
-<script src="{{ url_for('static', filename='app.js') }}"></script>
 
-<script>
-    /*
-     * بدء محادثة جديدة
-     * يتم استخدام الإعدادات التي حددها المدير
-     */
-    const newChatButton = document.getElementById("newChat");
+<!-- =========================================
+     JavaScript الرئيسي
+========================================== -->
 
-    if (newChatButton) {
+<script
+    src="{{ url_for('static', filename='app.js') }}"
+></script>
 
-        newChatButton.addEventListener("click", function () {
-
-            const messages = document.getElementById("messages");
-            const prompt = document.getElementById("prompt");
-
-            if (messages) {
-
-                messages.innerHTML = `
-                    <div class="welcome-screen">
-
-                        <div class="welcome-logo">
-                            {% if logo_url %}
-                                <img
-                                    src="{{ logo_url }}"
-                                    alt="{{ site_name or 'زولك AI' }}"
-                                    class="custom-logo"
-                                >
-                            {% else %}
-                                Z
-                            {% endif %}
-                        </div>
-
-                        <span class="welcome-eyebrow">
-                            {{ welcome or ("أهلاً بيك في " ~ (site_name or "زولك AI") ~ " 🇸🇩") }}
-                        </span>
-
-                        <h1>
-                            {{ homepage_title or "كيف أقدر أساعدك اليوم؟" }}
-                        </h1>
-
-                        <p>
-                            {{ homepage_subtitle or site_description or "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة." }}
-                        </p>
-
-                    </div>
-                `;
-            }
-
-            if (prompt) {
-
-                prompt.value = "";
-
-                prompt.focus();
-
-                prompt.dispatchEvent(
-                    new Event("input", {
-                        bubbles: true
-                    })
-                );
-            }
-
-        });
-
-    }
-</script>
 
 </body>
+
                     </html>
