@@ -22,7 +22,10 @@ app.secret_key = os.getenv(
     "change-this-secret-in-production"
 )
 
-DB = "/tmp/zolak.db"
+DB = os.getenv(
+    "DB_PATH",
+    "/tmp/zolak.db"
+)
 
 
 # =========================================================
@@ -30,8 +33,11 @@ DB = "/tmp/zolak.db"
 # =========================================================
 
 def db():
+
     c = sqlite3.connect(DB)
+
     c.row_factory = sqlite3.Row
+
     return c
 
 
@@ -76,12 +82,16 @@ def init_db():
     ]
 
     if "banned" not in columns:
+
         c.execute("""
             ALTER TABLE users
             ADD COLUMN banned INTEGER DEFAULT 0
         """)
 
+    # -----------------------------------------------------
     # إنشاء المدير إذا لم يكن موجوداً
+    # -----------------------------------------------------
+
     admin = c.execute("""
         SELECT id
         FROM users
@@ -115,7 +125,10 @@ def init_db():
             0
         ))
 
+    # -----------------------------------------------------
     # الإعدادات الأساسية
+    # -----------------------------------------------------
+
     settings = [
 
         (
@@ -136,6 +149,131 @@ def init_db():
         (
             "welcome",
             "أها يا زول 👋❤️ زولك جاهز يساعدك في أي حاجة."
+        ),
+
+        (
+            "homepage_title",
+            "زولك AI 🇸🇩"
+        ),
+
+        (
+            "homepage_subtitle",
+            "مساعد الذكاء الاصطناعي السوداني 🇸🇩"
+        ),
+
+        (
+            "homepage_button",
+            "ابدأ الآن"
+        ),
+
+        (
+            "primary_color",
+            "#00c896"
+        ),
+
+        (
+            "theme",
+            "dark"
+        ),
+
+        (
+            "mobile_ui",
+            "1"
+        ),
+
+        (
+            "no_credits_message",
+            "رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"
+        ),
+
+        (
+            "error_message",
+            "حصلت مشكلة، حاول مرة تانية."
+        ),
+
+        (
+            "logo_url",
+            ""
+        ),
+
+        (
+            "background_url",
+            ""
+        ),
+
+        (
+            "sudan_identity",
+            "1"
+        ),
+
+        (
+            "ad_text",
+            ""
+        ),
+
+        (
+            "notifications",
+            "1"
+        ),
+
+        (
+            "ai_model",
+            "gemini-3.6-flash"
+        ),
+
+        (
+            "ai_free_messages",
+            "10"
+        ),
+
+        (
+            "feature_writing",
+            "1"
+        ),
+
+        (
+            "feature_translation",
+            "1"
+        ),
+
+        (
+            "feature_study",
+            "1"
+        ),
+
+        (
+            "registration_enabled",
+            "1"
+        ),
+
+        (
+            "chat_history_enabled",
+            "1"
+        ),
+
+        (
+            "email_login_enabled",
+            "1"
+        ),
+
+        (
+            "maintenance_mode",
+            "0"
+        ),
+
+        (
+            "allow_login",
+            "1"
+        ),
+
+        (
+            "admin_protection",
+            "1"
+        ),
+
+        (
+            "packages",
+            "[]"
         )
 
     ]
@@ -155,6 +293,7 @@ def init_db():
         ))
 
     c.commit()
+
     c.close()
 
 
@@ -176,6 +315,7 @@ def setting(
     c.close()
 
     if row:
+
         return row["value"]
 
     return default
@@ -235,13 +375,50 @@ def home():
 
     return render_template(
         "index.html",
+
         site_name=setting(
             "site_name",
             "زولك AI"
         ),
+
         site_description=setting(
             "site_description",
             "مساعد ذكاء اصطناعي سوداني 🇸🇩🤖"
+        ),
+
+        homepage_title=setting(
+            "homepage_title",
+            "زولك AI 🇸🇩"
+        ),
+
+        homepage_subtitle=setting(
+            "homepage_subtitle",
+            "مساعد الذكاء الاصطناعي السوداني 🇸🇩"
+        ),
+
+        homepage_button=setting(
+            "homepage_button",
+            "ابدأ الآن"
+        ),
+
+        primary_color=setting(
+            "primary_color",
+            "#00c896"
+        ),
+
+        theme=setting(
+            "theme",
+            "dark"
+        ),
+
+        logo_url=setting(
+            "logo_url",
+            ""
+        ),
+
+        background_url=setting(
+            "background_url",
+            ""
         )
     )
 
@@ -268,6 +445,15 @@ def logout():
 
 @app.post("/api/register")
 def register():
+
+    if setting(
+        "registration_enabled",
+        "1"
+    ) != "1":
+
+        return jsonify(
+            error="التسجيل متوقف حالياً."
+        ), 403
 
     data = request.get_json(
         silent=True
@@ -367,7 +553,9 @@ def register():
     c.close()
 
     session["uid"] = user["id"]
+
     session["name"] = user["name"]
+
     session["admin"] = bool(
         user["is_admin"]
     )
@@ -383,6 +571,15 @@ def register():
 
 @app.post("/api/login")
 def api_login():
+
+    if setting(
+        "allow_login",
+        "1"
+    ) != "1":
+
+        return jsonify(
+            error="تسجيل الدخول متوقف حالياً."
+        ), 403
 
     data = request.get_json(
         silent=True
@@ -424,7 +621,6 @@ def api_login():
 
     password_ok = False
 
-    # كلمات المرور الجديدة تكون Hash
     try:
 
         password_ok = check_password_hash(
@@ -436,8 +632,10 @@ def api_login():
 
         password_ok = False
 
-    # توافق مع الحسابات القديمة
-    if not password_ok and stored_password == password:
+    if (
+        not password_ok
+        and stored_password == password
+    ):
 
         password_ok = True
 
@@ -476,7 +674,9 @@ def api_login():
         ), 403
 
     session["uid"] = user["id"]
+
     session["name"] = user["name"]
+
     session["admin"] = bool(
         user["is_admin"]
     )
@@ -593,7 +793,10 @@ def chat():
         ):
 
             return jsonify(
-                error="رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"
+                error=setting(
+                    "no_credits_message",
+                    "رصيدك المجاني خلص."
+                )
             ), 402
 
         api_key = os.getenv(
@@ -624,12 +827,17 @@ def chat():
 
         response = None
 
+        model_name = setting(
+            "ai_model",
+            "gemini-3.6-flash"
+        )
+
         for attempt in range(3):
 
             try:
 
                 response = client.models.generate_content(
-                    model="gemini-3.6-flash",
+                    model=model_name,
                     contents=message,
                     config=config
                 )
@@ -670,7 +878,6 @@ def chat():
 
         answer += "\n\n— تطوير منذر السيد 🇸🇩"
 
-        # خصم رصيد المستخدم العادي
         if not user["is_admin"]:
 
             c.execute("""
@@ -687,10 +894,12 @@ def chat():
                 c.rollback()
 
                 return jsonify(
-                    error="رصيدك المجاني خلص. حدّث الصفحة وجرب تاني."
+                    error=setting(
+                        "no_credits_message",
+                        "رصيدك المجاني خلص."
+                    )
                 ), 402
 
-        # حفظ رسالة المستخدم
         c.execute("""
             INSERT INTO chats
             (
@@ -705,7 +914,6 @@ def chat():
             message
         ))
 
-        # حفظ رد الذكاء الاصطناعي
         c.execute("""
             INSERT INTO chats
             (
@@ -748,7 +956,10 @@ def chat():
         )
 
         return jsonify(
-            error="حصلت مشكلة أثناء إرسال رسالتك. جرّب تاني بعد شوية."
+            error=setting(
+                "error_message",
+                "حصلت مشكلة أثناء إرسال رسالتك. جرّب تاني بعد شوية."
+            )
         ), 500
 
     finally:
@@ -757,12 +968,21 @@ def chat():
 
 
 # =========================================================
-# سجل محادثات المستخدم
+# سجل المحادثات
 # =========================================================
 
 @app.get("/api/chats")
 @login_required
 def chats():
+
+    if setting(
+        "chat_history_enabled",
+        "1"
+    ) != "1":
+
+        return jsonify(
+            chats=[]
+        )
 
     c = db()
 
@@ -839,18 +1059,26 @@ def admin():
 
     return render_template(
         "admin.html",
+
         users=users,
+
         total=total,
+
         msgs=messages,
+
         banned=banned,
+
         total_credits=total_credits,
+
         free=setting(
             "free_credits",
             "10"
         ),
+
         welcome=setting(
             "welcome"
         ),
+
         rights="© 2026 منذر السيد — جميع الحقوق محفوظة"
     )
 
@@ -900,6 +1128,7 @@ def admin_user_chats(uid):
 
     return jsonify(
         user=dict(user),
+
         chats=[
             dict(row)
             for row in rows
@@ -908,7 +1137,82 @@ def admin_user_chats(uid):
 
 
 # =========================================================
-# إعدادات زولك
+# إعدادات لوحة الإدارة
+# =========================================================
+
+ADMIN_SETTING_KEYS = {
+
+    "site_name",
+    "site_description",
+    "free_credits",
+    "welcome",
+
+    "homepage_title",
+    "homepage_subtitle",
+    "homepage_button",
+
+    "primary_color",
+    "theme",
+    "mobile_ui",
+
+    "no_credits_message",
+    "error_message",
+
+    "logo_url",
+    "background_url",
+
+    "sudan_identity",
+    "ad_text",
+    "notifications",
+
+    "ai_model",
+    "ai_free_messages",
+
+    "feature_writing",
+    "feature_translation",
+    "feature_study",
+
+    "registration_enabled",
+    "chat_history_enabled",
+    "email_login_enabled",
+
+    "maintenance_mode",
+    "allow_login",
+    "admin_protection",
+
+    "packages"
+}
+
+
+# =========================================================
+# جلب إعدادات الإدارة
+# =========================================================
+
+@app.get("/api/admin/settings")
+@admin_required
+def get_admin_settings():
+
+    c = db()
+
+    rows = c.execute("""
+        SELECT
+            key,
+            value
+        FROM settings
+    """).fetchall()
+
+    c.close()
+
+    return jsonify(
+        settings={
+            row["key"]: row["value"]
+            for row in rows
+        }
+    )
+
+
+# =========================================================
+# حفظ إعدادات الإدارة
 # =========================================================
 
 @app.post("/api/admin/settings")
@@ -919,92 +1223,103 @@ def admin_settings():
         silent=True
     ) or {}
 
+    boolean_keys = {
+
+        "mobile_ui",
+        "sudan_identity",
+        "notifications",
+
+        "feature_writing",
+        "feature_translation",
+        "feature_study",
+
+        "registration_enabled",
+        "chat_history_enabled",
+        "email_login_enabled",
+
+        "maintenance_mode",
+        "allow_login",
+        "admin_protection"
+    }
+
+    number_keys = {
+
+        "free_credits",
+        "ai_free_messages"
+    }
+
     c = db()
 
-    # اسم الموقع
-    if "site_name" in data:
+    try:
 
-        c.execute("""
-            INSERT OR REPLACE INTO settings
-            (
+        for key, value in data.items():
+
+            if key not in ADMIN_SETTING_KEYS:
+                continue
+
+            if key in number_keys:
+
+                try:
+
+                    value = max(
+                        0,
+                        int(value)
+                    )
+
+                except (
+                    ValueError,
+                    TypeError
+                ):
+
+                    c.close()
+
+                    return jsonify(
+                        error="القيمة الرقمية غير صحيحة."
+                    ), 400
+
+            elif key in boolean_keys:
+
+                value = (
+                    "1"
+                    if str(value).lower()
+                    in {
+                        "1",
+                        "true",
+                        "yes",
+                        "on"
+                    }
+                    else "0"
+                )
+
+            else:
+
+                value = str(
+                    value
+                ).strip()
+
+            c.execute("""
+                INSERT OR REPLACE INTO settings
+                (
+                    key,
+                    value
+                )
+                VALUES(?,?)
+            """, (
                 key,
                 value
-            )
-            VALUES(?,?)
-        """, (
-            "site_name",
-            str(
-                data["site_name"]
-            ).strip()
-        ))
+            ))
 
-    # وصف الموقع
-    if "site_description" in data:
+        c.commit()
 
-        c.execute("""
-            INSERT OR REPLACE INTO settings
-            (
-                key,
-                value
-            )
-            VALUES(?,?)
-        """, (
-            "site_description",
-            str(
-                data["site_description"]
-            ).strip()
-        ))
+    except Exception:
 
-    # الرصيد المجاني
-    if "free_credits" in data:
+        c.rollback()
 
-        try:
+        raise
 
-            free = int(
-                data["free_credits"]
-            )
+    finally:
 
-            if free < 0:
-                free = 0
-
-        except (
-            ValueError,
-            TypeError
-        ):
-
-            free = 10
-
-        c.execute("""
-            INSERT OR REPLACE INTO settings
-            (
-                key,
-                value
-            )
-            VALUES(?,?)
-        """, (
-            "free_credits",
-            str(free)
-        ))
-
-    # رسالة الترحيب
-    if "welcome" in data:
-
-        c.execute("""
-            INSERT OR REPLACE INTO settings
-            (
-                key,
-                value
-            )
-            VALUES(?,?)
-        """, (
-            "welcome",
-            str(
-                data["welcome"]
-            )
-        ))
-
-    c.commit()
-    c.close()
+        c.close()
 
     return jsonify(
         ok=True,
@@ -1024,12 +1339,14 @@ def add_credits(uid):
         silent=True
     ) or {}
 
-    # يدعم amount للإضافة
-    # و credits كقيمة جديدة للرصيد
     has_amount = "amount" in data
+
     has_credits = "credits" in data
 
-    if not has_amount and not has_credits:
+    if (
+        not has_amount
+        and not has_credits
+    ):
 
         return jsonify(
             error="أدخل قيمة الرصيد."
@@ -1138,6 +1455,7 @@ def add_credits(uid):
     if c.rowcount != 1:
 
         c.rollback()
+
         c.close()
 
         return jsonify(
@@ -1153,11 +1471,14 @@ def add_credits(uid):
     )).fetchone()
 
     c.commit()
+
     c.close()
 
     return jsonify(
         ok=True,
+
         message="تم تحديث الرصيد بنجاح.",
+
         credits=updated["credits"]
     )
 
@@ -1206,6 +1527,7 @@ def ban_user(uid):
     ))
 
     c.commit()
+
     c.close()
 
     return jsonify(
@@ -1224,7 +1546,9 @@ def unban_user(uid):
     c = db()
 
     user = c.execute("""
-        SELECT id,is_admin
+        SELECT
+            id,
+            is_admin
         FROM users
         WHERE id=?
     """, (
@@ -1257,6 +1581,7 @@ def unban_user(uid):
     ))
 
     c.commit()
+
     c.close()
 
     return jsonify(
@@ -1300,7 +1625,6 @@ def delete_user(uid):
             error="لا يمكن حذف حساب المدير."
         ), 403
 
-    # حذف المحادثات أولاً
     c.execute("""
         DELETE FROM chats
         WHERE user_id=?
@@ -1308,7 +1632,6 @@ def delete_user(uid):
         uid,
     ))
 
-    # حذف المستخدم
     c.execute("""
         DELETE FROM users
         WHERE id=?
@@ -1318,6 +1641,7 @@ def delete_user(uid):
     ))
 
     c.commit()
+
     c.close()
 
     return jsonify(
@@ -1327,7 +1651,7 @@ def delete_user(uid):
 
 
 # =========================================================
-# المستخدمون + إحصائياتهم
+# المستخدمون + الإحصائيات
 # =========================================================
 
 @app.get("/api/admin/users")
@@ -1416,7 +1740,6 @@ def admin_users():
             """
         ).fetchall()
 
-    # إحصائيات عامة
     stats = c.execute("""
         SELECT
 
@@ -1469,7 +1792,7 @@ def admin_users():
 
 
 # =========================================================
-# إحصائيات الإدارة منفصلة
+# إحصائيات الإدارة
 # =========================================================
 
 @app.get("/api/admin/stats")
@@ -1523,6 +1846,128 @@ def admin_stats():
 
 
 # =========================================================
+# النسخ الاحتياطي
+# =========================================================
+
+@app.get("/api/admin/backup")
+@admin_required
+def admin_backup():
+
+    c = db()
+
+    users = c.execute("""
+        SELECT
+            id,
+            name,
+            email,
+            credits,
+            is_admin,
+            banned
+        FROM users
+        ORDER BY id
+    """).fetchall()
+
+    chats = c.execute("""
+        SELECT
+            id,
+            user_id,
+            role,
+            content,
+            created_at
+        FROM chats
+        ORDER BY id
+    """).fetchall()
+
+    settings = c.execute("""
+        SELECT
+            key,
+            value
+        FROM settings
+        ORDER BY key
+    """).fetchall()
+
+    c.close()
+
+    return jsonify(
+
+        created_at=time.strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+
+        users=[
+            dict(row)
+            for row in users
+        ],
+
+        chats=[
+            dict(row)
+            for row in chats
+        ],
+
+        settings=[
+            dict(row)
+            for row in settings
+        ]
+
+    )
+
+
+# =========================================================
+# الباقات
+# =========================================================
+
+@app.post("/api/admin/packages")
+@admin_required
+def save_admin_packages():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    packages = data.get(
+        "packages",
+        []
+    )
+
+    if not isinstance(
+        packages,
+        list
+    ):
+
+        return jsonify(
+            error="بيانات الباقات غير صحيحة."
+        ), 400
+
+    import json
+
+    c = db()
+
+    c.execute("""
+        INSERT OR REPLACE INTO settings
+        (
+            key,
+            value
+        )
+        VALUES(?,?)
+    """, (
+        "packages",
+        json.dumps(
+            packages,
+            ensure_ascii=False
+        )
+    ))
+
+    c.commit()
+
+    c.close()
+
+    return jsonify(
+        ok=True,
+        message="تم حفظ الباقة بنجاح."
+    )
+
+
+# =========================================================
 # تشغيل الموقع
 # =========================================================
 
@@ -1530,10 +1975,11 @@ if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
+
         port=int(
             os.getenv(
                 "PORT",
                 "5000"
             )
         )
-        )
+    )
