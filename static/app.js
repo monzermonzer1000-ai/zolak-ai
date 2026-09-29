@@ -1,249 +1,141 @@
 "use strict";
 
-// =========================================================
-// عناصر واجهة المحادثة
-// =========================================================
-
 const promptBox = document.getElementById("prompt");
 const sendButton = document.getElementById("send");
 const messages = document.getElementById("messages");
-
-
-// =========================================================
-// المحادثة الحالية
-// =========================================================
+const sidebar = document.querySelector(".sidebar");
+const mobileMenu = document.querySelector(".mobile-menu");
 
 let currentConversationId = null;
 
 
-// =========================================================
-// إضافة رسالة للواجهة
-// =========================================================
+/* =========================
+   الرسائل
+========================= */
 
 function addMessage(text, type) {
-
     if (!messages) return;
 
     const message = document.createElement("div");
-
     message.className = "message " + type;
 
     const content = document.createElement("div");
-
     content.className = "message-content";
-
     content.textContent = text;
 
     message.appendChild(content);
-
     messages.appendChild(message);
 
     messages.scrollTop = messages.scrollHeight;
 }
 
 
-// =========================================================
-// تحديث بيانات الحساب والرصيد
-// =========================================================
+/* =========================
+   الحساب
+========================= */
 
 async function refreshAccount() {
-
     try {
-
         const response = await fetch("/api/me");
-
         const data = await response.json();
 
         if (!data.logged_in) return;
 
-        const loginLink =
-            document.getElementById("loginLink");
+        const loginLink = document.getElementById("loginLink");
+        const logout = document.getElementById("logout");
+        const who = document.getElementById("who");
+        const credits = document.getElementById("credits");
+        const adminLink = document.getElementById("adminLink");
 
-        const logout =
-            document.getElementById("logout");
-
-        const who =
-            document.getElementById("who");
-
-        const credits =
-            document.getElementById("credits");
-
-        const adminLink =
-            document.getElementById("adminLink");
-
-        if (loginLink) {
-            loginLink.hidden = true;
-        }
-
-        if (logout) {
-            logout.hidden = false;
-        }
+        if (loginLink) loginLink.hidden = true;
+        if (logout) logout.hidden = false;
 
         if (who) {
-
-            who.textContent =
-                "يا " + data.name + " ❤️";
+            who.textContent = "يا " + data.name + " ❤️";
         }
 
         if (credits) {
-
             credits.textContent =
-                "🎁 باقي ليك " +
-                data.credits +
-                " استخدام";
+                "🎁 باقي ليك " + data.credits + " استخدام";
         }
 
         if (adminLink && data.is_admin) {
-
             adminLink.hidden = false;
         }
 
     } catch (error) {
-
-        console.error(
-            "خطأ في تحديث الحساب:",
-            error
-        );
+        console.error("خطأ في تحديث الحساب:", error);
     }
 }
 
 
-// =========================================================
-// إنشاء منطقة المحادثات في القائمة الجانبية
-// =========================================================
+/* =========================
+   قائمة المحادثات
+========================= */
 
-function getConversationList() {
+function getConversationItems() {
 
-    if (!sidebar) {
-        return null;
-    }
+    let items =
+        document.getElementById("conversationItems");
 
-    let list =
-        sidebar.querySelector(
-            ".conversation-list"
-        );
+    if (!items && sidebar) {
 
-    if (!list) {
+        let list =
+            document.getElementById("conversationList");
 
-        list = document.createElement("div");
+        if (!list) {
 
-        list.className =
-            "conversation-list";
+            list = document.createElement("div");
 
-        list.innerHTML = `
-            <div class="conversation-list-title">
-                محادثاتك
-            </div>
+            list.id = "conversationList";
+            list.className = "conversation-list";
 
-            <div class="conversation-items"></div>
-        `;
+            const newButton =
+                sidebar.querySelector(".new-chat");
 
-        const newButton =
-            sidebar.querySelector(".new-chat");
-
-        if (newButton) {
-
-            newButton.insertAdjacentElement(
-                "afterend",
-                list
-            );
-
-        } else {
-
-            sidebar.appendChild(list);
+            if (newButton) {
+                newButton.insertAdjacentElement(
+                    "afterend",
+                    list
+                );
+            } else {
+                sidebar.appendChild(list);
+            }
         }
+
+        items = document.createElement("div");
+
+        items.id = "conversationItems";
+        items.className = "conversation-items";
+
+        list.appendChild(items);
     }
 
-    return list;
+    return items;
 }
 
 
-// =========================================================
-// تنسيق بسيط لقائمة المحادثات
-// =========================================================
-
-function styleConversationList() {
-
-    const list =
-        getConversationList();
-
-    if (!list) return;
-
-    list.style.marginTop = "12px";
-
-    list.style.padding =
-        "0 10px";
-
-    const title =
-        list.querySelector(
-            ".conversation-list-title"
-        );
-
-    if (title) {
-
-        title.style.fontSize =
-            "13px";
-
-        title.style.opacity =
-            "0.65";
-
-        title.style.padding =
-            "8px 6px";
-    }
-
-    const items =
-        list.querySelector(
-            ".conversation-items"
-        );
-
-    if (items) {
-
-        items.style.display =
-            "flex";
-
-        items.style.flexDirection =
-            "column";
-
-        items.style.gap =
-            "5px";
-    }
-}
-
-
-// =========================================================
-// تحميل قائمة المحادثات
-// =========================================================
+/* =========================
+   تحميل المحادثات
+========================= */
 
 async function loadConversations() {
+
+    const items = getConversationItems();
+
+    if (!items) return;
 
     try {
 
         const response =
-            await fetch(
-                "/api/conversations"
-            );
+            await fetch("/api/conversations");
 
         if (response.status === 401) {
-
             return;
         }
 
         const data =
             await response.json();
-
-        const list =
-            getConversationList();
-
-        if (!list) return;
-
-        styleConversationList();
-
-        const items =
-            list.querySelector(
-                ".conversation-items"
-            );
-
-        if (!items) return;
 
         items.innerHTML = "";
 
@@ -256,264 +148,161 @@ async function loadConversations() {
                 document.createElement("div");
 
             empty.textContent =
-                "لسه ما عندك محادثات محفوظة";
+                "ما عندك محادثات محفوظة";
 
-            empty.style.fontSize =
-                "12px";
-
-            empty.style.opacity =
-                "0.5";
-
-            empty.style.padding =
-                "8px 6px";
+            empty.style.padding = "8px";
+            empty.style.fontSize = "12px";
+            empty.style.opacity = "0.55";
 
             items.appendChild(empty);
 
             return;
         }
 
-        conversations.forEach(
-            function (conversation) {
 
-                const item =
-                    document.createElement("div");
+        conversations.forEach(function (conversation) {
 
-                item.className =
-                    "conversation-item";
+            const item =
+                document.createElement("div");
 
-                if (
-                    Number(
-                        conversation.id
-                    ) ===
-                    Number(
-                        currentConversationId
-                    )
-                ) {
+            item.className =
+                "conversation-item";
 
-                    item.classList.add(
-                        "active"
-                    );
-                }
+            if (
+                Number(conversation.id) ===
+                Number(currentConversationId)
+            ) {
+                item.classList.add("active");
+            }
 
-                item.style.display =
-                    "flex";
 
-                item.style.alignItems =
-                    "center";
+            const title =
+                document.createElement("span");
 
-                item.style.gap =
-                    "5px";
+            title.className =
+                "conversation-title";
 
-                item.style.padding =
-                    "9px 8px";
+            title.textContent =
+                conversation.title ||
+                "محادثة جديدة";
 
-                item.style.borderRadius =
-                    "10px";
 
-                item.style.cursor =
-                    "pointer";
+            const deleteButton =
+                document.createElement("button");
 
-                item.style.transition =
-                    "0.2s";
+            deleteButton.type = "button";
+            deleteButton.className =
+                "conversation-delete";
 
-                const title =
-                    document.createElement(
-                        "div"
-                    );
+            deleteButton.textContent = "×";
+            deleteButton.title =
+                "حذف المحادثة";
 
-                title.className =
-                    "conversation-title";
 
-                title.textContent =
-                    conversation.title ||
-                    "محادثة جديدة";
+            deleteButton.addEventListener(
+                "click",
+                async function (event) {
 
-                title.style.flex =
-                    "1";
+                    event.stopPropagation();
 
-                title.style.overflow =
-                    "hidden";
+                    const confirmed =
+                        confirm(
+                            "متأكد داير تحذف المحادثة دي؟"
+                        );
 
-                title.style.textOverflow =
-                    "ellipsis";
+                    if (!confirmed) return;
 
-                title.style.whiteSpace =
-                    "nowrap";
+                    try {
 
-                const deleteButton =
-                    document.createElement(
-                        "button"
-                    );
-
-                deleteButton.type =
-                    "button";
-
-                deleteButton.textContent =
-                    "×";
-
-                deleteButton.title =
-                    "حذف المحادثة";
-
-                deleteButton.style.border =
-                    "0";
-
-                deleteButton.style.background =
-                    "transparent";
-
-                deleteButton.style.cursor =
-                    "pointer";
-
-                deleteButton.style.opacity =
-                    "0.55";
-
-                deleteButton.style.fontSize =
-                    "18px";
-
-                deleteButton.style.padding =
-                    "0 4px";
-
-                deleteButton.addEventListener(
-                    "click",
-                    async function (event) {
-
-                        event.stopPropagation();
-
-                        const confirmed =
-                            confirm(
-                                "متأكد داير تحذف المحادثة دي؟"
+                        const response =
+                            await fetch(
+                                "/api/conversations/" +
+                                conversation.id,
+                                {
+                                    method: "DELETE"
+                                }
                             );
 
-                        if (!confirmed) {
+                        const data =
+                            await response.json();
+
+                        if (!response.ok) {
+
+                            alert(
+                                data.error ||
+                                "ما قدرنا نحذف المحادثة."
+                            );
+
                             return;
                         }
 
-                        try {
 
-                            const response =
-                                await fetch(
-                                    "/api/conversations/" +
-                                    conversation.id,
-                                    {
-                                        method:
-                                            "DELETE"
-                                    }
-                                );
+                        if (
+                            Number(
+                                currentConversationId
+                            ) ===
+                            Number(conversation.id)
+                        ) {
 
-                            const result =
-                                await response.json();
+                            currentConversationId =
+                                null;
 
-                            if (!response.ok) {
-
-                                alert(
-                                    result.error ||
-                                    "ما قدرنا نحذف المحادثة."
-                                );
-
-                                return;
-                            }
-
-                            if (
-                                Number(
-                                    currentConversationId
-                                ) ===
-                                Number(
-                                    conversation.id
-                                )
-                            ) {
-
-                                currentConversationId =
-                                    null;
-
-                                showWelcome();
-                            }
-
-                            loadConversations();
-
-                        } catch (error) {
-
-                            console.error(
-                                "خطأ في حذف المحادثة:",
-                                error
-                            );
-
-                            alert(
-                                "حصلت مشكلة، حاول تاني."
-                            );
+                            showWelcome();
                         }
-                    }
-                );
 
-                item.appendChild(title);
 
-                item.appendChild(
-                    deleteButton
-                );
+                        loadConversations();
 
-                item.addEventListener(
-                    "click",
-                    function () {
+                    } catch (error) {
 
-                        openConversation(
-                            conversation.id
+                        console.error(
+                            "خطأ في حذف المحادثة:",
+                            error
+                        );
+
+                        alert(
+                            "حصل خطأ، حاول تاني."
                         );
                     }
-                );
+                }
+            );
 
-                items.appendChild(item);
-            }
+
+            item.appendChild(title);
+            item.appendChild(deleteButton);
+
+
+            item.addEventListener(
+                "click",
+                function () {
+
+                    openConversation(
+                        conversation.id
+                    );
+                }
+            );
+
+
+            items.appendChild(item);
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "خطأ في تحميل المحادثات:",
+            error
         );
     }
-
-    styleActiveConversation();
 }
 
 
-// =========================================================
-// تمييز المحادثة الحالية
-// =========================================================
+/* =========================
+   فتح محادثة قديمة
+========================= */
 
-function styleActiveConversation() {
-
-    document
-        .querySelectorAll(
-            ".conversation-item"
-        )
-        .forEach(
-            function (item) {
-
-                const active =
-                    item.classList.contains(
-                        "active"
-                    );
-
-                if (active) {
-
-                    item.style.background =
-                        "rgba(0, 200, 150, 0.15)";
-
-                    item.style.opacity =
-                        "1";
-
-                } else {
-
-                    item.style.background =
-                        "transparent";
-
-                    item.style.opacity =
-                        "0.85";
-                }
-            }
-        );
-}
-
-
-// =========================================================
-// فتح محادثة قديمة
-// =========================================================
-
-async function openConversation(
-    conversationId
-) {
+async function openConversation(conversationId) {
 
     try {
 
@@ -531,8 +320,10 @@ async function openConversation(
             return;
         }
 
+
         const data =
             await response.json();
+
 
         if (!response.ok) {
 
@@ -544,46 +335,40 @@ async function openConversation(
             return;
         }
 
+
         currentConversationId =
             Number(conversationId);
 
-        if (messages) {
 
+        if (messages) {
             messages.innerHTML = "";
         }
+
 
         const chats =
             data.chats || [];
 
-        chats.forEach(
-            function (chat) {
 
-                addMessage(
-                    chat.content,
-                    chat.role === "user"
-                        ? "user"
-                        : "assistant"
-                );
-            }
-        );
+        chats.forEach(function (chat) {
 
-        if (
-            chats.length === 0
-        ) {
-
-            showWelcome(
-                false
+            addMessage(
+                chat.content,
+                chat.role === "user"
+                    ? "user"
+                    : "assistant"
             );
-        }
+
+        });
+
 
         loadConversations();
 
         closeSidebar();
 
         if (promptBox) {
-
             promptBox.focus();
         }
+
 
     } catch (error) {
 
@@ -593,15 +378,60 @@ async function openConversation(
         );
 
         alert(
-            "ما قدرنا نفتح المحادثة، حاول تاني."
+            "ما قدرنا نفتح المحادثة."
         );
     }
 }
 
 
-// =========================================================
-// إرسال الرسالة
-// =========================================================
+/* =========================
+   محادثة جديدة
+========================= */
+
+async function createNewConversation() {
+
+    currentConversationId = null;
+
+    showWelcome();
+
+    closeSidebar();
+
+    /*
+     * لا ننشئ السجل في قاعدة البيانات
+     * إلا بعد إرسال أول رسالة.
+     * ده يمنع إنشاء محادثات فارغة.
+     */
+
+    if (promptBox) {
+        promptBox.focus();
+    }
+
+    await loadConversations();
+}
+
+
+const newChatButton =
+    document.querySelector(".new-chat");
+
+
+if (newChatButton) {
+
+    newChatButton.addEventListener(
+        "click",
+        function (event) {
+
+            event.preventDefault();
+
+            createNewConversation();
+
+        }
+    );
+}
+
+
+/* =========================
+   إرسال الرسالة
+========================= */
 
 async function sendMessage() {
 
@@ -613,8 +443,10 @@ async function sendMessage() {
         return;
     }
 
+
     const question =
         promptBox.value.trim();
+
 
     if (
         !question ||
@@ -623,18 +455,20 @@ async function sendMessage() {
         return;
     }
 
+
     addMessage(
         question,
         "user"
     );
 
+
     promptBox.value = "";
 
-    sendButton.disabled =
-        true;
+    sendButton.disabled = true;
 
     sendButton.innerHTML =
         '<span class="send-icon">…</span>';
+
 
     try {
 
@@ -642,7 +476,7 @@ async function sendMessage() {
             message: question
         };
 
-        // إذا كنا داخل محادثة موجودة
+
         if (
             currentConversationId !== null
         ) {
@@ -650,6 +484,7 @@ async function sendMessage() {
             body.conversation_id =
                 currentConversationId;
         }
+
 
         const response =
             await fetch(
@@ -667,12 +502,12 @@ async function sendMessage() {
                 }
             );
 
+
         const data =
             await response.json();
 
-        if (
-            response.status === 401
-        ) {
+
+        if (response.status === 401) {
 
             window.location.href =
                 "/login";
@@ -680,13 +515,12 @@ async function sendMessage() {
             return;
         }
 
-        if (
-            response.status === 402
-        ) {
+
+        if (!response.ok) {
 
             addMessage(
                 data.error ||
-                "رصيدك المجاني خلص.",
+                "حصل خطأ، جرّب تاني.",
                 "assistant"
             );
 
@@ -695,21 +529,12 @@ async function sendMessage() {
             return;
         }
 
-        if (
-            !response.ok
-        ) {
 
-            addMessage(
-                data.error ||
-                "حصل خطأ، جرّب تاني.",
-                "assistant"
-            );
+        /*
+         * أول رسالة في المحادثة
+         * تنشئ conversation_id من السيرفر.
+         */
 
-            return;
-        }
-
-        // الباك إند ممكن ينشئ المحادثة
-        // تلقائياً عند أول رسالة
         if (
             data.conversation_id
         ) {
@@ -720,25 +545,19 @@ async function sendMessage() {
                 );
         }
 
-        if (data.answer) {
 
-            addMessage(
-                data.answer,
-                "assistant"
-            );
+        addMessage(
+            data.answer ||
+            data.error ||
+            "حصل خطأ، جرّب تاني.",
+            "assistant"
+        );
 
-        } else {
 
-            addMessage(
-                data.error ||
-                "حصل خطأ، جرّب تاني.",
-                "assistant"
-            );
-        }
+        await refreshAccount();
 
-        refreshAccount();
+        await loadConversations();
 
-        loadConversations();
 
     } catch (error) {
 
@@ -747,15 +566,16 @@ async function sendMessage() {
             error
         );
 
+
         addMessage(
             "ما قدرنا نتصل بالخدمة، تأكد من اتصالك وحاول تاني.",
             "assistant"
         );
 
+
     } finally {
 
-        sendButton.disabled =
-            false;
+        sendButton.disabled = false;
 
         sendButton.innerHTML =
             '<span class="send-icon">↑</span>';
@@ -765,9 +585,9 @@ async function sendMessage() {
 }
 
 
-// =========================================================
-// زر الإرسال
-// =========================================================
+/* =========================
+   زر الإرسال
+========================= */
 
 if (sendButton) {
 
@@ -778,9 +598,9 @@ if (sendButton) {
 }
 
 
-// =========================================================
-// زر Enter
-// =========================================================
+/* =========================
+   Enter
+========================= */
 
 if (promptBox) {
 
@@ -802,225 +622,15 @@ if (promptBox) {
 }
 
 
-// =========================================================
-// بطاقات الاقتراح
-// =========================================================
-
-document.addEventListener(
-    "click",
-    function (event) {
-
-        const card =
-            event.target.closest(
-                ".suggestion-card"
-            );
-
-        if (
-            !card ||
-            !promptBox
-        ) {
-            return;
-        }
-
-        const text =
-            card.getAttribute(
-                "data-prompt"
-            );
-
-        if (!text) return;
-
-        event.preventDefault();
-
-        promptBox.value =
-            text;
-
-        sendMessage();
-    },
-    true
-);
-
-
-// =========================================================
-// الترحيب / محادثة جديدة
-// =========================================================
-
-function showWelcome(
-    focusInput = true
-) {
-
-    if (
-        !messages ||
-        !promptBox
-    ) {
-        return;
-    }
-
-    messages.innerHTML = `
-        <div class="welcome-screen">
-
-            <div class="welcome-logo">
-                Z
-            </div>
-
-            <span class="welcome-eyebrow">
-                أهلاً بيك في زولك AI 🇸🇩
-            </span>
-
-            <h1>
-                كيف أقدر أساعدك اليوم؟
-            </h1>
-
-            <p>
-                اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
-                <br>
-                أنا هنا عشان أساعدك.
-            </p>
-
-            <div class="welcome-suggestions">
-
-                <button
-                    class="suggestion-card"
-                    type="button"
-                    data-prompt="اشرح لي موضوع الذكاء الاصطناعي بطريقة بسيطة">
-
-                    <span class="suggestion-icon">
-                        ✦
-                    </span>
-
-                    <span class="suggestion-text">
-                        <strong>
-                            اشرح لي موضوع
-                        </strong>
-
-                        <small>
-                            خلينا نفهم حاجة جديدة
-                        </small>
-                    </span>
-
-                    <span class="suggestion-arrow">
-                        ←
-                    </span>
-
-                </button>
-
-
-                <button
-                    class="suggestion-card"
-                    type="button"
-                    data-prompt="ساعدني أكتب رسالة احترافية">
-
-                    <span class="suggestion-icon">
-                        ✎
-                    </span>
-
-                    <span class="suggestion-text">
-                        <strong>
-                            ساعدني في الكتابة
-                        </strong>
-
-                        <small>
-                            رسائل وأفكار ومحتوى
-                        </small>
-                    </span>
-
-                    <span class="suggestion-arrow">
-                        ←
-                    </span>
-
-                </button>
-
-
-                <button
-                    class="suggestion-card"
-                    type="button"
-                    data-prompt="اقترح لي أفكار لمشروع جديد">
-
-                    <span class="suggestion-icon">
-                        ◇
-                    </span>
-
-                    <span class="suggestion-text">
-                        <strong>
-                            أفكار لمشروع
-                        </strong>
-
-                        <small>
-                            نخطط ونطوّر أفكارك
-                        </small>
-                    </span>
-
-                    <span class="suggestion-arrow">
-                        ←
-                    </span>
-
-                </button>
-
-
-                <button
-                    class="suggestion-card"
-                    type="button"
-                    data-prompt="ساعدني أتعلم مهارة جديدة">
-
-                    <span class="suggestion-icon">
-                        ⌘
-                    </span>
-
-                    <span class="suggestion-text">
-                        <strong>
-                            التعلّم والتطوير
-                        </strong>
-
-                        <small>
-                            خطوات واضحة للتعلّم
-                        </small>
-                    </span>
-
-                    <span class="suggestion-arrow">
-                        ←
-                    </span>
-
-                </button>
-
-            </div>
-        </div>
-    `;
-
-    promptBox.value = "";
-
-    if (focusInput) {
-
-        promptBox.focus();
-    }
-
-    closeSidebar();
-
-    styleActiveConversation();
-}
-
-
-// =========================================================
-// القائمة الجانبية
-// =========================================================
-
-const mobileMenu =
-    document.querySelector(
-        ".mobile-menu"
-    );
-
-const sidebar =
-    document.querySelector(
-        ".sidebar"
-    );
-
-
-// =========================================================
-// طبقة خلف القائمة
-// =========================================================
+/* =========================
+   القائمة الجانبية للموبايل
+========================= */
 
 let sidebarOverlay =
     document.querySelector(
         ".sidebar-overlay"
     );
+
 
 if (!sidebarOverlay) {
 
@@ -1032,39 +642,36 @@ if (!sidebarOverlay) {
     sidebarOverlay.className =
         "sidebar-overlay";
 
-    sidebarOverlay.style.position =
-        "fixed";
-
-    sidebarOverlay.style.inset =
-        "0";
-
-    sidebarOverlay.style.zIndex =
-        "40";
-
-    sidebarOverlay.style.background =
-        "rgba(0, 0, 0, 0.35)";
-
-    sidebarOverlay.style.backdropFilter =
-        "blur(2px)";
-
-    sidebarOverlay.style.opacity =
-        "0";
-
-    sidebarOverlay.style.pointerEvents =
-        "none";
-
-    sidebarOverlay.style.transition =
-        "opacity 0.25s ease";
-
     document.body.appendChild(
         sidebarOverlay
     );
 }
 
 
-// =========================================================
-// فتح القائمة
-// =========================================================
+sidebarOverlay.style.position =
+    "fixed";
+
+sidebarOverlay.style.inset =
+    "0";
+
+sidebarOverlay.style.zIndex =
+    "40";
+
+sidebarOverlay.style.background =
+    "rgba(0,0,0,0.35)";
+
+sidebarOverlay.style.backdropFilter =
+    "blur(2px)";
+
+sidebarOverlay.style.opacity =
+    "0";
+
+sidebarOverlay.style.pointerEvents =
+    "none";
+
+sidebarOverlay.style.transition =
+    "opacity 0.25s ease";
+
 
 function openSidebar() {
 
@@ -1085,10 +692,6 @@ function openSidebar() {
 }
 
 
-// =========================================================
-// إغلاق القائمة
-// =========================================================
-
 function closeSidebar() {
 
     if (!sidebar) return;
@@ -1108,10 +711,6 @@ function closeSidebar() {
 }
 
 
-// =========================================================
-// تبديل القائمة
-// =========================================================
-
 function toggleSidebar() {
 
     if (!sidebar) return;
@@ -1130,10 +729,6 @@ function toggleSidebar() {
     }
 }
 
-
-// =========================================================
-// زر القائمة
-// =========================================================
 
 if (mobileMenu) {
 
@@ -1156,56 +751,146 @@ if (mobileMenu) {
 }
 
 
-// =========================================================
-// الضغط خارج القائمة
-// =========================================================
+sidebarOverlay.addEventListener(
+    "click",
+    function () {
 
-if (sidebarOverlay) {
+        closeSidebar();
 
-    sidebarOverlay.addEventListener(
-        "click",
-        function () {
-
-            closeSidebar();
-        }
-    );
-}
+    }
+);
 
 
-// =========================================================
-// زر محادثة جديدة
-// =========================================================
+document.addEventListener(
+    "keydown",
+    function (event) {
 
-const newChatButton =
-    document.querySelector(
-        ".new-chat"
-    );
-
-if (newChatButton) {
-
-    newChatButton.addEventListener(
-        "click",
-        function (event) {
-
-            event.preventDefault();
-
-            // مهم:
-            // لا نرسل طلب للسيرفر هنا.
-            // المحادثة الجديدة يتم إنشاؤها
-            // تلقائياً عند إرسال أول رسالة.
-
-            currentConversationId =
-                null;
-
-            showWelcome();
-
-            loadConversations();
+        if (
+            event.key === "Escape"
+        ) {
 
             closeSidebar();
         }
-    );
+    }
+);
+
+
+window.addEventListener(
+    "resize",
+    function () {
+
+        if (
+            window.innerWidth > 800
+        ) {
+
+            closeSidebar();
+        }
+    }
+);
+
+
+/* =========================
+   بطاقات الاقتراح
+========================= */
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        const card =
+            event.target.closest(
+                ".suggestion-card"
+            );
+
+
+        if (
+            !card ||
+            !promptBox
+        ) {
+            return;
+        }
+
+
+        const text =
+            card.getAttribute(
+                "data-prompt"
+            );
+
+
+        if (!text) return;
+
+
+        event.preventDefault();
+
+        promptBox.value = text;
+
+        sendMessage();
+
+    },
+    true
+);
+
+
+/* =========================
+   الترحيب
+========================= */
+
+function showWelcome(
+    focusInput = true
+) {
+
+    if (!messages) return;
+
+
+    messages.innerHTML = `
+
+        <div class="welcome-screen">
+
+            <div class="welcome-logo">
+                Z
+            </div>
+
+            <span class="welcome-eyebrow">
+                أهلاً بيك في زولك AI 🇸🇩
+            </span>
+
+            <h1>
+                كيف أقدر أساعدك اليوم؟
+            </h1>
+
+            <p>
+                اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
+                <br>
+                أنا هنا عشان أساعدك.
+            </p>
+
+        </div>
+
+    `;
+
+
+    if (promptBox) {
+
+        promptBox.value = "";
+
+        if (focusInput) {
+            promptBox.focus();
+        }
+    }
 }
 
 
-// =========================================================
-// إ
+/* =========================
+   تشغيل الموقع
+========================= */
+
+async function initializeApp() {
+
+    await refreshAccount();
+
+    await loadConversations();
+
+}
+
+
+initializeApp();
