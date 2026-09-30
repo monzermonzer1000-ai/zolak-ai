@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>لوحة إدارة زولك AI 🇸🇩</title>
+<title>لوحة المدير | زولك AI 🇸🇩</title>
 
 <style>
 *{
@@ -37,12 +37,12 @@ body{
 
 body.light{
     --bg:#f4f7fb;
-    --panel:#ffffff;
+    --panel:#fff;
     --panel2:#eef3f8;
     --border:#d5dde7;
     --text:#17202a;
     --muted:#64748b;
-    --input:#ffffff;
+    --input:#fff;
 }
 
 button,
@@ -54,6 +54,11 @@ select{
 
 button{
     cursor:pointer;
+}
+
+button:disabled{
+    opacity:.55;
+    cursor:not-allowed;
 }
 
 .container{
@@ -111,12 +116,12 @@ header{
 
 .btn.red{
     background:var(--red);
-    color:white;
+    color:#fff;
 }
 
 .btn.blue{
     background:var(--blue);
-    color:white;
+    color:#fff;
 }
 
 .btn.yellow{
@@ -263,15 +268,15 @@ select{
     outline:none;
 }
 
-textarea{
-    min-height:100px;
-    resize:vertical;
-}
-
 input:focus,
 textarea:focus,
 select:focus{
     border-color:var(--green);
+}
+
+textarea{
+    min-height:100px;
+    resize:vertical;
 }
 
 .actions{
@@ -298,7 +303,7 @@ select:focus{
 table{
     width:100%;
     border-collapse:collapse;
-    min-width:800px;
+    min-width:850px;
 }
 
 th,
@@ -349,7 +354,7 @@ th{
 
 .small-btn.blue{
     background:var(--blue);
-    color:white;
+    color:#fff;
 }
 
 .small-btn.green{
@@ -359,7 +364,7 @@ th{
 
 .small-btn.red{
     background:var(--red);
-    color:white;
+    color:#fff;
 }
 
 .small-btn.yellow{
@@ -396,6 +401,19 @@ th{
     text-align:center;
     padding:25px;
     color:var(--muted);
+}
+
+.original-actions{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-top:12px;
+}
+
+.original-actions button{
+    border:0;
+    border-radius:8px;
+    padding:8px 11px;
 }
 
 .modal{
@@ -496,6 +514,13 @@ th{
     color:#ff9a9a;
 }
 
+.footer{
+    text-align:center;
+    color:var(--muted);
+    padding:25px 10px;
+    line-height:1.8;
+}
+
 @media(max-width:800px){
 
     .stats{
@@ -546,7 +571,7 @@ th{
 <div class="header-actions">
 
 <button type="button" class="btn" onclick="goHome()">
-الموقع
+الرئيسية
 </button>
 
 <button type="button" class="btn red" onclick="logout()">
@@ -560,7 +585,7 @@ th{
 <main class="container">
 
 <div class="title">
-<h1>لوحة إدارة زولك AI</h1>
+<h1>🛡️ لوحة المدير</h1>
 <p>إدارة المستخدمين والموقع والذكاء الاصطناعي والإعدادات</p>
 </div>
 
@@ -569,22 +594,22 @@ th{
 <div class="stats">
 
 <div class="stat">
-<small>المستخدمون</small>
+<small>👥 المستخدمون</small>
 <strong id="statUsers">0</strong>
 </div>
 
 <div class="stat">
-<small>الرسائل</small>
+<small>💬 الرسائل</small>
 <strong id="statMessages">0</strong>
 </div>
 
 <div class="stat">
-<small>المحظورون</small>
+<small>🚫 الموقوفون</small>
 <strong id="statBanned">0</strong>
 </div>
 
 <div class="stat">
-<small>الرصيد الكلي</small>
+<small>🎁 إجمالي الأرصدة</small>
 <strong id="statCredits">0</strong>
 </div>
 
@@ -593,31 +618,31 @@ th{
 <div class="tabs">
 
 <button type="button" class="tab active" onclick="showSection('users',this)">
-المستخدمون
+👥 المستخدمون
 </button>
 
 <button type="button" class="tab" onclick="showSection('homepage',this)">
-الصفحة الرئيسية
+🏠 الصفحة الرئيسية
 </button>
 
 <button type="button" class="tab" onclick="showSection('design',this)">
-التصميم
+🎨 التصميم
 </button>
 
 <button type="button" class="tab" onclick="showSection('content',this)">
-المحتوى
+📝 المحتوى
 </button>
 
 <button type="button" class="tab" onclick="showSection('ai',this)">
-الذكاء الاصطناعي
+🤖 الذكاء الاصطناعي
 </button>
 
 <button type="button" class="tab" onclick="showSection('security',this)">
-الأمان
+🔐 الأمان
 </button>
 
 <button type="button" class="tab" onclick="showSection('backup',this)">
-النسخ الاحتياطي
+💾 النسخ الاحتياطي
 </button>
 
 <button type="button" class="tab" onclick="showSection('maintenance',this)">
@@ -633,21 +658,23 @@ th{
 
 <div class="panel">
 
-<h2>إدارة المستخدمين</h2>
+<h2>👥 إدارة المستخدمين</h2>
 
 <div class="users-search">
 
 <input
 id="userSearch"
+type="search"
 placeholder="ابحث بالاسم أو الإيميل..."
+autocomplete="off"
 >
 
 <button type="button" class="btn green" onclick="loadUsers()">
-بحث
+🔍 بحث
 </button>
 
 <button type="button" class="btn" onclick="loadUsers()">
-تحديث
+🔄 تحديث
 </button>
 
 </div>
@@ -680,6 +707,7 @@ placeholder="ابحث بالاسم أو الإيميل..."
 
 </div>
 </div>
+
 </section>
 
 
@@ -689,33 +717,48 @@ placeholder="ابحث بالاسم أو الإيميل..."
 
 <div class="panel">
 
-<h2>إعدادات الصفحة الرئيسية</h2>
+<h2>🏠 إعدادات الصفحة الرئيسية</h2>
 
 <div class="grid">
 
 <div class="field">
+
 <label>اسم الموقع</label>
+
 <input id="site_name">
+
 </div>
 
 <div class="field">
+
 <label>عنوان الصفحة</label>
+
 <input id="homepage_title">
+
 </div>
 
 <div class="field full">
+
 <label>وصف الموقع</label>
+
 <textarea id="site_description"></textarea>
+
 </div>
 
 <div class="field full">
+
 <label>نص الصفحة</label>
+
 <textarea id="homepage_text"></textarea>
+
 </div>
 
 <div class="field full">
+
 <label>رسالة الترحيب</label>
+
 <textarea id="welcome"></textarea>
+
 </div>
 
 </div>
@@ -723,11 +766,13 @@ placeholder="ابحث بالاسم أو الإيميل..."
 <div class="actions">
 
 <button type="button" class="btn green" onclick="saveSettings()">
-حفظ الإعدادات
+💾 حفظ الإعدادات
 </button>
 
 </div>
+
 </div>
+
 </section>
 
 
@@ -737,7 +782,7 @@ placeholder="ابحث بالاسم أو الإيميل..."
 
 <div class="panel">
 
-<h2>التصميم والمظهر</h2>
+<h2>🎨 التصميم والمظهر</h2>
 
 <div class="grid">
 
@@ -770,12 +815,13 @@ placeholder="#00c896"
 <div class="actions">
 
 <button type="button" class="btn green" onclick="saveSettings()">
-حفظ التصميم
+💾 حفظ التصميم
 </button>
 
 </div>
 
 </div>
+
 </section>
 
 
@@ -785,7 +831,7 @@ placeholder="#00c896"
 
 <div class="panel">
 
-<h2>المحتوى والإعلان</h2>
+<h2>📝 المحتوى والإعلان</h2>
 
 <div class="grid">
 
@@ -810,12 +856,13 @@ placeholder="#00c896"
 <div class="actions">
 
 <button type="button" class="btn green" onclick="saveSettings()">
-حفظ المحتوى
+💾 حفظ المحتوى
 </button>
 
 </div>
 
 </div>
+
 </section>
 
 
@@ -825,7 +872,7 @@ placeholder="#00c896"
 
 <div class="panel">
 
-<h2>إعدادات الذكاء الاصطناعي</h2>
+<h2>🤖 إعدادات الذكاء الاصطناعي</h2>
 
 <div class="grid">
 
@@ -839,7 +886,7 @@ placeholder="#00c896"
 
 <div class="field">
 
-<label>الرصيد المجاني</label>
+<label>🎁 الرصيد المجاني عند التسجيل</label>
 
 <input id="free_credits" type="number" min="0">
 
@@ -861,13 +908,17 @@ placeholder="#00c896"
 
 <div class="actions">
 
-<button type="button" class="btn green" onclick="saveSettings()">
-حفظ إعدادات الذكاء
+<button
+type="button"
+class="btn green"
+onclick="saveSettings()">
+💾 حفظ إعدادات الذكاء
 </button>
 
 </div>
 
 </div>
+
 </section>
 
 
@@ -877,7 +928,7 @@ placeholder="#00c896"
 
 <div class="panel">
 
-<h2>الأمان والتحكم</h2>
+<h2>🔐 الأمان والتحكم</h2>
 
 <div class="grid">
 
@@ -910,12 +961,13 @@ placeholder="#00c896"
 <div class="actions">
 
 <button type="button" class="btn green" onclick="saveSettings()">
-حفظ إعدادات الأمان
+💾 حفظ إعدادات الأمان
 </button>
 
 </div>
 
 </div>
+
 </section>
 
 
@@ -925,7 +977,7 @@ placeholder="#00c896"
 
 <div class="panel">
 
-<h2>النسخ الاحتياطي</h2>
+<h2>💾 النسخ الاحتياطي</h2>
 
 <p style="color:var(--muted);line-height:1.8">
 يمكنك تحميل نسخة من قاعدة بيانات زولك AI.
@@ -933,13 +985,17 @@ placeholder="#00c896"
 
 <div class="actions">
 
-<button type="button" class="btn blue" onclick="downloadBackup()">
+<button
+type="button"
+class="btn blue"
+onclick="downloadBackup()">
 ⬇️ تحميل النسخة الاحتياطية
 </button>
 
 </div>
 
 </div>
+
 </section>
 
 
@@ -968,9 +1024,7 @@ type="button"
 id="healthButton"
 class="btn green"
 onclick="runHealthCheck()">
-
 🔍 فحص الآن
-
 </button>
 
 </div>
@@ -979,9 +1033,7 @@ onclick="runHealthCheck()">
 id="healthOverall"
 class="health-overall warning"
 style="margin-top:15px">
-
 لم يتم الفحص بعد
-
 </div>
 
 <div class="health-grid">
@@ -1065,7 +1117,16 @@ Gemini API
 </div>
 
 </div>
+
 </section>
+
+
+<div class="footer">
+
+© 2026 منذر السيد — جميع الحقوق محفوظة<br>
+زولك AI 🇸🇩
+
+</div>
 
 </main>
 
@@ -1082,7 +1143,10 @@ Gemini API
 المستخدم
 </h2>
 
-<button type="button" class="btn red" onclick="closeModal()">
+<button
+type="button"
+class="btn red"
+onclick="closeModal()">
 إغلاق
 </button>
 
@@ -1091,6 +1155,7 @@ Gemini API
 <div id="modalContent"></div>
 
 </div>
+
 </div>
 
 
@@ -1136,6 +1201,7 @@ async function api(url, options = {}){
             data.message ||
             "حصل خطأ في الطلب."
         );
+
     }
 
     return data;
@@ -1148,24 +1214,27 @@ async function api(url, options = {}){
 
 function showMessage(text,type="success"){
 
-    const box = document.getElementById("message");
+    const box =
+        document.getElementById("message");
 
     if(!box) return;
 
     box.textContent = text;
 
-    box.className = "message show " + type;
+    box.className =
+        "message show " + type;
 
     setTimeout(function(){
 
         box.className = "message";
 
     },4000);
+
 }
 
 
 /* =========================
-   الموقع
+   الرئيسية
 ========================= */
 
 function goHome(){
@@ -1192,19 +1261,22 @@ function logout(){
 
 function showSection(id,button){
 
-    document.querySelectorAll(".section").forEach(function(section){
+    document.querySelectorAll(".section")
+    .forEach(function(section){
 
         section.classList.remove("active");
 
     });
 
-    document.querySelectorAll(".tab").forEach(function(tab){
+    document.querySelectorAll(".tab")
+    .forEach(function(tab){
 
         tab.classList.remove("active");
 
     });
 
-    const section = document.getElementById(id);
+    const section =
+        document.getElementById(id);
 
     if(section){
 
@@ -1234,17 +1306,17 @@ function showSection(id,button){
 
 
 /* =========================
-   حماية النصوص
+   حماية HTML
 ========================= */
 
 function escapeHtml(value){
 
     return String(value ?? "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
 
 }
 
@@ -1257,25 +1329,35 @@ async function loadStats(){
 
     try{
 
-        const data = await api("/api/admin/stats");
+        const data =
+            await api("/api/admin/stats");
 
-        document.getElementById("statUsers").textContent =
-            Number(data.total_users || 0).toLocaleString();
+        document.getElementById("statUsers")
+            .textContent =
+            Number(data.total_users || 0)
+            .toLocaleString();
 
-        document.getElementById("statMessages").textContent =
-            Number(data.total_messages || 0).toLocaleString();
+        document.getElementById("statMessages")
+            .textContent =
+            Number(data.total_messages || 0)
+            .toLocaleString();
 
-        document.getElementById("statBanned").textContent =
-            Number(data.banned_users || 0).toLocaleString();
+        document.getElementById("statBanned")
+            .textContent =
+            Number(data.banned_users || 0)
+            .toLocaleString();
 
-        document.getElementById("statCredits").textContent =
-            Number(data.total_credits || 0).toLocaleString();
+        document.getElementById("statCredits")
+            .textContent =
+            Number(data.total_credits || 0)
+            .toLocaleString();
 
     }catch(error){
 
         showMessage(error.message,"error");
 
     }
+
 }
 
 
@@ -1285,7 +1367,8 @@ async function loadStats(){
 
 async function loadUsers(){
 
-    const table = document.getElementById("usersTable");
+    const table =
+        document.getElementById("usersTable");
 
     table.innerHTML = `
         <tr>
@@ -1298,55 +1381,68 @@ async function loadUsers(){
     try{
 
         const search =
-            document.getElementById("userSearch").value.trim();
+            document.getElementById("userSearch")
+            .value
+            .trim();
 
-        let url = "/api/admin/users";
+        let url =
+            "/api/admin/users";
 
         if(search){
 
-            url += "?q=" + encodeURIComponent(search);
+            url +=
+                "?q=" +
+                encodeURIComponent(search);
 
         }
 
-        const data = await api(url);
+        const data =
+            await api(url);
 
-        const users = data.users || [];
+        const users =
+            data.users || [];
 
         if(!users.length){
 
             table.innerHTML = `
                 <tr>
                     <td colspan="5" class="empty">
-                        ما في مستخدمين.
+                        ما في مستخدمين مطابقين.
                     </td>
                 </tr>
             `;
 
             return;
+
         }
 
-        table.innerHTML = users.map(function(user){
+        table.innerHTML =
+            users.map(function(user){
 
-            const isBanned =
-                Boolean(user.is_banned);
+                const id =
+                    Number(user.id);
 
-            const isAdmin =
-                Boolean(user.is_admin);
+                const banned =
+                    Boolean(
+                        user.is_banned ??
+                        user.banned
+                    );
 
-            const status = isBanned
-                ? `<span class="badge red">موقوف</span>`
-                : `<span class="badge green">نشط</span>`;
+                const admin =
+                    Boolean(user.is_admin);
 
-            const admin = isAdmin
-                ? `<span class="badge yellow">مدير</span>`
-                : "";
+                const status =
+                    admin
+                    ? `<span class="badge yellow">🛡️ مدير</span>`
+                    : banned
+                    ? `<span class="badge red">🚫 موقوف</span>`
+                    : `<span class="badge green">✅ نشط</span>`;
 
-            return `
+                return `
                 <tr>
 
                     <td>
                         ${escapeHtml(user.name)}
-                        ${admin ? "<br>"+admin : ""}
                     </td>
 
                     <td>
@@ -1354,7 +1450,9 @@ async function loadUsers(){
                     </td>
 
                     <td>
-                        ${Number(user.credits || 0).toLocaleString()}
+                        ${Number(
+                            user.credits || 0
+                        ).toLocaleString()}
                     </td>
 
                     <td>
@@ -1368,39 +1466,67 @@ async function loadUsers(){
                             <button
                                 type="button"
                                 class="small-btn blue"
-                                onclick="viewUser(${Number(user.id)})">
-                                عرض
+                                onclick="viewUser(${id})">
+                                👁️ عرض
                             </button>
 
                             <button
                                 type="button"
                                 class="small-btn green"
-                                onclick="addCredits(${Number(user.id)})">
-                                + رصيد
+                                onclick="addCredit(${id})">
+                                ➕ إضافة 10
                             </button>
 
                             <button
                                 type="button"
-                                class="small-btn yellow"
-                                onclick="toggleBan(${Number(user.id)},${!isBanned})">
-                                ${isBanned ? "فك الحظر" : "حظر"}
+                                class="small-btn green"
+                                onclick="addCustomCredit(${id})">
+                                🎁 إضافة رصيد
                             </button>
 
-                            <button
-                                type="button"
-                                class="small-btn red"
-                                onclick="deleteUser(${Number(user.id)})">
-                                حذف
-                            </button>
+                            ${
+                                !admin
+                                ? (
+                                    banned
+                                    ?
+                                    `<button
+                                        type="button"
+                                        class="small-btn yellow"
+                                        onclick="unbanUser(${id})">
+                                        ✅ إلغاء الحظر
+                                    </button>`
+                                    :
+                                    `<button
+                                        type="button"
+                                        class="small-btn yellow"
+                                        onclick="banUser(${id})">
+                                        🚫 حظر
+                                    </button>`
+                                )
+                                : ""
+                            }
+
+                            ${
+                                !admin
+                                ?
+                                `<button
+                                    type="button"
+                                    class="small-btn red"
+                                    onclick="deleteUser(${id})">
+                                    🗑️ حذف
+                                </button>`
+                                :
+                                ""
+                            }
 
                         </div>
 
                     </td>
 
                 </tr>
-            `;
+                `;
 
-        }).join("");
+            }).join("");
 
     }catch(error){
 
@@ -1412,8 +1538,13 @@ async function loadUsers(){
             </tr>
         `;
 
-        showMessage(error.message,"error");
+        showMessage(
+            error.message,
+            "error"
+        );
+
     }
+
 }
 
 
@@ -1425,26 +1556,43 @@ async function viewUser(uid){
 
     try{
 
-        const data = await api("/api/admin/users");
+        const data =
+            await api("/api/admin/users");
 
         const user =
-            (data.users || []).find(function(item){
+            (data.users || [])
+            .find(function(item){
 
-                return Number(item.id) === Number(uid);
+                return Number(item.id) ===
+                    Number(uid);
 
             });
 
         if(!user){
 
-            showMessage("المستخدم غير موجود.","error");
+            showMessage(
+                "المستخدم غير موجود.",
+                "error"
+            );
 
             return;
+
         }
 
-        document.getElementById("modalTitle").textContent =
+        const banned =
+            Boolean(
+                user.is_banned ??
+                user.banned
+            );
+
+        document.getElementById(
+            "modalTitle"
+        ).textContent =
             user.name || "المستخدم";
 
-        document.getElementById("modalContent").innerHTML = `
+        document.getElementById(
+            "modalContent"
+        ).innerHTML = `
 
             <div class="grid">
 
@@ -1476,7 +1624,9 @@ async function viewUser(uid){
                         id="editCredits"
                         type="number"
                         min="0"
-                        value="${Number(user.credits || 0)}">
+                        value="${Number(
+                            user.credits || 0
+                        )}">
 
                 </div>
 
@@ -1487,12 +1637,20 @@ async function viewUser(uid){
                     <select id="editAdmin">
 
                         <option value="0"
-                            ${user.is_admin ? "" : "selected"}>
+                            ${
+                                user.is_admin
+                                ? ""
+                                : "selected"
+                            }>
                             مستخدم
                         </option>
 
                         <option value="1"
-                            ${user.is_admin ? "selected" : ""}>
+                            ${
+                                user.is_admin
+                                ? "selected"
+                                : ""
+                            }>
                             مدير
                         </option>
 
@@ -1502,26 +1660,65 @@ async function viewUser(uid){
 
             </div>
 
+            <div class="info">
+
+                <strong>الحالة:</strong>
+
+                ${
+                    banned
+                    ? "🚫 المستخدم موقوف"
+                    : "✅ المستخدم نشط"
+                }
+
+            </div>
+
             <div class="actions">
 
                 <button
                     type="button"
                     class="btn green"
-                    onclick="saveUser(${Number(user.id)})">
-                    حفظ التعديل
+                    onclick="saveUser(${Number(uid)})">
+                    💾 حفظ التعديل
                 </button>
+
+                ${
+                    !user.is_admin
+                    ?
+                    banned
+                    ?
+                    `<button
+                        type="button"
+                        class="btn yellow"
+                        onclick="unbanUser(${Number(uid)});closeModal()">
+                        ✅ إلغاء الحظر
+                    </button>`
+                    :
+                    `<button
+                        type="button"
+                        class="btn yellow"
+                        onclick="banUser(${Number(uid)});closeModal()">
+                        🚫 حظر
+                    </button>`
+                    :
+                    ""
+                }
 
             </div>
         `;
 
-        document.getElementById("userModal")
-            .classList.add("show");
+        document.getElementById(
+            "userModal"
+        ).classList.add("show");
 
     }catch(error){
 
-        showMessage(error.message,"error");
+        showMessage(
+            error.message,
+            "error"
+        );
 
     }
+
 }
 
 
@@ -1531,8 +1728,9 @@ async function viewUser(uid){
 
 function closeModal(){
 
-    document.getElementById("userModal")
-        .classList.remove("show");
+    document.getElementById(
+        "userModal"
+    ).classList.remove("show");
 
 }
 
@@ -1546,24 +1744,41 @@ async function saveUser(uid){
     try{
 
         const name =
-            document.getElementById("editName").value.trim();
+            document.getElementById(
+                "editName"
+            ).value.trim();
 
         const credits =
-            Number(document.getElementById("editCredits").value);
+            Number(
+                document.getElementById(
+                    "editCredits"
+                ).value
+            );
 
         const isAdmin =
-            document.getElementById("editAdmin").value === "1";
+            document.getElementById(
+                "editAdmin"
+            ).value === "1";
 
         if(!name){
 
-            showMessage("اكتب اسم المستخدم.","error");
+            showMessage(
+                "اكتب اسم المستخدم.",
+                "error"
+            );
 
             return;
         }
 
-        if(!Number.isFinite(credits) || credits < 0){
+        if(
+            !Number.isFinite(credits) ||
+            credits < 0
+        ){
 
-            showMessage("الرصيد غير صحيح.","error");
+            showMessage(
+                "الرصيد غير صحيح.",
+                "error"
+            );
 
             return;
         }
@@ -1582,63 +1797,8 @@ async function saveUser(uid){
 
         closeModal();
 
-        showMessage("تم تحديث المستخدم بنجاح.");
-
-        await loadUsers();
-        await loadStats();
-
-    }catch(error){
-
-        showMessage(error.message,"error");
-
-    }
-}
-
-
-/* =========================
-   إضافة رصيد
-========================= */
-
-async function addCredits(uid){
-
-    const amount =
-        prompt(
-            "أدخل عدد الرصيد الذي تريد إضافته:",
-            "10"
-        );
-
-    if(amount === null){
-
-        return;
-    }
-
-    const number =
-        Number(amount);
-
-    if(!Number.isFinite(number) || number < 0){
-
         showMessage(
-            "أدخل رقم صحيح.",
-            "error"
-        );
-
-        return;
-    }
-
-    try{
-
-        await api(
-            "/api/admin/user/" + uid + "/credits",
-            {
-                method:"POST",
-                body:JSON.stringify({
-                    amount:number
-                })
-            }
-        );
-
-        showMessage(
-            "تمت إضافة " + number + " رصيد."
+            "تم تحديث المستخدم بنجاح."
         );
 
         await loadUsers();
@@ -1652,29 +1812,167 @@ async function addCredits(uid){
         );
 
     }
+
 }
 
 
 /* =========================
-   الحظر
+   إضافة 10
 ========================= */
 
-async function toggleBan(uid,banned){
+async function addCredit(id){
 
-    const action =
-        banned
-        ? "هل تريد حظر هذا المستخدم؟"
-        : "هل تريد فك الحظر عن هذا المستخدم؟";
+    await changeCredits(
+        id,
+        10
+    );
 
-    if(!confirm(action)){
+}
+
+
+/* =========================
+   إضافة رصيد مخصص
+========================= */
+
+async function addCustomCredit(id){
+
+    const value =
+        prompt(
+            "أدخل عدد الرصيد الداير تضيفو:",
+            "10"
+        );
+
+    if(
+        value === null ||
+        value.trim() === ""
+    ){
 
         return;
+
     }
+
+    const amount =
+        Number(value);
+
+    if(
+        !Number.isInteger(amount) ||
+        amount <= 0
+    ){
+
+        showMessage(
+            "أدخل رقماً صحيحاً أكبر من صفر.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    await changeCredits(
+        id,
+        amount
+    );
+
+}
+
+
+/* =========================
+   تغيير الرصيد
+========================= */
+
+async function changeCredits(
+    id,
+    amount
+){
 
     try{
 
         await api(
-            "/api/admin/user/" + uid + "/ban",
+            "/api/admin/user/" +
+            id +
+            "/credits",
+            {
+                method:"POST",
+                body:JSON.stringify({
+                    amount:amount
+                })
+            }
+        );
+
+        showMessage(
+            "تمت إضافة " +
+            amount +
+            " رصيد."
+        );
+
+        await loadUsers();
+        await loadStats();
+
+    }catch(error){
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================
+   حظر
+========================= */
+
+async function banUser(id){
+
+    if(
+        !confirm(
+            "متأكد داير توقف المستخدم؟"
+        )
+    ){
+
+        return;
+
+    }
+
+    await setBan(
+        id,
+        true
+    );
+
+}
+
+
+/* =========================
+   إلغاء الحظر
+========================= */
+
+async function unbanUser(id){
+
+    await setBan(
+        id,
+        false
+    );
+
+}
+
+
+/* =========================
+   الحظر / فك الحظر
+========================= */
+
+async function setBan(
+    id,
+    banned
+){
+
+    try{
+
+        await api(
+            "/api/admin/user/" +
+            id +
+            "/ban",
             {
                 method:"POST",
                 body:JSON.stringify({
@@ -1685,8 +1983,8 @@ async function toggleBan(uid,banned){
 
         showMessage(
             banned
-            ? "تم حظر المستخدم."
-            : "تم فك الحظر عن المستخدم."
+            ? "✅ تم إيقاف المستخدم."
+            : "✅ تم إلغاء الحظر."
         );
 
         await loadUsers();
@@ -1700,6 +1998,7 @@ async function toggleBan(uid,banned){
         );
 
     }
+
 }
 
 
@@ -1707,28 +2006,41 @@ async function toggleBan(uid,banned){
    حذف المستخدم
 ========================= */
 
-async function deleteUser(uid){
+async function deleteUser(id){
 
-    if(!confirm("هل أنت متأكد من حذف هذا المستخدم؟")){
+    if(
+        !confirm(
+            "⚠️ متأكد داير تحذف المستخدم نهائياً؟"
+        )
+    ){
 
         return;
+
     }
 
-    if(!confirm("الحذف نهائي. هل تريد المتابعة؟")){
+    if(
+        !confirm(
+            "الحذف نهائي. هل تريد المتابعة؟"
+        )
+    ){
 
         return;
+
     }
 
     try{
 
         await api(
-            "/api/admin/user/" + uid,
+            "/api/admin/user/" +
+            id,
             {
                 method:"DELETE"
             }
         );
 
-        showMessage("تم حذف المستخدم.");
+        showMessage(
+            "✅ تم حذف المستخدم."
+        );
 
         await loadUsers();
         await loadStats();
@@ -1741,11 +2053,12 @@ async function deleteUser(uid){
         );
 
     }
+
 }
 
 
 /* =========================
-   قراءة حقل
+   قراءة الحقول
 ========================= */
 
 function getField(id){
@@ -1756,22 +2069,31 @@ function getField(id){
     if(!element){
 
         return null;
+
     }
 
-    if(element.type === "checkbox"){
+    if(
+        element.type ===
+        "checkbox"
+    ){
 
         return element.checked;
+
     }
 
     return element.value;
+
 }
 
 
 /* =========================
-   وضع الإعدادات في الصفحة
+   وضع الحقول
 ========================= */
 
-function setField(id,value){
+function setField(
+    id,
+    value
+){
 
     const element =
         document.getElementById(id);
@@ -1779,9 +2101,13 @@ function setField(id,value){
     if(!element){
 
         return;
+
     }
 
-    if(element.type === "checkbox"){
+    if(
+        element.type ===
+        "checkbox"
+    ){
 
         element.checked =
             value === true ||
@@ -1795,6 +2121,7 @@ function setField(id,value){
             value ?? "";
 
     }
+
 }
 
 
@@ -1807,30 +2134,88 @@ async function loadSettings(){
     try{
 
         const data =
-            await api("/api/admin/settings");
+            await api(
+                "/api/admin/settings"
+            );
 
         settings =
             data.settings || {};
 
-        setField("site_name",settings.site_name);
-        setField("homepage_title",settings.homepage_title);
-        setField("site_description",settings.site_description);
-        setField("homepage_text",settings.homepage_text);
-        setField("welcome",settings.welcome);
+        setField(
+            "site_name",
+            settings.site_name
+        );
 
-        setField("primary_color",settings.primary_color);
-        setField("theme",settings.theme);
+        setField(
+            "homepage_title",
+            settings.homepage_title
+        );
 
-        setField("announcement",settings.announcement);
-        setField("support_email",settings.support_email);
+        setField(
+            "site_description",
+            settings.site_description
+        );
 
-        setField("ai_model",settings.ai_model);
-        setField("free_credits",settings.free_credits);
-        setField("max_message_length",settings.max_message_length);
+        setField(
+            "homepage_text",
+            settings.homepage_text
+        );
 
-        setField("allow_register",settings.allow_register);
-        setField("maintenance",settings.maintenance);
-        setField("enable_history",settings.enable_history);
+        setField(
+            "welcome",
+            settings.welcome
+        );
+
+        setField(
+            "primary_color",
+            settings.primary_color
+        );
+
+        setField(
+            "theme",
+            settings.theme || "dark"
+        );
+
+        setField(
+            "announcement",
+            settings.announcement
+        );
+
+        setField(
+            "support_email",
+            settings.support_email
+        );
+
+        setField(
+            "ai_model",
+            settings.ai_model
+        );
+
+        setField(
+            "free_credits",
+            settings.free_credits
+        );
+
+        setField(
+            "max_message_length",
+            settings.max_message_length
+        );
+
+        setField(
+            "allow_register",
+            settings.allow_register ??
+            settings.enable_registration
+        );
+
+        setField(
+            "maintenance",
+            settings.maintenance
+        );
+
+        setField(
+            "enable_history",
+            settings.enable_history
+        );
 
         applyTheme();
 
@@ -1844,6 +2229,7 @@ async function loadSettings(){
         );
 
     }
+
 }
 
 
@@ -1853,41 +2239,82 @@ async function loadSettings(){
 
 async function saveSettings(){
 
+    const freeValue =
+        getField("free_credits");
+
+    const maxValue =
+        getField("max_message_length");
+
+    if(
+        freeValue !== null &&
+        freeValue !== "" &&
+        (
+            !Number.isInteger(
+                Number(freeValue)
+            ) ||
+            Number(freeValue) < 0
+        )
+    ){
+
+        showMessage(
+            "الرصيد المجاني غير صحيح.",
+            "error"
+        );
+
+        return;
+
+    }
+
     const supported = {
 
-        site_name:getField("site_name"),
+        site_name:
+            getField("site_name"),
 
-        homepage_title:getField("homepage_title"),
+        homepage_title:
+            getField("homepage_title"),
 
-        homepage_text:getField("homepage_text"),
+        homepage_text:
+            getField("homepage_text"),
 
-        site_description:getField("site_description"),
+        site_description:
+            getField("site_description"),
 
-        welcome:getField("welcome"),
+        welcome:
+            getField("welcome"),
 
-        primary_color:getField("primary_color"),
+        primary_color:
+            getField("primary_color"),
 
-        theme:getField("theme"),
+        theme:
+            getField("theme"),
 
-        support_email:getField("support_email"),
+        support_email:
+            getField("support_email"),
 
-        announcement:getField("announcement"),
+        announcement:
+            getField("announcement"),
 
-        ai_model:getField("ai_model"),
+        ai_model:
+            getField("ai_model"),
 
-        free_credits:Number(
-            getField("free_credits") || 0
-        ),
+        free_credits:
+            Number(
+                freeValue || 0
+            ),
 
-        enable_history:getField("enable_history"),
+        enable_history:
+            getField("enable_history"),
 
-        allow_register:getField("allow_register"),
+        allow_register:
+            getField("allow_register"),
 
-        maintenance:getField("maintenance"),
+        maintenance:
+            getField("maintenance"),
 
-        max_message_length:Number(
-            getField("max_message_length") || 0
-        )
+        max_message_length:
+            Number(
+                maxValue || 0
+            )
 
     };
 
@@ -1897,7 +2324,9 @@ async function saveSettings(){
             "/api/admin/settings",
             {
                 method:"POST",
-                body:JSON.stringify(supported)
+                body:JSON.stringify(
+                    supported
+                )
             }
         );
 
@@ -1911,7 +2340,7 @@ async function saveSettings(){
         updateHealthSettings();
 
         showMessage(
-            "تم حفظ الإعدادات بنجاح."
+            "✅ اتحفظت الإعدادات بنجاح."
         );
 
     }catch(error){
@@ -1922,6 +2351,7 @@ async function saveSettings(){
         );
 
     }
+
 }
 
 
@@ -1936,24 +2366,35 @@ function applyTheme(){
 
     if(theme === "light"){
 
-        document.body.classList.add("light");
+        document.body
+            .classList
+            .add("light");
 
     }else{
 
-        document.body.classList.remove("light");
+        document.body
+            .classList
+            .remove("light");
 
     }
 
     const color =
         getField("primary_color");
 
-    if(color){
+    if(
+        color &&
+        /^#[0-9a-fA-F]{6}$/.test(color)
+    ){
 
         document.documentElement
             .style
-            .setProperty("--green",color);
+            .setProperty(
+                "--green",
+                color
+            );
 
     }
+
 }
 
 
@@ -1968,60 +2409,39 @@ function updateHealthSettings(){
         getField("ai_model") ||
         "غير محدد";
 
-    const maintenance =
-        settings.maintenance === true ||
-        settings.maintenance === "true" ||
-        settings.maintenance === 1 ||
-        settings.maintenance === "1";
-
     const modelBox =
-        document.getElementById("healthModel");
+        document.getElementById(
+            "healthModel"
+        );
 
     const modelMessage =
-        document.getElementById("healthModelMessage");
+        document.getElementById(
+            "healthModelMessage"
+        );
 
     if(modelBox){
 
-        modelBox.textContent = model;
+        modelBox.textContent =
+            model;
 
         modelBox.className =
             "health-status " +
-            (model && model !== "غير محدد"
+            (
+                model !== "غير محدد"
                 ? "ok"
-                : "warning");
+                : "warning"
+            );
+
     }
 
     if(modelMessage){
 
         modelMessage.textContent =
-            "الموديل الحالي: " + model;
+            "الموديل الحالي: " +
+            model;
+
     }
 
-    const maintenanceBox =
-        document.getElementById("healthMaintenance");
-
-    const maintenanceMessage =
-        document.getElementById("healthMaintenanceMessage");
-
-    if(maintenanceBox){
-
-        maintenanceBox.textContent =
-            maintenance
-            ? "مفعّل"
-            : "متوقف";
-
-        maintenanceBox.className =
-            "health-status " +
-            (maintenance ? "warning" : "ok");
-    }
-
-    if(maintenanceMessage){
-
-        maintenanceMessage.textContent =
-            maintenance
-            ? "وضع الصيانة مفعّل حالياً."
-            : "الموقع ليس في وضع الصيانة.";
-    }
 }
 
 
@@ -2032,20 +2452,26 @@ function updateHealthSettings(){
 async function runHealthCheck(){
 
     const button =
-        document.getElementById("healthButton");
+        document.getElementById(
+            "healthButton"
+        );
 
     if(button){
 
-        button.disabled = true;
+        button.disabled =
+            true;
 
         button.textContent =
             "⏳ جاري الفحص...";
+
     }
 
     try{
 
         const data =
-            await api("/api/admin/health");
+            await api(
+                "/api/admin/health"
+            );
 
         const checks =
             data.checks || {};
@@ -2069,7 +2495,9 @@ async function runHealthCheck(){
         );
 
         const overall =
-            document.getElementById("healthOverall");
+            document.getElementById(
+                "healthOverall"
+            );
 
         const status =
             data.overall_status ||
@@ -2082,12 +2510,14 @@ async function runHealthCheck(){
         overall.textContent =
             statusText(status);
 
-        document.getElementById("healthCheckedAt")
-            .textContent =
+        document.getElementById(
+            "healthCheckedAt"
+        ).textContent =
             data.checked_at || "—";
 
-        document.getElementById("healthDbPath")
-            .textContent =
+        document.getElementById(
+            "healthDbPath"
+        ).textContent =
             data.db_path || "—";
 
         updateHealthSettings();
@@ -2095,13 +2525,16 @@ async function runHealthCheck(){
     }catch(error){
 
         const overall =
-            document.getElementById("healthOverall");
+            document.getElementById(
+                "healthOverall"
+            );
 
         overall.className =
             "health-overall error";
 
         overall.textContent =
-            "فشل الفحص: " + error.message;
+            "فشل الفحص: " +
+            error.message;
 
         showMessage(
             error.message,
@@ -2112,20 +2545,28 @@ async function runHealthCheck(){
 
         if(button){
 
-            button.disabled = false;
+            button.disabled =
+                false;
 
             button.textContent =
                 "🔍 فحص الآن";
+
         }
+
     }
+
 }
 
 
 /* =========================
-   تحديث بطاقة الفحص
+   بطاقة الفحص
 ========================= */
 
-function updateHealthCard(id,messageId,check){
+function updateHealthCard(
+    id,
+    messageId,
+    check
+){
 
     const box =
         document.getElementById(id);
@@ -2136,6 +2577,7 @@ function updateHealthCard(id,messageId,check){
     if(!box || !message){
 
         return;
+
     }
 
     if(!check){
@@ -2150,6 +2592,7 @@ function updateHealthCard(id,messageId,check){
             "لم تصل بيانات الفحص.";
 
         return;
+
     }
 
     const status =
@@ -2164,8 +2607,8 @@ function updateHealthCard(id,messageId,check){
         healthClass(status);
 
     message.textContent =
-        check.message ||
-        "";
+        check.message || "";
+
 }
 
 
@@ -2176,7 +2619,8 @@ function updateHealthCard(id,messageId,check){
 function healthClass(status){
 
     status =
-        String(status).toLowerCase();
+        String(status)
+        .toLowerCase();
 
     if(
         status === "ok" ||
@@ -2185,6 +2629,7 @@ function healthClass(status){
     ){
 
         return "ok";
+
     }
 
     if(
@@ -2193,16 +2638,19 @@ function healthClass(status){
     ){
 
         return "warning";
+
     }
 
     return "error";
+
 }
 
 
 function statusText(status){
 
     status =
-        String(status || "").toLowerCase();
+        String(status || "")
+        .toLowerCase();
 
     if(
         status === "ok" ||
@@ -2211,6 +2659,7 @@ function statusText(status){
     ){
 
         return "يعمل";
+
     }
 
     if(
@@ -2219,16 +2668,17 @@ function statusText(status){
     ){
 
         return "تحذير";
+
     }
 
-    if(
-        status === "unknown"
-    ){
+    if(status === "unknown"){
 
         return "غير معروف";
+
     }
 
     return "خطأ";
+
 }
 
 
@@ -2245,37 +2695,47 @@ function downloadBackup(){
 
 
 /* =========================
-   إغلاق النافذة عند الضغط خارجها
+   إغلاق المودال بالخارج
 ========================= */
 
-document.getElementById("userModal")
-.addEventListener("click",function(event){
+document.getElementById(
+    "userModal"
+).addEventListener(
+    "click",
+    function(event){
 
-    if(event.target === this){
+        if(
+            event.target === this
+        ){
 
-        closeModal();
+            closeModal();
+
+        }
 
     }
-
-});
+);
 
 
 /* =========================
-   البحث بالضغط Enter
+   البحث Enter
 ========================= */
 
-document.getElementById("userSearch")
-.addEventListener("keydown",function(event){
+document.getElementById(
+    "userSearch"
+).addEventListener(
+    "keydown",
+    function(event){
 
-    if(event.key === "Enter"){
+        if(event.key === "Enter"){
 
-        event.preventDefault();
+            event.preventDefault();
 
-        loadUsers();
+            loadUsers();
+
+        }
 
     }
-
-});
+);
 
 
 /* =========================
@@ -2293,8 +2753,6 @@ async function loadAll(){
 }
 
 
-/* تشغيل الصفحة */
-
 document.addEventListener(
     "DOMContentLoaded",
     function(){
@@ -2307,4 +2765,4 @@ document.addEventListener(
 </script>
 
 </body>
-   </html>
+    </html>
