@@ -6,23 +6,38 @@ from functools import wraps
 from datetime import datetime, timezone
 
 from flask import (
-    Flask, render_template, request, jsonify, session,
-    redirect, send_file
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    session,
+    redirect,
+    send_file
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "change-this-secret-in-production")
+
+app.secret_key = os.getenv(
+    "SECRET_KEY",
+    "change-this-secret-in-production"
+)
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=os.getenv("COOKIE_SECURE", "true").lower() == "true",
+    SESSION_COOKIE_SECURE=os.getenv(
+        "COOKIE_SECURE",
+        "true"
+    ).lower() == "true",
     MAX_CONTENT_LENGTH=15 * 1024 * 1024
 )
 
-DB = os.getenv("DATABASE_PATH", "zolak.db")
+DB = os.getenv(
+    "DATABASE_PATH",
+    "zolak.db"
+)
 
 
 # =========================================================
@@ -30,13 +45,22 @@ DB = os.getenv("DATABASE_PATH", "zolak.db")
 # =========================================================
 
 def db():
-    connection = sqlite3.connect(DB, timeout=20)
+    connection = sqlite3.connect(
+        DB,
+        timeout=20
+    )
+
     connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
+
+    connection.execute(
+        "PRAGMA foreign_keys = ON"
+    )
+
     return connection
 
 
 def init_db():
+
     c = db()
 
     c.execute("""
@@ -71,21 +95,25 @@ def init_db():
     """)
 
     # -----------------------------------------
-    # إضافة الأعمدة الناقصة في قواعد البيانات القديمة
+    # الأعمدة الناقصة في قواعد البيانات القديمة
     # -----------------------------------------
 
     user_columns = {
         row["name"]
-        for row in c.execute("PRAGMA table_info(users)").fetchall()
+        for row in c.execute(
+            "PRAGMA table_info(users)"
+        ).fetchall()
     }
 
     if "is_banned" not in user_columns:
+
         c.execute("""
             ALTER TABLE users
             ADD COLUMN is_banned INTEGER NOT NULL DEFAULT 0
         """)
 
     if "created_at" not in user_columns:
+
         c.execute("""
             ALTER TABLE users
             ADD COLUMN created_at DATETIME
@@ -96,32 +124,50 @@ def init_db():
     # -----------------------------------------
 
     defaults = [
-        ("site_name", "زولك AI 🇸🇩"),
-        ("free_credits", "10"),
-        ("welcome", "أها يا زول 👋❤️ زولك جاهز يساعدك في أي حاجة."),
-        ("maintenance", "false"),
-        ("allow_register", "true"),
-        ("ai_model", os.getenv("GEMINI_MODEL", "gemini-2.5-flash")),
+        (
+            "site_name",
+            "زولك AI 🇸🇩"
+        ),
+        (
+            "free_credits",
+            "10"
+        ),
+        (
+            "welcome",
+            "أها يا زول 👋❤️ زولك جاهز يساعدك في أي حاجة."
+        ),
+        (
+            "maintenance",
+            "false"
+        ),
+        (
+            "allow_register",
+            "true"
+        ),
+        (
+            "ai_model",
+            os.getenv(
+                "GEMINI_MODEL",
+                "gemini-3.8-flash"
+            )
+        ),
     ]
 
     for key, value in defaults:
+
         c.execute(
             """
             INSERT OR IGNORE INTO settings(key, value)
             VALUES(?, ?)
             """,
-            (key, value)
+            (
+                key,
+                value
+            )
         )
 
     # =====================================================
     # إنشاء / إصلاح حساب المدير
-    # =====================================================
-    #
-    # البيانات الافتراضية:
-    # البريد: admin@zolak.ai
-    # كلمة السر: admin123
-    #
-    # ويمكن تغييرها من متغيرات البيئة إذا كانت موجودة.
     # =====================================================
 
     admin_email = os.getenv(
@@ -150,7 +196,6 @@ def init_db():
 
     if not existing_admin:
 
-        # إنشاء المدير إذا لم يكن موجوداً
         c.execute(
             """
             INSERT INTO users
@@ -166,19 +211,15 @@ def init_db():
             """,
             (
                 admin_name,
-                admin_email,
-                generate_password_hash(admin_password),
+                generate_password_hash(
+                    admin_password
+                ),
                 999999
             )
         )
 
     else:
 
-        # إصلاح الحساب الموجود:
-        # - مدير
-        # - غير موقوف
-        # - كلمة المرور تصبح admin123
-        # - الرصيد كبير
         c.execute(
             """
             UPDATE users
@@ -192,7 +233,9 @@ def init_db():
             """,
             (
                 admin_name,
-                generate_password_hash(admin_password),
+                generate_password_hash(
+                    admin_password
+                ),
                 admin_email
             )
         )
@@ -201,7 +244,11 @@ def init_db():
     c.close()
 
 
-def setting(key, default=""):
+def setting(
+    key,
+    default=""
+):
+
     c = db()
 
     result = c.execute(
@@ -215,10 +262,19 @@ def setting(key, default=""):
 
     c.close()
 
-    return result["value"] if result else default
+    return (
+        result["value"]
+        if result
+        else default
+    )
 
 
-def save_setting(c, key, value):
+def save_setting(
+    c,
+    key,
+    value
+):
+
     c.execute(
         """
         INSERT INTO settings(key, value)
@@ -226,7 +282,10 @@ def save_setting(c, key, value):
         ON CONFLICT(key)
         DO UPDATE SET value = excluded.value
         """,
-        (str(key), str(value))
+        (
+            str(key),
+            str(value)
+        )
     )
 
 
@@ -240,9 +299,13 @@ init_db()
 def login_required(fn):
 
     @wraps(fn)
-    def wrapper(*args, **kwargs):
+    def wrapper(
+        *args,
+        **kwargs
+    ):
 
         if not session.get("uid"):
+
             return jsonify(
                 error="لازم تسجل دخول أولاً."
             ), 401
@@ -261,6 +324,7 @@ def login_required(fn):
         c.close()
 
         if not user:
+
             session.clear()
 
             return jsonify(
@@ -275,7 +339,10 @@ def login_required(fn):
                 error="حسابك موقوف. راجع الإدارة."
             ), 403
 
-        return fn(*args, **kwargs)
+        return fn(
+            *args,
+            **kwargs
+        )
 
     return wrapper
 
@@ -283,11 +350,15 @@ def login_required(fn):
 def admin_required(fn):
 
     @wraps(fn)
-    def wrapper(*args, **kwargs):
+    def wrapper(
+        *args,
+        **kwargs
+    ):
 
         if not session.get("uid"):
 
             if request.path.startswith("/api/"):
+
                 return jsonify(
                     error="سجل دخولك أولاً."
                 ), 401
@@ -316,18 +387,25 @@ def admin_required(fn):
             session.clear()
 
             if request.path.startswith("/api/"):
+
                 return jsonify(
                     error="ما عندك صلاحية للدخول."
                 ), 403
 
             return redirect("/login")
 
-        return fn(*args, **kwargs)
+        return fn(
+            *args,
+            **kwargs
+        )
 
     return wrapper
 
 
-def verify_password(stored_password, entered_password):
+def verify_password(
+    stored_password,
+    entered_password
+):
 
     try:
 
@@ -335,14 +413,19 @@ def verify_password(stored_password, entered_password):
             stored_password,
             entered_password
         ):
+
             return True, False
 
-    except (ValueError, TypeError):
+    except (
+        ValueError,
+        TypeError
+    ):
 
         pass
 
     # دعم كلمات المرور القديمة
     if stored_password == entered_password:
+
         return True, True
 
     return False, False
@@ -455,15 +538,24 @@ def register():
     ) or {}
 
     name = str(
-        data.get("name", "")
+        data.get(
+            "name",
+            ""
+        )
     ).strip()
 
     email = str(
-        data.get("email", "")
+        data.get(
+            "email",
+            ""
+        )
     ).strip().lower()
 
     password = str(
-        data.get("password", "")
+        data.get(
+            "password",
+            ""
+        )
     )
 
     if (
@@ -522,7 +614,9 @@ def register():
             (
                 name,
                 email,
-                generate_password_hash(password),
+                generate_password_hash(
+                    password
+                ),
                 credits
             )
         )
@@ -578,11 +672,17 @@ def api_login():
     ) or {}
 
     email = str(
-        data.get("email", "")
+        data.get(
+            "email",
+            ""
+        )
     ).strip().lower()
 
     password = str(
-        data.get("password", "")
+        data.get(
+            "password",
+            ""
+        )
     )
 
     c = db()
@@ -634,7 +734,9 @@ def api_login():
             WHERE id = ?
             """,
             (
-                generate_password_hash(password),
+                generate_password_hash(
+                    password
+                ),
                 user["id"]
             )
         )
@@ -666,6 +768,7 @@ def api_login():
 def me():
 
     if not session.get("uid"):
+
         return jsonify(
             logged_in=False
         )
@@ -704,7 +807,7 @@ def me():
 
 
 # =========================================================
-# الذكاء الاصطناعي
+# الذكاء الاصطناعي - Gemini
 # =========================================================
 
 @app.post("/api/chat")
@@ -716,7 +819,10 @@ def chat():
     ) or {}
 
     message = str(
-        data.get("message", "")
+        data.get(
+            "message",
+            ""
+        )
     ).strip()
 
     if not message:
@@ -790,17 +896,35 @@ def chat():
             api_key=api_key
         )
 
+        # -------------------------------------------------
+        # الموديل
+        # -------------------------------------------------
+
         model = setting(
             "ai_model",
             os.getenv(
                 "GEMINI_MODEL",
-                "gemini-2.5-flash"
+                "gemini-3.8-flash"
             )
-        )
+        ).strip()
+
+        # حماية من وجود الموديل القديم في الإعدادات
+        if (
+            not model
+            or model == "gemini-2.5-flash"
+        ):
+
+            model = "gemini-3.8-flash"
+
+        # -------------------------------------------------
+        # جلب آخر رسائل المحادثة
+        # -------------------------------------------------
 
         previous = c.execute(
             """
-            SELECT role, content
+            SELECT
+                role,
+                content
             FROM chats
             WHERE user_id = ?
             ORDER BY id DESC
@@ -830,6 +954,10 @@ def chat():
                 )
             )
 
+        # -------------------------------------------------
+        # الرسالة الجديدة
+        # -------------------------------------------------
+
         history.append(
             types.Content(
                 role="user",
@@ -841,19 +969,30 @@ def chat():
             )
         )
 
+        # -------------------------------------------------
+        # طلب Gemini
+        #
+        # مهم:
+        # لا نستخدم temperature مع Gemini 3.8 Flash
+        # -------------------------------------------------
+
         response = client.models.generate_content(
             model=model,
             contents=history,
             config=types.GenerateContentConfig(
                 system_instruction=(
                     "أنت زولك AI، مساعد ذكاء اصطناعي سوداني ودود. "
-                    "أجب بوضوح ودقة، واستخدم اللهجة السودانية عندما يطلبها "
-                    "المستخدم. لا تدّعي أنك إنسان، وإذا لم تعرف الإجابة "
-                    "فقل ذلك بوضوح."
-                ),
-                temperature=0.7
+                    "أجب بوضوح ودقة. استخدم اللهجة السودانية عندما "
+                    "يطلبها المستخدم أو عندما يكون ذلك مناسباً. "
+                    "لا تدّعي أنك إنسان. إذا لم تعرف الإجابة فقل "
+                    "ذلك بوضوح. لا تخترع معلومات."
+                )
             )
         )
+
+        # -------------------------------------------------
+        # استخراج الرد
+        # -------------------------------------------------
 
         answer = (
             response.text or ""
@@ -864,8 +1003,12 @@ def chat():
             c.close()
 
             return jsonify(
-                error="ما قدرنا نستخرج رد من الخدمة. جرّب تاني."
+                error="ما قدرنا نستخرج رد من خدمة الذكاء الاصطناعي. جرّب تاني."
             ), 502
+
+        # -------------------------------------------------
+        # خصم الرصيد فقط بعد نجاح الرد
+        # -------------------------------------------------
 
         result = c.execute(
             """
@@ -886,6 +1029,10 @@ def chat():
                 error="رصيدك ما كفاية لإرسال رسالة جديدة."
             ), 402
 
+        # -------------------------------------------------
+        # حفظ رسالة المستخدم
+        # -------------------------------------------------
+
         c.execute(
             """
             INSERT INTO chats
@@ -902,6 +1049,10 @@ def chat():
                 message
             )
         )
+
+        # -------------------------------------------------
+        # حفظ رد الذكاء الاصطناعي
+        # -------------------------------------------------
 
         c.execute(
             """
@@ -927,12 +1078,22 @@ def chat():
             answer=answer
         )
 
-    except Exception:
+    except Exception as error:
 
-        c.close()
+        try:
+            c.rollback()
+        except Exception:
+            pass
 
+        try:
+            c.close()
+        except Exception:
+            pass
+
+        # تسجيل الخطأ الحقيقي في Faable Logs
         app.logger.exception(
-            "AI response failed"
+            "AI response failed: %s",
+            str(error)
         )
 
         return jsonify(
@@ -1038,7 +1199,9 @@ def get_admin_settings():
 
     rows = c.execute(
         """
-        SELECT key, value
+        SELECT
+            key,
+            value
         FROM settings
         """
     ).fetchall()
@@ -1054,691 +1217,3 @@ def get_admin_settings():
 
 
 @app.post("/api/admin/settings")
-@admin_required
-def admin_settings():
-
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-    if not isinstance(data, dict):
-
-        return jsonify(
-            error="صيغة الإعدادات غير صحيحة."
-        ), 400
-
-    allowed = {
-        "site_name",
-        "free_credits",
-        "welcome",
-        "maintenance",
-        "allow_register",
-        "ai_model",
-        "site_description",
-        "homepage_title",
-        "homepage_text",
-        "primary_color",
-        "theme",
-        "support_email",
-        "announcement",
-        "enable_history",
-        "enable_registration",
-        "max_message_length"
-    }
-
-    c = db()
-
-    for key, value in data.items():
-
-        if key not in allowed:
-            continue
-
-        if key == "free_credits":
-
-            try:
-
-                value = max(
-                    0,
-                    min(
-                        100000,
-                        int(value)
-                    )
-                )
-
-            except (
-                ValueError,
-                TypeError
-            ):
-
-                c.close()
-
-                return jsonify(
-                    error="قيمة الرصيد المجاني غير صحيحة."
-                ), 400
-
-        if isinstance(
-            value,
-            (dict, list)
-        ):
-
-            c.close()
-
-            return jsonify(
-                error="قيمة أحد الإعدادات غير صحيحة."
-            ), 400
-
-        value = str(value)[:2000]
-
-        save_setting(
-            c,
-            key,
-            value
-        )
-
-    c.commit()
-    c.close()
-
-    return jsonify(
-        ok=True,
-        message="تم حفظ الإعدادات."
-    )
-
-
-# =========================================================
-# إدارة المستخدمين
-# =========================================================
-
-@app.get("/api/admin/users")
-@admin_required
-def admin_users():
-
-    search = str(
-        request.args.get(
-            "q",
-            ""
-        )
-    ).strip()[:100]
-
-    c = db()
-
-    if search:
-
-        pattern = f"%{search}%"
-
-        rows = c.execute(
-            """
-            SELECT
-                id,
-                name,
-                email,
-                credits,
-                is_admin,
-                is_banned,
-                created_at
-            FROM users
-            WHERE name LIKE ?
-            OR email LIKE ?
-            ORDER BY id DESC
-            LIMIT 300
-            """,
-            (
-                pattern,
-                pattern
-            )
-        ).fetchall()
-
-    else:
-
-        rows = c.execute(
-            """
-            SELECT
-                id,
-                name,
-                email,
-                credits,
-                is_admin,
-                is_banned,
-                created_at
-            FROM users
-            ORDER BY id DESC
-            LIMIT 300
-            """
-        ).fetchall()
-
-    c.close()
-
-    users = [
-        dict(row)
-        for row in rows
-    ]
-
-    return jsonify(
-        users=users,
-        total=len(users)
-    )
-
-
-@app.post("/api/admin/user/<int:uid>/credits")
-@admin_required
-def add_credits(uid):
-
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-    try:
-
-        amount = int(
-            data.get(
-                "amount",
-                10
-            )
-        )
-
-    except (
-        ValueError,
-        TypeError
-    ):
-
-        return jsonify(
-            error="عدد الرصيد غير صحيح."
-        ), 400
-
-    if amount < 0 or amount > 100000:
-
-        return jsonify(
-            error="قيمة الرصيد خارج الحدود المسموحة."
-        ), 400
-
-    c = db()
-
-    result = c.execute(
-        """
-        UPDATE users
-        SET credits = credits + ?
-        WHERE id = ?
-        """,
-        (
-            amount,
-            uid
-        )
-    )
-
-    c.commit()
-    c.close()
-
-    if result.rowcount != 1:
-
-        return jsonify(
-            error="المستخدم غير موجود."
-        ), 404
-
-    return jsonify(
-        ok=True,
-        message="تمت إضافة الرصيد."
-    )
-
-
-@app.patch("/api/admin/user/<int:uid>")
-@admin_required
-def update_user(uid):
-
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-    c = db()
-
-    user = c.execute(
-        """
-        SELECT id
-        FROM users
-        WHERE id = ?
-        """,
-        (uid,)
-    ).fetchone()
-
-    if not user:
-
-        c.close()
-
-        return jsonify(
-            error="المستخدم غير موجود."
-        ), 404
-
-    if "name" in data:
-
-        name = str(
-            data["name"]
-        ).strip()[:100]
-
-        if not name:
-
-            c.close()
-
-            return jsonify(
-                error="اسم المستخدم مطلوب."
-            ), 400
-
-        c.execute(
-            """
-            UPDATE users
-            SET name = ?
-            WHERE id = ?
-            """,
-            (
-                name,
-                uid
-            )
-        )
-
-    if "credits" in data:
-
-        try:
-
-            credits = max(
-                0,
-                min(
-                    1000000,
-                    int(data["credits"])
-                )
-            )
-
-        except (
-            ValueError,
-            TypeError
-        ):
-
-            c.close()
-
-            return jsonify(
-                error="قيمة الرصيد غير صحيحة."
-            ), 400
-
-        c.execute(
-            """
-            UPDATE users
-            SET credits = ?
-            WHERE id = ?
-            """,
-            (
-                credits,
-                uid
-            )
-        )
-
-    if "is_banned" in data:
-
-        banned = (
-            1
-            if str(
-                data["is_banned"]
-            ).lower()
-            in (
-                "1",
-                "true",
-                "yes",
-                "on"
-            )
-            else 0
-        )
-
-        c.execute(
-            """
-            UPDATE users
-            SET is_banned = ?
-            WHERE id = ?
-            """,
-            (
-                banned,
-                uid
-            )
-        )
-
-    if "is_admin" in data:
-
-        if uid == session.get("uid"):
-
-            c.close()
-
-            return jsonify(
-                error="ما ممكن تعدل صلاحيات حسابك الحالي."
-            ), 400
-
-        admin_value = (
-            1
-            if str(
-                data["is_admin"]
-            ).lower()
-            in (
-                "1",
-                "true",
-                "yes",
-                "on"
-            )
-            else 0
-        )
-
-        c.execute(
-            """
-            UPDATE users
-            SET is_admin = ?
-            WHERE id = ?
-            """,
-            (
-                admin_value,
-                uid
-            )
-        )
-
-    c.commit()
-    c.close()
-
-    return jsonify(
-        ok=True,
-        message="تم تحديث المستخدم."
-    )
-
-
-@app.post("/api/admin/user/<int:uid>/ban")
-@admin_required
-def ban_user(uid):
-
-    if uid == session.get("uid"):
-
-        return jsonify(
-            error="ما ممكن توقف حسابك الحالي."
-        ), 400
-
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-    banned = data.get(
-        "banned",
-        True
-    )
-
-    banned = (
-        1
-        if str(banned).lower()
-        in (
-            "1",
-            "true",
-            "yes",
-            "on"
-        )
-        else 0
-    )
-
-    c = db()
-
-    result = c.execute(
-        """
-        UPDATE users
-        SET is_banned = ?
-        WHERE id = ?
-        """,
-        (
-            banned,
-            uid
-        )
-    )
-
-    c.commit()
-    c.close()
-
-    if result.rowcount != 1:
-
-        return jsonify(
-            error="المستخدم غير موجود."
-        ), 404
-
-    return jsonify(
-        ok=True
-    )
-
-
-@app.delete("/api/admin/user/<int:uid>")
-@admin_required
-def delete_user(uid):
-
-    if uid == session.get("uid"):
-
-        return jsonify(
-            error="ما ممكن تحذف حسابك الحالي."
-        ), 400
-
-    c = db()
-
-    result = c.execute(
-        """
-        DELETE FROM users
-        WHERE id = ?
-        """,
-        (uid,)
-    )
-
-    c.commit()
-    c.close()
-
-    if result.rowcount != 1:
-
-        return jsonify(
-            error="المستخدم غير موجود."
-        ), 404
-
-    return jsonify(
-        ok=True,
-        message="تم حذف المستخدم."
-    )
-
-
-# =========================================================
-# فحص صحة الموقع
-# =========================================================
-
-@app.get("/api/admin/health")
-@admin_required
-def admin_health():
-
-    checks = []
-
-    # قاعدة البيانات
-    try:
-
-        c = db()
-
-        c.execute(
-            "SELECT 1"
-        ).fetchone()
-
-        c.close()
-
-        checks.append({
-            "name": "قاعدة البيانات",
-            "status": "ok",
-            "message": "الاتصال بقاعدة البيانات يعمل."
-        })
-
-    except Exception as error:
-
-        checks.append({
-            "name": "قاعدة البيانات",
-            "status": "error",
-            "message": str(error)[:250]
-        })
-
-    # مفتاح الذكاء الاصطناعي
-    if os.getenv("GEMINI_API_KEY"):
-
-        checks.append({
-            "name": "مفتاح الذكاء الاصطناعي",
-            "status": "ok",
-            "message": "مفتاح Gemini موجود في متغيرات الاستضافة."
-        })
-
-    else:
-
-        checks.append({
-            "name": "مفتاح الذكاء الاصطناعي",
-            "status": "warning",
-            "message": "لم تتم إضافة GEMINI_API_KEY."
-        })
-
-    # مسار قاعدة البيانات
-    db_directory = os.path.dirname(
-        os.path.abspath(DB)
-    )
-
-    if (
-        os.path.isdir(db_directory)
-        and os.access(
-            db_directory,
-            os.W_OK
-        )
-    ):
-
-        checks.append({
-            "name": "مسار التخزين",
-            "status": "ok",
-            "message": "مسار قاعدة البيانات قابل للكتابة."
-        })
-
-    else:
-
-        checks.append({
-            "name": "مسار التخزين",
-            "status": "error",
-            "message": "مسار قاعدة البيانات غير قابل للكتابة."
-        })
-
-    statuses = [
-        item["status"]
-        for item in checks
-    ]
-
-    if "error" in statuses:
-        overall = "error"
-
-    elif "warning" in statuses:
-        overall = "warning"
-
-    else:
-        overall = "ok"
-
-    return jsonify(
-        checks=checks,
-        overall_status=overall,
-        checked_at=datetime.now(
-            timezone.utc
-        ).isoformat(),
-        db_path=os.path.abspath(DB)
-    )
-
-
-# =========================================================
-# النسخ الاحتياطي
-# =========================================================
-
-@app.get("/api/admin/backup")
-@admin_required
-def download_backup():
-
-    try:
-
-        c = db()
-
-        c.execute(
-            "PRAGMA wal_checkpoint(FULL)"
-        )
-
-        c.close()
-
-        with open(
-            DB,
-            "rb"
-        ) as backup_file:
-
-            data = backup_file.read()
-
-        filename = (
-            "zolak-backup-"
-            + time.strftime(
-                "%Y%m%d-%H%M%S"
-            )
-            + ".db"
-        )
-
-        return send_file(
-            io.BytesIO(data),
-            mimetype="application/octet-stream",
-            as_attachment=True,
-            download_name=filename
-        )
-
-    except Exception:
-
-        app.logger.exception(
-            "Backup failed"
-        )
-
-        return jsonify(
-            error="تعذر إنشاء النسخة الاحتياطية."
-        ), 500
-
-
-@app.get("/api/admin/backup/download")
-@admin_required
-def download_backup_alias():
-
-    return download_backup()
-
-
-# =========================================================
-# فحص بسيط للموقع
-# =========================================================
-
-@app.get("/health")
-def health():
-
-    try:
-
-        c = db()
-
-        c.execute(
-            "SELECT 1"
-        ).fetchone()
-
-        c.close()
-
-        return jsonify(
-            status="ok"
-        )
-
-    except Exception:
-
-        app.logger.exception(
-            "Health endpoint failed"
-        )
-
-        return jsonify(
-            status="error"
-        ), 500
-
-
-# =========================================================
-# تشغيل التطبيق
-# =========================================================
-
-if __name__ == "__main__":
-
-    app.run(
-        host="0.0.0.0",
-        port=int(
-            os.getenv(
-                "PORT",
-                "5000"
-            )
-        )
-)
