@@ -1,0 +1,13 @@
+{
+  "background_color": "rgb(255, 252, 252)",
+  "description": "مساعد ذكاء اصطناعي سوداني يساعدك في الكتابة والدراسة والترجمة والشغل والدردشة 🇸🇩🤖",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "زولك AI",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "زولك",
+  "start_url": "/",
+  "theme_color": "hsl(0, 0%, 0%)",
+  "id": "zolak-ai"
+}
