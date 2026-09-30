@@ -14,7 +14,11 @@ from flask import (
     redirect,
     send_file
 )
-from werkzeug.security import generate_password_hash, check_password_hash
+
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
 
 
 app = Flask(__name__)
@@ -72,7 +76,8 @@ def init_db():
             credits INTEGER NOT NULL DEFAULT 10,
             is_admin INTEGER NOT NULL DEFAULT 0,
             is_banned INTEGER NOT NULL DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            gemini_interaction_id TEXT
         )
     """)
 
@@ -83,7 +88,9 @@ def init_db():
             role TEXT NOT NULL,
             content TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY(user_id)
+                REFERENCES users(id)
+                ON DELETE CASCADE
         )
     """)
 
@@ -93,10 +100,6 @@ def init_db():
             value TEXT
         )
     """)
-
-    # -----------------------------------------
-    # الأعمدة الناقصة في قواعد البيانات القديمة
-    # -----------------------------------------
 
     user_columns = {
         row["name"]
@@ -119,9 +122,12 @@ def init_db():
             ADD COLUMN created_at DATETIME
         """)
 
-    # -----------------------------------------
-    # الإعدادات الافتراضية
-    # -----------------------------------------
+    if "gemini_interaction_id" not in user_columns:
+
+        c.execute("""
+            ALTER TABLE users
+            ADD COLUMN gemini_interaction_id TEXT
+        """)
 
     defaults = [
         (
@@ -146,10 +152,7 @@ def init_db():
         ),
         (
             "ai_model",
-            os.getenv(
-                "GEMINI_MODEL",
-                "gemini-3.8-flash"
-            )
+            "gemini-3.8-flash"
         ),
     ]
 
@@ -157,8 +160,9 @@ def init_db():
 
         c.execute(
             """
-            INSERT OR IGNORE INTO settings(key, value)
-            VALUES(?, ?)
+            INSERT OR IGNORE INTO settings
+            (key, value)
+            VALUES (?, ?)
             """,
             (
                 key,
@@ -166,9 +170,9 @@ def init_db():
             )
         )
 
-    # =====================================================
-    # إنشاء / إصلاح حساب المدير
-    # =====================================================
+    # -----------------------------------------------------
+    # المدير
+    # -----------------------------------------------------
 
     admin_email = os.getenv(
         "ADMIN_EMAIL",
@@ -211,6 +215,7 @@ def init_db():
             """,
             (
                 admin_name,
+                admin_email,
                 generate_password_hash(
                     admin_password
                 ),
@@ -240,14 +245,24 @@ def init_db():
             )
         )
 
+    # -----------------------------------------------------
+    # إصلاح أي إعداد قديم
+    # -----------------------------------------------------
+
+    c.execute(
+        """
+        UPDATE settings
+        SET value = 'gemini-3.8-flash'
+        WHERE key = 'ai_model'
+        AND value = 'gemini-2.5-flash'
+        """
+    )
+
     c.commit()
     c.close()
 
 
-def setting(
-    key,
-    default=""
-):
+def setting(key, default=""):
 
     c = db()
 
@@ -262,18 +277,13 @@ def setting(
 
     c.close()
 
-    return (
-        result["value"]
-        if result
-        else default
-    )
+    if result:
+        return result["value"]
+
+    return default
 
 
-def save_setting(
-    c,
-    key,
-    value
-):
+def save_setting(c, key, value):
 
     c.execute(
         """
@@ -293,16 +303,13 @@ init_db()
 
 
 # =========================================================
-# تسجيل الدخول والصلاحيات
+# الصلاحيات
 # =========================================================
 
 def login_required(fn):
 
     @wraps(fn)
-    def wrapper(
-        *args,
-        **kwargs
-    ):
+    def wrapper(*args, **kwargs):
 
         if not session.get("uid"):
 
@@ -339,10 +346,7 @@ def login_required(fn):
                 error="حسابك موقوف. راجع الإدارة."
             ), 403
 
-        return fn(
-            *args,
-            **kwargs
-        )
+        return fn(*args, **kwargs)
 
     return wrapper
 
@@ -350,10 +354,7 @@ def login_required(fn):
 def admin_required(fn):
 
     @wraps(fn)
-    def wrapper(
-        *args,
-        **kwargs
-    ):
+    def wrapper(*args, **kwargs):
 
         if not session.get("uid"):
 
@@ -394,10 +395,7 @@ def admin_required(fn):
 
             return redirect("/login")
 
-        return fn(
-            *args,
-            **kwargs
-        )
+        return fn(*args, **kwargs)
 
     return wrapper
 
@@ -413,7 +411,6 @@ def verify_password(
             stored_password,
             entered_password
         ):
-
             return True, False
 
     except (
@@ -423,7 +420,6 @@ def verify_password(
 
         pass
 
-    # دعم كلمات المرور القديمة
     if stored_password == entered_password:
 
         return True, True
@@ -432,7 +428,7 @@ def verify_password(
 
 
 # =========================================================
-# الصفحات الأساسية
+# الصفحات
 # =========================================================
 
 @app.get("/")
@@ -457,6 +453,14 @@ def login():
     return render_template(
         "login.html"
     )
+
+
+@app.get("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect("/")
 
 
 @app.get("/admin")
@@ -509,14 +513,6 @@ def admin():
     )
 
 
-@app.get("/logout")
-def logout():
-
-    session.clear()
-
-    return redirect("/")
-
-
 # =========================================================
 # التسجيل
 # =========================================================
@@ -538,24 +534,15 @@ def register():
     ) or {}
 
     name = str(
-        data.get(
-            "name",
-            ""
-        )
+        data.get("name", "")
     ).strip()
 
     email = str(
-        data.get(
-            "email",
-            ""
-        )
+        data.get("email", "")
     ).strip().lower()
 
     password = str(
-        data.get(
-            "password",
-            ""
-        )
+        data.get("password", "")
     )
 
     if (
@@ -568,10 +555,7 @@ def register():
             error="أدخل البيانات كاملة، وكلمة المرور 4 أحرف على الأقل."
         ), 400
 
-    if (
-        len(name) > 100
-        or len(email) > 200
-    ):
+    if len(name) > 100 or len(email) > 200:
 
         return jsonify(
             error="البيانات المدخلة طويلة."
@@ -625,10 +609,7 @@ def register():
 
         user = c.execute(
             """
-            SELECT
-                id,
-                name,
-                is_admin
+            SELECT id, name, is_admin
             FROM users
             WHERE email = ?
             """,
@@ -655,9 +636,7 @@ def register():
         )
     )
 
-    return jsonify(
-        ok=True
-    )
+    return jsonify(ok=True)
 
 
 # =========================================================
@@ -672,17 +651,11 @@ def api_login():
     ) or {}
 
     email = str(
-        data.get(
-            "email",
-            ""
-        )
+        data.get("email", "")
     ).strip().lower()
 
     password = str(
-        data.get(
-            "password",
-            ""
-        )
+        data.get("password", "")
     )
 
     c = db()
@@ -755,9 +728,7 @@ def api_login():
         )
     )
 
-    return jsonify(
-        ok=True
-    )
+    return jsonify(ok=True)
 
 
 # =========================================================
@@ -807,7 +778,7 @@ def me():
 
 
 # =========================================================
-# الذكاء الاصطناعي - Gemini
+# الذكاء الاصطناعي - Gemini Interactions API
 # =========================================================
 
 @app.post("/api/chat")
@@ -819,10 +790,7 @@ def chat():
     ) or {}
 
     message = str(
-        data.get(
-            "message",
-            ""
-        )
+        data.get("message", "")
     ).strip()
 
     if not message:
@@ -850,7 +818,9 @@ def chat():
 
     user = c.execute(
         """
-        SELECT credits
+        SELECT
+            credits,
+            gemini_interaction_id
         FROM users
         WHERE id = ?
         """,
@@ -890,7 +860,6 @@ def chat():
     try:
 
         from google import genai
-        from google.genai import types
 
         client = genai.Client(
             api_key=api_key
@@ -902,13 +871,10 @@ def chat():
 
         model = setting(
             "ai_model",
-            os.getenv(
-                "GEMINI_MODEL",
-                "gemini-3.8-flash"
-            )
+            "gemini-3.8-flash"
         ).strip()
 
-        # حماية من وجود الموديل القديم في الإعدادات
+        # منع أي موديل قديم
         if (
             not model
             or model == "gemini-2.5-flash"
@@ -917,85 +883,49 @@ def chat():
             model = "gemini-3.8-flash"
 
         # -------------------------------------------------
-        # جلب آخر رسائل المحادثة
+        # التعليمات
         # -------------------------------------------------
 
-        previous = c.execute(
-            """
-            SELECT
-                role,
-                content
-            FROM chats
-            WHERE user_id = ?
-            ORDER BY id DESC
-            LIMIT 12
-            """,
-            (session["uid"],)
-        ).fetchall()
-
-        history = []
-
-        for item in reversed(previous):
-
-            role = (
-                "user"
-                if item["role"] == "user"
-                else "model"
-            )
-
-            history.append(
-                types.Content(
-                    role=role,
-                    parts=[
-                        types.Part.from_text(
-                            text=item["content"]
-                        )
-                    ]
-                )
-            )
-
-        # -------------------------------------------------
-        # الرسالة الجديدة
-        # -------------------------------------------------
-
-        history.append(
-            types.Content(
-                role="user",
-                parts=[
-                    types.Part.from_text(
-                        text=message
-                    )
-                ]
-            )
+        system_instruction = (
+            "أنت زولك AI، مساعد ذكاء اصطناعي سوداني ودود. "
+            "أجب بوضوح ودقة. "
+            "استخدم اللهجة السودانية عندما يطلبها المستخدم "
+            "أو عندما يكون ذلك مناسباً. "
+            "لا تدّعي أنك إنسان. "
+            "إذا لم تعرف الإجابة فقل ذلك بوضوح. "
+            "لا تخترع معلومات."
         )
 
         # -------------------------------------------------
-        # طلب Gemini
-        #
-        # مهم:
-        # لا نستخدم temperature مع Gemini 3.8 Flash
+        # استكمال المحادثة السابقة
         # -------------------------------------------------
 
-        response = client.models.generate_content(
-            model=model,
-            contents=history,
-            config=types.GenerateContentConfig(
-                system_instruction=(
-                    "أنت زولك AI، مساعد ذكاء اصطناعي سوداني ودود. "
-                    "أجب بوضوح ودقة. استخدم اللهجة السودانية عندما "
-                    "يطلبها المستخدم أو عندما يكون ذلك مناسباً. "
-                    "لا تدّعي أنك إنسان. إذا لم تعرف الإجابة فقل "
-                    "ذلك بوضوح. لا تخترع معلومات."
-                )
-            )
+        previous_interaction_id = (
+            user["gemini_interaction_id"]
         )
 
+        kwargs = {
+            "model": model,
+            "input": message,
+            "system_instruction": system_instruction
+        }
+
+        if previous_interaction_id:
+
+            kwargs[
+                "previous_interaction_id"
+            ] = previous_interaction_id
+
         # -------------------------------------------------
-        # استخراج الرد
+        # الطلب
         # -------------------------------------------------
+
+        interaction = client.interactions.create(
+            **kwargs
+        )
 
         answer = (
-            response.text or ""
+            interaction.output_text or ""
         ).strip()
 
         if not answer:
@@ -1003,11 +933,35 @@ def chat():
             c.close()
 
             return jsonify(
-                error="ما قدرنا نستخرج رد من خدمة الذكاء الاصطناعي. جرّب تاني."
+                error="ما قدرنا نستخرج رد من الذكاء الاصطناعي. جرّب تاني."
             ), 502
 
         # -------------------------------------------------
-        # خصم الرصيد فقط بعد نجاح الرد
+        # حفظ Interaction ID
+        # -------------------------------------------------
+
+        interaction_id = getattr(
+            interaction,
+            "id",
+            None
+        )
+
+        if interaction_id:
+
+            c.execute(
+                """
+                UPDATE users
+                SET gemini_interaction_id = ?
+                WHERE id = ?
+                """,
+                (
+                    interaction_id,
+                    session["uid"]
+                )
+            )
+
+        # -------------------------------------------------
+        # خصم الرصيد
         # -------------------------------------------------
 
         result = c.execute(
@@ -1030,7 +984,7 @@ def chat():
             ), 402
 
         # -------------------------------------------------
-        # حفظ رسالة المستخدم
+        # حفظ الرسائل
         # -------------------------------------------------
 
         c.execute(
@@ -1049,10 +1003,6 @@ def chat():
                 message
             )
         )
-
-        # -------------------------------------------------
-        # حفظ رد الذكاء الاصطناعي
-        # -------------------------------------------------
 
         c.execute(
             """
@@ -1090,15 +1040,73 @@ def chat():
         except Exception:
             pass
 
-        # تسجيل الخطأ الحقيقي في Faable Logs
+        error_text = str(error)
+
         app.logger.exception(
             "AI response failed: %s",
-            str(error)
+            error_text
         )
+
+        # -------------------------------------------------
+        # Gemini 503
+        # -------------------------------------------------
+
+        if (
+            "503" in error_text
+            or "UNAVAILABLE" in error_text
+            or "high demand" in error_text.lower()
+        ):
+
+            return jsonify(
+                error=(
+                    "خدمة الذكاء الاصطناعي عليها ضغط حالياً. "
+                    "جرّب تاني بعد شوية."
+                )
+            ), 503
+
+        # -------------------------------------------------
+        # موديل قديم
+        # -------------------------------------------------
+
+        if "gemini-2.5-flash" in error_text:
+
+            return jsonify(
+                error=(
+                    "إعداد موديل قديم موجود في الخدمة. "
+                    "تم اكتشاف المشكلة، جرّب بعد إعادة تشغيل الموقع."
+                )
+            ), 503
 
         return jsonify(
             error="حصلت مشكلة في خدمة الذكاء الاصطناعي. جرّب تاني."
         ), 500
+
+
+# =========================================================
+# بدء محادثة جديدة
+# =========================================================
+
+@app.post("/api/chat/new")
+@login_required
+def new_chat():
+
+    c = db()
+
+    c.execute(
+        """
+        UPDATE users
+        SET gemini_interaction_id = NULL
+        WHERE id = ?
+        """,
+        (session["uid"],)
+    )
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
 
 
 # =========================================================
@@ -1136,7 +1144,7 @@ def chats():
 
 
 # =========================================================
-# إحصائيات لوحة الإدارة
+# إحصائيات الإدارة
 # =========================================================
 
 @app.get("/api/admin/stats")
@@ -1188,7 +1196,7 @@ def admin_stats():
 
 
 # =========================================================
-# إعدادات الموقع
+# إعدادات الإدارة
 # =========================================================
 
 @app.get("/api/admin/settings")
@@ -1199,9 +1207,7 @@ def get_admin_settings():
 
     rows = c.execute(
         """
-        SELECT
-            key,
-            value
+        SELECT key, value
         FROM settings
         """
     ).fetchall()
@@ -1217,3 +1223,614 @@ def get_admin_settings():
 
 
 @app.post("/api/admin/settings")
+@admin_required
+def update_admin_settings():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    c = db()
+
+    allowed = {
+        "site_name",
+        "free_credits",
+        "welcome",
+        "maintenance",
+        "allow_register",
+        "ai_model"
+    }
+
+    for key, value in data.items():
+
+        if key not in allowed:
+            continue
+
+        value = str(value)
+
+        if key == "ai_model":
+
+            if (
+                not value.strip()
+                or value.strip()
+                == "gemini-2.5-flash"
+            ):
+
+                value = "gemini-3.8-flash"
+
+        save_setting(
+            c,
+            key,
+            value
+        )
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
+
+
+# =========================================================
+# المستخدمين - الإدارة
+# =========================================================
+
+@app.get("/api/admin/users")
+@admin_required
+def admin_users():
+
+    query = str(
+        request.args.get(
+            "q",
+            ""
+        )
+    ).strip()
+
+    c = db()
+
+    if query:
+
+        users = c.execute(
+            """
+            SELECT
+                id,
+                name,
+                email,
+                credits,
+                is_admin,
+                is_banned,
+                created_at
+            FROM users
+            WHERE
+                name LIKE ?
+                OR email LIKE ?
+            ORDER BY id DESC
+            LIMIT 100
+            """,
+            (
+                f"%{query}%",
+                f"%{query}%"
+            )
+        ).fetchall()
+
+    else:
+
+        users = c.execute(
+            """
+            SELECT
+                id,
+                name,
+                email,
+                credits,
+                is_admin,
+                is_banned,
+                created_at
+            FROM users
+            ORDER BY id DESC
+            LIMIT 100
+            """
+        ).fetchall()
+
+    c.close()
+
+    return jsonify(
+        users=[
+            dict(user)
+            for user in users
+        ]
+    )
+
+
+@app.post("/api/admin/user/<int:uid>/credits")
+@admin_required
+def add_credits(uid):
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    try:
+
+        amount = int(
+            data.get(
+                "amount",
+                0
+            )
+        )
+
+    except (
+        ValueError,
+        TypeError
+    ):
+
+        amount = 0
+
+    if amount == 0:
+
+        return jsonify(
+            error="أدخل عدد صحيح."
+        ), 400
+
+    c = db()
+
+    result = c.execute(
+        """
+        UPDATE users
+        SET credits = MAX(
+            0,
+            credits + ?
+        )
+        WHERE id = ?
+        """,
+        (
+            amount,
+            uid
+        )
+    )
+
+    c.commit()
+
+    user = c.execute(
+        """
+        SELECT credits
+        FROM users
+        WHERE id = ?
+        """,
+        (uid,)
+    ).fetchone()
+
+    c.close()
+
+    if result.rowcount != 1:
+
+        return jsonify(
+            error="المستخدم ما موجود."
+        ), 404
+
+    return jsonify(
+        ok=True,
+        credits=user["credits"]
+    )
+
+
+@app.patch("/api/admin/user/<int:uid>")
+@admin_required
+def update_user(uid):
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    c = db()
+
+    user = c.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE id = ?
+        """,
+        (uid,)
+    ).fetchone()
+
+    if not user:
+
+        c.close()
+
+        return jsonify(
+            error="المستخدم ما موجود."
+        ), 404
+
+    if "name" in data:
+
+        name = str(
+            data["name"]
+        ).strip()
+
+        if name:
+
+            c.execute(
+                """
+                UPDATE users
+                SET name = ?
+                WHERE id = ?
+                """,
+                (
+                    name,
+                    uid
+                )
+            )
+
+    if "email" in data:
+
+        email = str(
+            data["email"]
+        ).strip().lower()
+
+        if email:
+
+            try:
+
+                c.execute(
+                    """
+                    UPDATE users
+                    SET email = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        email,
+                        uid
+                    )
+                )
+
+            except sqlite3.IntegrityError:
+
+                c.close()
+
+                return jsonify(
+                    error="الإيميل مستخدم قبل كده."
+                ), 409
+
+    if "credits" in data:
+
+        try:
+
+            credits = max(
+                0,
+                int(data["credits"])
+            )
+
+            c.execute(
+                """
+                UPDATE users
+                SET credits = ?
+                WHERE id = ?
+                """,
+                (
+                    credits,
+                    uid
+                )
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            pass
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
+
+
+@app.post("/api/admin/user/<int:uid>/ban")
+@admin_required
+def ban_user(uid):
+
+    c = db()
+
+    c.execute(
+        """
+        UPDATE users
+        SET is_banned = 1
+        WHERE id = ?
+        """,
+        (uid,)
+    )
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
+
+
+@app.post("/api/admin/user/<int:uid>/unban")
+@admin_required
+def unban_user(uid):
+
+    c = db()
+
+    c.execute(
+        """
+        UPDATE users
+        SET is_banned = 0
+        WHERE id = ?
+        """,
+        (uid,)
+    )
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
+
+
+@app.delete("/api/admin/user/<int:uid>")
+@admin_required
+def delete_user(uid):
+
+    if uid == session.get("uid"):
+
+        return jsonify(
+            error="ما ممكن تحذف حساب المدير الحالي."
+        ), 400
+
+    c = db()
+
+    c.execute(
+        """
+        DELETE FROM users
+        WHERE id = ?
+        """,
+        (uid,)
+    )
+
+    c.commit()
+    c.close()
+
+    return jsonify(
+        ok=True
+    )
+
+
+# =========================================================
+# الصحة
+# =========================================================
+
+@app.get("/health")
+def health():
+
+    try:
+
+        c = db()
+
+        c.execute(
+            "SELECT 1"
+        ).fetchone()
+
+        c.close()
+
+        return jsonify(
+            status="ok"
+        )
+
+    except Exception as error:
+
+        app.logger.exception(
+            "Health check failed: %s",
+            str(error)
+        )
+
+        return jsonify(
+            status="error"
+        ), 500
+
+
+@app.get("/api/admin/health")
+@admin_required
+def admin_health():
+
+    checks = {}
+
+    # قاعدة البيانات
+    try:
+
+        c = db()
+
+        c.execute(
+            "SELECT 1"
+        ).fetchone()
+
+        c.close()
+
+        checks["database"] = "ok"
+
+    except Exception:
+
+        checks["database"] = "error"
+
+    # مفتاح Gemini
+    checks["gemini_key"] = (
+        "ok"
+        if os.getenv("GEMINI_API_KEY")
+        else "missing"
+    )
+
+    # الموديل
+    model = setting(
+        "ai_model",
+        "gemini-3.8-flash"
+    )
+
+    if model == "gemini-2.5-flash":
+
+        model = "gemini-3.8-flash"
+
+    checks["ai_model"] = model
+
+    return jsonify(
+        status="ok",
+        checks=checks
+    )
+
+
+# =========================================================
+# النسخ الاحتياطي
+# =========================================================
+
+@app.get("/api/admin/backup")
+@admin_required
+def backup():
+
+    c = db()
+
+    users = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT
+                id,
+                name,
+                email,
+                credits,
+                is_admin,
+                is_banned,
+                created_at
+            FROM users
+            """
+        ).fetchall()
+    ]
+
+    chats_data = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                role,
+                content,
+                created_at
+            FROM chats
+            """
+        ).fetchall()
+    ]
+
+    settings_data = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT key, value
+            FROM settings
+            """
+        ).fetchall()
+    ]
+
+    c.close()
+
+    return jsonify(
+        users=users,
+        chats=chats_data,
+        settings=settings_data
+    )
+
+
+@app.get("/api/admin/backup/download")
+@admin_required
+def backup_download():
+
+    c = db()
+
+    users = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT
+                id,
+                name,
+                email,
+                credits,
+                is_admin,
+                is_banned,
+                created_at
+            FROM users
+            """
+        ).fetchall()
+    ]
+
+    chats_data = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                role,
+                content,
+                created_at
+            FROM chats
+            """
+        ).fetchall()
+    ]
+
+    settings_data = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT key, value
+            FROM settings
+            """
+        ).fetchall()
+    ]
+
+    c.close()
+
+    import json
+
+    backup_data = {
+        "created_at": datetime.now(
+            timezone.utc
+        ).isoformat(),
+        "users": users,
+        "chats": chats_data,
+        "settings": settings_data
+    }
+
+    raw = json.dumps(
+        backup_data,
+        ensure_ascii=False,
+        indent=2
+    ).encode("utf-8")
+
+    return send_file(
+        io.BytesIO(raw),
+        mimetype="application/json",
+        as_attachment=True,
+        download_name="zolak-ai-backup.json"
+    )
+
+
+# =========================================================
+# تشغيل التطبيق
+# =========================================================
+
+if __name__ == "__main__":
+
+    app.run(
+        host="0.0.0.0",
+        port=int(
+            os.getenv(
+                "PORT",
+                "5000"
+            )
+        ),
+        debug=False
+        )
