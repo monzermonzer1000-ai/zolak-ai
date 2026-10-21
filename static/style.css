@@ -1029,3 +1029,36 @@ tr:last-child td {
 .w-full {
   width: 100%;
   }
+/* Mobile Sidebar Fix */
+@media (max-width: 650px) {
+  .sidebar {
+    display: flex !important;
+    position: fixed !important;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(280px, 85vw) !important;
+    min-width: 0 !important;
+    height: 100dvh;
+    overflow-y: auto;
+    background: #ffffff;
+    box-shadow: -10px 0 35px rgba(0, 0, 0, 0.18);
+    z-index: 1000;
+    transform: translateX(110%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar.open,
+  .sidebar.active,
+  .sidebar.show,
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .main-content,
+  .chat-main,
+  .content-area {
+    width: 100%;
+    min-width: 0;
+  }
+}
