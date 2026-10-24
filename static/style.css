@@ -209,3 +209,280 @@ a:focus-visible {
     min-width: 0;
   }
   }
+/* =====================================
+   ZOLAK AI - SIDEBAR MOBILE FIX
+===================================== */
+
+/* ضبط الصفحة الرئيسية */
+.app.chatgpt-layout {
+    display: flex !important;
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+}
+
+.main.main-chat {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    width: 0;
+    min-width: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+}
+
+/* القائمة في الكمبيوتر */
+.sidebar {
+    flex: 0 0 260px;
+    width: 260px;
+    min-width: 260px;
+    height: 100vh;
+    height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: #ffffff;
+    border-left: 1px solid #e1e9e5;
+    z-index: 100;
+}
+
+/* ترتيب محتويات القائمة */
+.sidebar .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 4px 18px;
+}
+
+.sidebar .brand-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 4px;
+}
+
+.sidebar .brand-text strong {
+    font-size: 17px;
+}
+
+.sidebar .brand-text span {
+    font-size: 12px;
+    line-height: 1.6;
+    opacity: 0.7;
+}
+
+.sidebar .sidebar-spacer {
+    flex: 1 1 auto;
+    min-height: 15px;
+}
+
+.sidebar .sidebar-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5px;
+    padding: 12px 5px 0;
+    border-top: 1px solid #e1e9e5;
+    font-size: 11px;
+    opacity: 0.75;
+}
+
+.sidebar .account-box {
+    margin-top: 10px;
+}
+
+/* زر القائمة */
+.mobile-menu {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    padding: 0;
+    border: 1px solid #e1e9e5;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #172b26;
+    font-size: 23px;
+    cursor: pointer;
+}
+
+.mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.mobile-brand strong {
+    font-size: 15px;
+}
+
+.mobile-brand-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 800;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+/* خلفية القائمة عند فتحها */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(9, 20, 17, 0.48);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+/* تصميم الموبايل */
+@media (max-width: 800px) {
+
+    .app.chatgpt-layout {
+        width: 100%;
+        min-height: 100dvh;
+    }
+
+    .mobile-menu {
+        display: inline-flex !important;
+    }
+
+    .sidebar {
+        position: fixed !important;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 100 !important;
+        width: min(82vw, 310px) !important;
+        min-width: 0 !important;
+        max-width: 310px;
+        height: 100vh;
+        height: 100dvh;
+        padding: 18px 14px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        background: #ffffff !important;
+        box-shadow: -12px 0 35px rgba(0, 0, 0, 0.12);
+        transform: translateX(110%);
+        visibility: hidden;
+        transition:
+            transform 0.28s ease,
+            visibility 0.28s ease;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+        visibility: visible;
+    }
+
+    .main.main-chat {
+        width: 100%;
+        min-width: 0;
+        flex: 1 1 100%;
+    }
+
+    .topbar.chat-navbar {
+        min-height: 62px;
+        padding: 9px 12px;
+        gap: 8px;
+    }
+
+    .topbar-left {
+        font-size: 11px;
+    }
+
+    .assistant-status {
+        display: none;
+    }
+
+    .messages {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        padding: 22px 14px;
+    }
+
+    .welcome-screen {
+        min-height: 55vh;
+        padding: 22px 8px;
+    }
+
+    .welcome-screen h1 {
+        font-size: clamp(25px, 7vw, 34px);
+    }
+
+    .welcome-screen p {
+        font-size: 13px;
+    }
+
+    .composer.composer-area {
+        width: 100%;
+        padding: 8px 10px;
+    }
+
+    .composer-note {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 3px 8px;
+        font-size: 10px;
+        text-align: center;
+    }
+
+    .suggestions,
+    .suggestion-grid,
+    .suggestion-cards {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* شاشات الموبايل الصغيرة */
+@media (max-width: 380px) {
+
+    .mobile-brand strong {
+        font-size: 13px;
+    }
+
+    .mobile-brand-logo {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+    }
+
+    .topbar.chat-navbar {
+        padding-right: 8px;
+        padding-left: 8px;
+    }
+}
+
+/* تقليل الحركة لمن يفضل ذلك */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    .sidebar-overlay {
+        transition: none !important;
+    }
+  }
