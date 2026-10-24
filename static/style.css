@@ -159,3 +159,53 @@ a:focus-visible {
   color: #fff;
   background: var(--primary);
   font-weight: 750
+/* ZOLAK AI - Mobile Sidebar Fix */
+
+@media (max-width: 800px) {
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: min(300px, 85vw) !important;
+    min-width: 0 !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow-y: auto !important;
+    background: #ffffff !important;
+    z-index: 1001 !important;
+    transform: translateX(105%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s ease;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);
+  }
+
+  .sidebar.open {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+  }
+
+  .sidebar-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1000 !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+  }
+
+  .main.main-chat {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .topbar.chat-navbar {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .messages {
+    width: 100%;
+    min-width: 0;
+  }
+  }
