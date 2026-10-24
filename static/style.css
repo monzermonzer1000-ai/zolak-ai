@@ -1,488 +1,100 @@
-/* ZOLAK AI — Responsive Professional Design */
+/* ==========================================
+   ZOLAK AI — COMPLETE RESPONSIVE DESIGN
+   Compatible with index.html and app.js
+========================================== */
 
 :root {
-  --bg: #f5f7fa;
-  --surface: #ffffff;
-  --surface-soft: #f0f8f5;
-  --text: #172b26;
-  --muted: #788781;
-  --border: #e1e9e5;
-  --primary: #08b991;
-  --primary-dark: #07866b;
-  --primary-soft: #e4f8f1;
-  --shadow: 0 8px 28px rgba(17, 54, 43, .07);
-  --radius: 18px;
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface-soft: #f0f8f5;
+    --text: #172b26;
+    --muted: #788781;
+    --border: #e1e9e5;
+    --primary: #08b991;
+    --primary-dark: #07866b;
+    --primary-soft: #e4f8f1;
+    --shadow: 0 8px 28px rgba(17, 54, 43, .08);
+    --radius: 16px;
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html {
-  width: 100%;
-  min-height: 100%;
-  margin: 0;
-  overflow-x: hidden;
-  -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth;
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
 }
 
 body {
-  width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  overflow-x: hidden;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  color: var(--text);
-  background: var(--bg);
-  line-height: 1.65;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.65;
 }
 
 button,
 input,
 textarea,
 select {
-  font: inherit;
+    font: inherit;
 }
 
 button {
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+    color: inherit;
+    text-decoration: none;
 }
 
 img {
-  max-width: 100%;
-  height: auto;
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+[hidden] {
+    display: none !important;
 }
 
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 3px solid rgba(8, 185, 145, .3);
-  outline-offset: 2px;
+    outline: 3px solid rgba(8, 185, 145, .3);
+    outline-offset: 2px;
 }
 
-[hidden] {
-  display: none !important;
-}
-
-/* APPLICATION */
+/* ==========================================
+   MAIN APPLICATION
+========================================== */
 
 .app.chatgpt-layout {
-  position: relative;
-  display: flex;
-  width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
-  overflow: hidden;
-  background-color: var(--bg);
-}
-
-/* SIDEBAR */
-
-.sidebar {
-  position: relative;
-  z-index: 20;
-  display: flex;
-  flex: 0 0 260px;
-  flex-direction: column;
-  gap: 18px;
-  width: 260px;
-  min-width: 260px;
-  height: 100vh;
-  height: 100dvh;
-  min-height: 0;
-  padding: 22px 15px 16px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  background: #fff;
-  border-right: 1px solid var(--border);
-  scrollbar-width: thin;
-  scrollbar-color: #d5e4dd transparent;
-}
-
-.brand,
-.brand-logo,
-.mobile-brand-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.brand {
-  flex-shrink: 0;
-}
-
-.brand-logo {
-  overflow: hidden;
-}
-
-.brand-icon {
-  display: inline-flex;
-  flex: 0 0 42px;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  color: #fff;
-  background: linear-gradient(135deg, #10cba0, #078365);
-  box-shadow: 0 5px 14px rgba(8, 185, 145, .2);
-  font-size: 21px;
-}
-
-.mobile-brand-logo {
-  display: none;
-}
-
-.new-chat {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  width: 100%;
-  min-height: 46px;
-  padding: 12px 14px;
-  border: 0;
-  border-radius: 13px;
-  color: #fff;
-  background: var(--primary);
-  font-weight: 750
-/* ZOLAK AI - Mobile Sidebar Fix */
-
-@media (max-width: 800px) {
-  .sidebar {
-    position: fixed !important;
-    top: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    left: auto !important;
-    width: min(300px, 85vw) !important;
-    min-width: 0 !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    overflow-y: auto !important;
-    background: #ffffff !important;
-    z-index: 1001 !important;
-    transform: translateX(105%);
-    visibility: hidden;
-    transition: transform 0.25s ease, visibility 0.25s ease;
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);
-  }
-
-  .sidebar.open {
-    transform: translateX(0) !important;
-    visibility: visible !important;
-  }
-
-  .sidebar-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 1000 !important;
-    background: rgba(0, 0, 0, 0.45) !important;
-  }
-
-  .main.main-chat {
-    flex: 1 1 100% !important;
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  .topbar.chat-navbar {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .messages {
-    width: 100%;
-    min-width: 0;
-  }
-  }
-/* =====================================
-   ZOLAK AI - SIDEBAR MOBILE FIX
-===================================== */
-
-/* ضبط الصفحة الرئيسية */
-.app.chatgpt-layout {
-    display: flex !important;
     position: relative;
-    width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow: hidden;
-}
-
-.main.main-chat {
     display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    width: 0;
-    min-width: 0;
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow: hidden;
-}
-
-/* القائمة في الكمبيوتر */
-.sidebar {
-    flex: 0 0 260px;
-    width: 260px;
-    min-width: 260px;
+    width: 100%;
     height: 100vh;
     height: 100dvh;
-    overflow-x: hidden;
-    overflow-y: auto;
-    background: #ffffff;
-    border-left: 1px solid #e1e9e5;
-    z-index: 100;
+    min-height: 0;
+    overflow: hidden;
+    background-color: var(--bg);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
-/* ترتيب محتويات القائمة */
-.sidebar .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 4px 18px;
-}
-
-.sidebar .brand-text {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    gap: 4px;
-}
-
-.sidebar .brand-text strong {
-    font-size: 17px;
-}
-
-.sidebar .brand-text span {
-    font-size: 12px;
-    line-height: 1.6;
-    opacity: 0.7;
-}
-
-.sidebar .sidebar-spacer {
-    flex: 1 1 auto;
-    min-height: 15px;
-}
-
-.sidebar .sidebar-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 5px;
-    padding: 12px 5px 0;
-    border-top: 1px solid #e1e9e5;
-    font-size: 11px;
-    opacity: 0.75;
-}
-
-.sidebar .account-box {
-    margin-top: 10px;
-}
-
-/* زر القائمة */
-.mobile-menu {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
-    padding: 0;
-    border: 1px solid #e1e9e5;
-    border-radius: 12px;
-    background: #ffffff;
-    color: #172b26;
-    font-size: 23px;
-    cursor: pointer;
-}
-
-.mobile-brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
-
-.mobile-brand strong {
-    font-size: 15px;
-}
-
-.mobile-brand-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    flex: 0 0 38px;
-    border-radius: 12px;
-    color: white;
-    font-weight: 800;
-}
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-}
-
-.topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    white-space: nowrap;
-    font-size: 12px;
-}
-
-/* خلفية القائمة عند فتحها */
-.sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 90;
-    background: rgba(9, 20, 17, 0.48);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-}
-
-/* تصميم الموبايل */
-@media (max-width: 800px) {
-
-    .app.chatgpt-layout {
-        width: 100%;
-        min-height: 100dvh;
-    }
-
-    .mobile-menu {
-        display: inline-flex !important;
-    }
-
-    .sidebar {
-        position: fixed !important;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 100 !important;
-        width: min(82vw, 310px) !important;
-        min-width: 0 !important;
-        max-width: 310px;
-        height: 100vh;
-        height: 100dvh;
-        padding: 18px 14px;
-        overflow-x: hidden;
-        overflow-y: auto;
-        background: #ffffff !important;
-        box-shadow: -12px 0 35px rgba(0, 0, 0, 0.12);
-        transform: translateX(110%);
-        visibility: hidden;
-        transition:
-            transform 0.28s ease,
-            visibility 0.28s ease;
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-        visibility: visible;
-    }
-
-    .main.main-chat {
-        width: 100%;
-        min-width: 0;
-        flex: 1 1 100%;
-    }
-
-    .topbar.chat-navbar {
-        min-height: 62px;
-        padding: 9px 12px;
-        gap: 8px;
-    }
-
-    .topbar-left {
-        font-size: 11px;
-    }
-
-    .assistant-status {
-        display: none;
-    }
-
-    .messages {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        padding: 22px 14px;
-    }
-
-    .welcome-screen {
-        min-height: 55vh;
-        padding: 22px 8px;
-    }
-
-    .welcome-screen h1 {
-        font-size: clamp(25px, 7vw, 34px);
-    }
-
-    .welcome-screen p {
-        font-size: 13px;
-    }
-
-    .composer.composer-area {
-        width: 100%;
-        padding: 8px 10px;
-    }
-
-    .composer-note {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 3px 8px;
-        font-size: 10px;
-        text-align: center;
-    }
-
-    .suggestions,
-    .suggestion-grid,
-    .suggestion-cards {
-        grid-template-columns: minmax(0, 1fr);
-    }
-}
-
-/* شاشات الموبايل الصغيرة */
-@media (max-width: 380px) {
-
-    .mobile-brand strong {
-        font-size: 13px;
-    }
-
-    .mobile-brand-logo {
-        width: 34px;
-        height: 34px;
-        flex-basis: 34px;
-    }
-
-    .topbar.chat-navbar {
-        padding-right: 8px;
-        padding-left: 8px;
-    }
-}
-
-/* تقليل الحركة لمن يفضل ذلك */
-@media (prefers-reduced-motion: reduce) {
-    .sidebar,
-    .sidebar-overlay {
-        transition: none !important;
-    }
-  }
+/* ==========================================
+   SID
