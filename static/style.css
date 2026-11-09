@@ -1,100 +1,549 @@
 /* ==========================================
-   ZOLAK AI — COMPLETE RESPONSIVE DESIGN
-   Compatible with index.html and app.js
+ZOLAK AI — RESPONSIVE DESIGN
+Mobile + Desktop
 ========================================== */
 
 :root {
-    --bg: #f5f7fa;
-    --surface: #ffffff;
-    --surface-soft: #f0f8f5;
-    --text: #172b26;
-    --muted: #788781;
-    --border: #e1e9e5;
-    --primary: #08b991;
-    --primary-dark: #07866b;
-    --primary-soft: #e4f8f1;
-    --shadow: 0 8px 28px rgba(17, 54, 43, .08);
-    --radius: 16px;
+--bg: #f4f7f6;
+--surface: #ffffff;
+--text: #172b26;
+--muted: #718078;
+--border: #e1e9e5;
+--primary: #08b991;
+--primary-dark: #07866b;
+--primary-soft: #e4f8f1;
+--radius: 16px;
 }
 
 * {
-    box-sizing: border-box;
-}
+  box-sizing: border-box;
+  }
 
 html {
-    width: 100%;
-    min-height: 100%;
-    margin: 0;
-    overflow-x: hidden;
-    -webkit-text-size-adjust: 100%;
-    scroll-behavior: smooth;
+width: 100%;
+min-height: 100%;
+margin: 0;
+overflow-x: hidden;
+-webkit-text-size-adjust: 100%;
 }
 
 body {
-    width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
-    margin: 0;
-    overflow: hidden;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Arial, sans-serif;
-    color: var(--text);
-    background: var(--bg);
-    line-height: 1.65;
+width: 100%;
+min-height: 100vh;
+min-height: 100dvh;
+margin: 0;
+overflow: hidden;
+font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+color: var(--text);
+background: var(--bg);
+line-height: 1.65;
 }
 
-button,
-input,
-textarea,
-select {
-    font: inherit;
+button, input, textarea, select {
+font: inherit;
 }
 
 button {
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
 }
 
 a {
-    color: inherit;
-    text-decoration: none;
+color: inherit;
+text-decoration: none;
 }
 
 img {
-    display: block;
-    max-width: 100%;
-    height: auto;
+max-width: 100%;
+height: auto;
 }
 
 [hidden] {
-    display: none !important;
+display: none !important;
 }
 
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-    outline: 3px solid rgba(8, 185, 145, .3);
-    outline-offset: 2px;
+outline: 3px solid rgba(8, 185, 145, .3);
+outline-offset: 2px;
 }
 
-/* ==========================================
-   MAIN APPLICATION
-========================================== */
+/* MAIN APPLICATION */
 
 .app.chatgpt-layout {
-    position: relative;
-    display: flex;
+position: relative;
+display: flex;
+flex-direction: row;
+width: 100%;
+height: 100vh;
+height: 100dvh;
+min-height: 0;
+overflow: hidden;
+background-color: var(--bg);
+background-position: center;
+background-size: cover;
+background-repeat: no-repeat;
+}
+
+/* SIDEBAR */
+
+.sidebar {
+position: relative;
+z-index: 50;
+display: flex;
+flex-direction: column;
+flex-shrink: 0;
+width: 280px;
+height: 100%;
+min-height: 0;
+overflow-y: auto;
+padding: 16px;
+background: rgba(248, 252, 250, .97);
+color: var(--text);
+border-left: 1px solid var(--border);
+transition: transform .25s ease;
+}
+
+.sidebar button {
+max-width: 100%;
+}
+
+.sidebar a {
+text-decoration: none;
+}
+
+.sidebar-header,
+.sidebar-top {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+padding: 8px 4px 16px;
+}
+
+.sidebar h1,
+.sidebar h2,
+.sidebar h3 {
+margin-top: 0;
+}
+
+.sidebar button,
+.sidebar .nav-item,
+.sidebar a {
+overflow-wrap: anywhere;
+}
+
+.sidebar .nav-item,
+.sidebar .conversation-item,
+.sidebar .chat-item {
+display: flex;
+align-items: center;
+gap: 9px;
+width: 100%;
+padding: 10px;
+border-radius: 10px;
+text-align: right;
+}
+
+.sidebar .nav-item:hover,
+.sidebar .conversation-item:hover,
+.sidebar .chat-item:hover {
+background: var(--primary-soft);
+}
+
+.sidebar .active {
+background: var(--primary-soft);
+}
+
+/* NEW CHAT BUTTON */
+
+.new-chat,
+#newChat,
+button.new-chat {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+width: 100%;
+min-height: 46px;
+padding: 10px 14px;
+border: 1px solid var(--primary);
+border-radius: 12px;
+background: #fff;
+color: var(--text);
+font-weight: 700;
+}
+
+/* CONVERSATIONS */
+
+.conversations-list,
+#conversationsList,
+#conversationList {
+flex: 1;
+min-height: 0;
+overflow-y: auto;
+overscroll-behavior: contain;
+}
+
+.conversation-item,
+.chat-item {
+max-width: 100%;
+overflow-wrap: anywhere;
+}
+
+/* MAIN CHAT */
+
+.main,
+.main.main-chat {
+position: relative;
+display: flex;
+flex: 1;
+flex-direction: column;
+width: 0;
+min-width: 0;
+height: 100%;
+min-height: 0;
+overflow: hidden;
+background: rgba(255, 255, 255, .88);
+color: var(--text);
+}
+
+/* TOP BAR */
+
+.topbar,
+.chat-navbar,
+.main-header {
+position: relative;
+z-index: 5;
+display: flex;
+align-items: center;
+justify-content: space-between;
+flex-shrink: 0;
+gap: 10px;
+width: 100%;
+min-height: 62px;
+padding: 10px 16px;
+background: rgba(255, 255, 255, .96);
+border-bottom: 1px solid var(--border);
+}
+
+.topbar button,
+.chat-navbar button,
+.main-header button {
+flex-shrink: 0;
+}
+
+/* MOBILE MENU BUTTON */
+
+.mobile-menu {
+display: none;
+align-items: center;
+justify-content: center;
+width: 42px;
+height: 42px;
+padding: 0;
+border: 1px solid var(--border);
+border-radius: 11px;
+background: #fff;
+color: var(--text);
+font-size: 22px;
+}
+
+/* MESSAGES AREA */
+
+.messages {
+display: flex;
+flex: 1;
+flex-direction: column;
+gap: 16px;
+width: 100%;
+min-height: 0;
+padding: 22px clamp(14px, 4vw, 42px);
+overflow-x: hidden;
+overflow-y: auto;
+overscroll-behavior: contain;
+background: rgba(255, 255, 255, .82);
+color: var(--text);
+}
+
+.message,
+.message-row,
+.chat-message {
+max-width: 100%;
+overflow-wrap: anywhere;
+word-break: break-word;
+}
+
+.message p,
+.chat-message p {
+margin-top: 0;
+}
+
+.message pre,
+.message code,
+.chat-message pre {
+max-width: 100%;
+overflow-x: auto;
+white-space: pre-wrap;
+overflow-wrap: anywhere;
+}
+
+.message img,
+.chat-message img {
+max-width: 100%;
+height: auto;
+border-radius: 12px;
+}
+
+/* COMPOSER */
+
+.composer,
+.composer-area {
+position: relative;
+z-index: 4;
+flex-shrink: 0;
+width: 100%;
+padding: 12px clamp(10px, 4vw, 36px);
+background: rgba(255, 255, 255, .97);
+border-top: 1px solid var(--border);
+}
+
+.composer form,
+.composer-area form {
+display: flex;
+align-items: flex-end;
+gap: 9px;
+width: 100%;
+max-width: 900px;
+margin: 0 auto;
+}
+
+#prompt,
+textarea#prompt,
+.composer textarea,
+.composer-area textarea {
+display: block;
+flex: 1;
+width: 100%;
+min-width: 0;
+min-height: 48px;
+max-height: 160px;
+padding: 11px 14px;
+resize: vertical;
+border: 1px solid var(--border);
+border-radius: 15px;
+outline: none;
+background: #fff;
+color: var(--text);
+line-height: 1.6;
+font-size: 16px;
+}
+
+#prompt:focus,
+.composer textarea:focus,
+.composer-area textarea:focus {
+border-color: var(--primary);
+box-shadow: 0 0 0 3px rgba(8, 185, 145, .1);
+}
+
+#send,
+button#send,
+.composer button[type="submit"] {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+min-width: 46px;
+min-height: 46px;
+padding: 9px 14px;
+border: 0;
+border-radius: 13px;
+background: var(--primary);
+color: #fff;
+font-weight: 700;
+}
+
+#send:hover,
+button#send:hover {
+background: var(--primary-dark);
+}
+
+/* BRAND AND LOGO */
+
+.brand,
+.logo,
+.custom-logo {
+max-width: 100%;
+overflow-wrap: anywhere;
+}
+
+.custom-logo {
+object-fit: contain;
+}
+
+.suggestion-icon {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+}
+
+/* SIDEBAR OVERLAY */
+
+.sidebar-overlay {
+position: fixed;
+inset: 0;
+z-index: 40;
+background: rgba(10, 20, 16, .5);
+opacity: 0;
+pointer-events: none;
+transition: opacity .25s ease;
+}
+
+/* SCROLLBARS */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd9d2 transparent;
+  }
+
+*::-webkit-scrollbar {
+width: 6px;
+height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+background: #cbd9d2;
+border-radius: 10px;
+}
+
+/* MOBILE AND TABLETS */
+
+@media (max-width: 800px) {
+
+body {
+    overflow: hidden;
+}
+
+.app.chatgpt-layout {
     width: 100%;
     height: 100vh;
     height: 100dvh;
-    min-height: 0;
-    overflow: hidden;
-    background-color: var(--bg);
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
 }
 
-/* ==========================================
-   SID
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 50;
+    width: min(300px, 86vw);
+    height: 100%;
+    height: 100dvh;
+    overflow-y: auto;
+    transform: translateX(105%);
+    transition: transform .25s ease;
+    box-shadow: none;
+}
+
+.sidebar.open {
+    transform: translateX(0);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, .15);
+}
+
+.mobile-menu {
+    display: inline-flex;
+}
+
+.main,
+.main.main-chat {
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+}
+
+.topbar,
+.chat-navbar,
+.main-header {
+    min-height: 56px;
+    padding: 8px 10px;
+    gap: 7px;
+}
+
+.messages {
+    padding: 14px 10px;
+    gap: 12px;
+}
+
+.composer,
+.composer-area {
+    padding: 9px 9px calc(9px + env(safe-area-inset-bottom));
+}
+
+.composer form,
+.composer-area form {
+    gap: 7px;
+}
+
+#prompt,
+textarea#prompt,
+.composer textarea,
+.composer-area textarea {
+    min-height: 45px;
+    max-height: 135px;
+    padding: 9px 11px;
+    font-size: 16px;
+}
+
+#send,
+button#send,
+.composer button[type="submit"] {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 11px;
+}
+
+}
+
+/* SMALL PHONES */
+
+@media (max-width: 380px) {
+
+.topbar,
+.chat-navbar,
+.main-header {
+    padding-right: 7px;
+    padding-left: 7px;
+}
+
+.messages {
+    padding-right: 8px;
+    padding-left: 8px;
+}
+
+.composer,
+.composer-area {
+    padding-right: 6px;
+    padding-left: 6px;
+}
+
+#send,
+button#send {
+    min-width: 40px;
+    padding-right: 8px;
+    padding-left: 8px;
+}
+
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+*,
+*::before,
+*::after {
+scroll-behavior: auto !important;
+transition-duration: .01ms !important;
+}
+}
