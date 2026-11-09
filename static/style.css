@@ -1,382 +1,847 @@
-<!DOCTYPE html><html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="{{ primary_color or '#08b991' }}">
-    <meta name="description" content="{{ site_description or 'مساعد ذكاء اصطناعي سوداني 🇸🇩🤖' }}"><title>{{ site_name or "زولك AI 🇸🇩" }}</title>
 
-<link rel="manifest" href="/manifest.json">
+/* =====================================================
+   ZOLAK AI — COMPLETE RESPONSIVE DESIGN
+   Sudanese AI Assistant 🇸🇩
+   ===================================================== */
 
-<!-- Main design -->
-<link rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}?v=4">
+:root {
+    --primary: #08b991;
+    --primary-dark: #07866b;
+    --primary-soft: #e8faf4;
+    --ink: #18332c;
+    --muted: #71827b;
+    --line: #e6eeea;
+    --paper: #ffffff;
+    --canvas: #f5f8f7;
+    --shadow: 0 8px 28px rgba(20, 55, 43, .07);
+}
 
-<style>
-    :root {
-        --zolak-primary: {{ primary_color or '#08b991' }};
-    }
+* {
+    box-sizing: border-box;
+}
 
-    .app.chatgpt-layout {
-        {% if background_url %}
-        background-image: url("{{ background_url }}");
-        {% else %}
-        background-image: url("/static/sudan-flag-background.jpg");
-        {% endif %}
-        background-position: center;
-        background-size: cover;
-        background-repeat: no-repeat;
-    }
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+}
 
-    .brand-logo,
-    .welcome-logo,
-    .mobile-brand-logo,
-    #send {
-        background-color: var(--zolak-primary);
-    }
+html {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+}
 
-    .new-chat {
-        border-color: var(--zolak-primary);
-    }
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+    color: var(--ink);
+    background: var(--canvas);
+    font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+    line-height: 1.65;
+}
 
-    .online-indicator,
-    .account-status {
-        background-color: var(--zolak-primary);
-    }
+button,
+input,
+textarea {
+    font: inherit;
+}
 
-    .sidebar-link.active {
-        border-right: 3px solid var(--zolak-primary);
-    }
-</style>
+button {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
 
-</head><body class="{% if theme == 'light' %}theme-light{% else %}theme-dark{% endif %}"><div class="app chatgpt-layout"><!-- Sidebar -->
-<aside class="sidebar">
+a {
+    color: inherit;
+    text-decoration: none;
+}
 
-    <div class="brand">
-        <div class="brand-logo brand-icon">
-            {% if logo_url %}
-                <img
-                    src="{{ logo_url }}"
-                    alt="{{ site_name or 'زولك AI' }}"
-                    class="custom-logo">
-            {% else %}
-                Z
-            {% endif %}
-        </div>
+img {
+    max-width: 100%;
+}
 
-        <div class="brand-text">
-            <strong>{{ site_name or "زولك AI" }}</strong>
-            <span>
-                {{ homepage_subtitle or site_description or "مساعدك السوداني 🇸🇩" }}
-            </span>
-        </div>
-    </div>
+[hidden] {
+    display: none !important;
+}
 
-    <button class="new-chat" id="newChat" type="button">
-        <span class="new-chat-icon">＋</span>
-        <span>محادثة جديدة</span>
-    </button>
+:focus-visible {
+    outline: 3px solid rgba(8,185,145,.28);
+    outline-offset: 2px;
+}
 
-    <!-- Conversation history -->
-    <div class="conversation-list" id="conversationList">
-        <div class="conversation-list-title">محادثاتك</div>
-        <div class="conversation-items" id="conversationItems"></div>
-    </div>
+/* APP BACKGROUND */
 
-    <!-- Navigation -->
-    <div class="sidebar-section">
-        <span class="sidebar-heading">القائمة الرئيسية</span>
-
-        <nav class="sidebar-links">
-
-            <a href="/" class="sidebar-link active">
-                <span class="nav-icon">⌂</span>
-                <span>الرئيسية</span>
-            </a>
-
-            <a href="/login" id="loginLink" class="sidebar-link">
-                <span class="nav-icon">♙</span>
-                <span>تسجيل الدخول</span>
-            </a>
-
-            <a href="/admin" id="adminLink"
-               class="sidebar-link" hidden>
-                <span class="nav-icon">⚙</span>
-                <span>لوحة المدير</span>
-            </a>
-
-            <a href="/logout" id="logout"
-               class="sidebar-link" hidden>
-                <span class="nav-icon">⇥</span>
-                <span>تسجيل الخروج</span>
-            </a>
-
-        </nav>
-    </div>
-
-    <div class="sidebar-spacer"></div>
-
-    <!-- Account -->
-    <div class="account-box account sidebar-bottom">
-
-        <div class="account-avatar">ز</div>
-
-        <div class="account-info">
-            <div id="who" class="account-name">يا زول 👋</div>
-            <div id="credits" class="account-credits">
-                سجّل دخولك للبدء
-            </div>
-        </div>
-
-        <span class="account-status" aria-hidden="true"></span>
-
-    </div>
-
-    <div class="sidebar-footer">
-        <span>{{ site_name or "زولك AI" }} — صُنع في السودان</span>
-        <span>🇸🇩</span>
-    </div>
-
-</aside>
-
-<!-- Main application -->
-<main class="main main-chat">
-
-    <!-- Header -->
-    <header class="topbar chat-navbar">
-
-        <div class="topbar-right">
-
-            <button
-                class="mobile-menu"
-                id="mobileMenu"
-                type="button"
-                aria-label="فتح القائمة"
-                aria-expanded="false"
-                title="القائمة">
-                ☰
-            </button>
-
-            <div class="mobile-brand">
-
-                <span class="mobile-brand-logo">
-                    {% if logo_url %}
-                        <img
-                            src="{{ logo_url }}"
-                            alt="{{ site_name or 'زولك AI' }}"
-                            class="custom-logo">
-                    {% else %}
-                        Z
-                    {% endif %}
-                </span>
-
-                <strong>{{ site_name or "زولك AI" }}</strong>
-                <span class="sudan-badge">🇸🇩</span>
-
-            </div>
-
-        </div>
-
-        <div class="topbar-left">
-            <span class="online-indicator"></span>
-            <span class="assistant-status">مساعدك الذكي</span>
-        </div>
-
-    </header>
-
-    <!-- Chat messages -->
-    <section
-        class="messages"
-        id="messages"
-        aria-live="polite">
-
-        <div class="welcome-screen">
-
-            <div class="welcome-logo">
-                {% if logo_url %}
-                    <img
-                        src="{{ logo_url }}"
-                        alt="{{ site_name or 'زولك AI' }}"
-                        class="custom-logo">
-                {% else %}
-                    Z
-                {% endif %}
-            </div>
-
-            <span class="welcome-eyebrow">
-                {{ welcome or ("أهلاً بيك في " ~ (site_name or "زولك AI") ~ " 🇸🇩") }}
-            </span>
-
-            <h1>
-                {{ homepage_title or "كيف أقدر أساعدك اليوم؟" }}
-            </h1>
-
-            <p>
-                {{ homepage_subtitle or site_description or "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة." }}
-            </p>
-
-        </div>
-
-    </section>
-
-    <!-- Message composer -->
-    <div class="composer composer-area">
-
-        <div class="composer-inner">
-
-            <textarea
-                id="prompt"
-                placeholder="اكتب رسالتك هنا..."
-                rows="1"
-                aria-label="اكتب رسالتك"></textarea>
-
-            <button
-                id="send"
-                type="button"
-                aria-label="إرسال الرسالة"
-                title="إرسال">
-                <span class="send-icon">↑</span>
-            </button>
-
-        </div>
-
-        <div class="composer-note">
-            <span>
-                {{ site_name or "زولك AI" }}
-                ممكن يخطئ أحياناً، راجع المعلومات المهمة.
-            </span>
-
-            <span class="composer-flag">
-                صُنع في السودان 🇸🇩
-            </span>
-        </div>
-
-    </div>
-
-</main>
-
-</div><!-- Application JavaScript --><script src="{{ url_for('static', filename='app.js') }}?v=4"></script></body>
-</html>
-/* ZOLAK AI — MOBILE APP FINAL FIX */
 .app.chatgpt-layout {
-    background-color: #10251e !important;
-    background-image: url("/static/sudan-flag-background.jpg") !important;
-    background-position: center !important;
-    background-size: cover !important;
-    background-repeat: no-repeat !important;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+
+    background-color: #10251e;
+    background-image: url("/static/sudan-flag-background.jpg");
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
+/* SIDEBAR */
+
+.sidebar {
+    position: relative;
+    z-index: 50;
+    display: flex;
+    flex: 0 0 280px;
+    flex-direction: column;
+    width: 280px;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 16px 14px;
+
+    color: var(--ink);
+    background: rgba(250,253,251,.98);
+    border-left: 1px solid var(--line);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    margin: 0 0 24px;
+}
+
+.brand-logo,
+.brand-icon {
+    display: flex;
+    flex: 0 0 46px;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    overflow: hidden;
+    border-radius: 14px;
+    color: #fff;
+    background: var(--primary);
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.brand-text strong {
+    font-size: 17px;
+    line-height: 1.4;
+}
+
+.brand-text span {
+    color: var(--muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.custom-logo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: inherit;
+}
+
+.new-chat,
+#newChat {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+    border: 1px solid var(--primary);
+    border-radius: 13px;
+    color: var(--primary-dark);
+    background: #fff;
+    font-weight: 700;
+}
+
+.new-chat:hover {
+    background: var(--primary-soft);
+}
+
+.new-chat-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.sidebar-section {
+    margin-top: 22px;
+}
+
+.sidebar-heading {
+    display: block;
+    padding: 0 8px 9px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-height: 42px;
+    padding: 9px 11px;
+    border-radius: 11px;
+    color: #40564e;
+    font-size: 14px;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+    color: var(--primary-dark);
+    background: var(--primary-soft);
+}
+
+.nav-icon {
+    width: 22px;
+    text-align: center;
+    font-size: 18px;
+}
+
+.sidebar-spacer {
+    flex: 1;
+    min-height: 22px;
+}
+
+.account-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+}
+
+.account-avatar {
+    display: flex;
+    flex: 0 0 38px;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--primary);
+    font-weight: 800;
+}
+
+.account-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.account-name {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.account-credits {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.account-status,
+.online-indicator {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 50%;
+    background: #20c77a;
+}
+
+.sidebar-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 12px 4px 0;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+/* CONVERSATION HISTORY */
+
+.conversation-list {
+    margin-top: 17px;
+    min-height: 0;
+    max-height: 38vh;
+    overflow-y: auto;
+}
+
+.conversation-list-title {
+    padding: 7px 8px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.conversation-items {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.conversation-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.conversation-item:hover,
+.conversation-item.active {
+    background: var(--primary-soft);
+}
+
+.conversation-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    padding: 6px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.conversation-delete {
+    padding: 4px 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+}
+
+.conversation-delete:hover {
+    background: #fff0f0;
+    color: #c44;
+}
+
+.conversation-empty {
+    padding: 9px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* MAIN CHAT AREA */
+
+.main,
 .main.main-chat {
-    background: rgba(255,255,255,.84) !important;
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    width: 0;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    color: var(--ink);
+    background: rgba(255,255,255,.88);
 }
 
-.messages {
-    background: rgba(255,255,255,.68) !important;
-    color: #18332c !important;
-}
+/* HEADER */
 
 .topbar,
 .chat-navbar,
+.main-header {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 66px;
+    padding: 10px 22px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(255,255,255,.96);
+}
+
+.topbar-right,
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+}
+
+.topbar-left {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.mobile-menu {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 22px;
+}
+
+.mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.mobile-brand-logo {
+    display: flex;
+    flex: 0 0 34px;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 800;
+}
+
+.sudan-badge {
+    font-size: 15px;
+}
+
+/* MESSAGES */
+
+.messages {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    min-height: 0;
+    padding: 28px clamp(14px, 4vw, 48px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    background: rgba(255,255,255,.78);
+    color: var(--ink);
+}
+
+.welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 720px);
+    min-height: min(100%, 470px);
+    margin: auto;
+    padding: 26px 12px 40px;
+    text-align: center;
+}
+
+.welcome-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 76px;
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 20px;
+    overflow: hidden;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #0ac99b, #07866b);
+    color: #fff;
+    box-shadow: 0 12px 28px rgba(8,185,145,.2);
+    font-size: 38px;
+    font-weight: 900;
+}
+
+.welcome-eyebrow {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 7px 13px;
+    border: 1px solid #d8f4e9;
+    border-radius: 999px;
+    background: #f1fcf7;
+    color: var(--primary-dark);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.welcome-screen h1 {
+    margin: 8px 0 12px;
+    color: var(--ink);
+    font-size: clamp(25px, 4vw, 38px);
+    line-height: 1.35;
+}
+
+.welcome-screen p {
+    max-width: 520px;
+    margin: 0;
+    color: #52665e;
+    font-size: 16px;
+    line-height: 1.9;
+}
+
+.message {
+    display: flex;
+    width: 100%;
+}
+
+.message.user {
+    justify-content: flex-start;
+}
+
+.message.assistant {
+    justify-content: flex-end;
+}
+
+.message-content {
+    max-width: min(85%, 760px);
+    padding: 13px 17px;
+    border-radius: 17px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.8;
+}
+
+.message.user .message-content {
+    background: var(--primary-soft);
+    border: 1px solid #d8f2e8;
+}
+
+.message.assistant .message-content {
+    background: rgba(245,247,246,.96);
+    border: 1px solid var(--line);
+}
+
+.message pre,
+.message code {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* COMPOSER */
+
 .composer,
 .composer-area {
-    background: rgba(255,255,255,.94) !important;
-}
-
-.sidebar {
-    background: rgba(250,253,251,.97) !important;
-    z-index: 50 !important;
-}
-
-.welcome-screen h1,
-.welcome-screen p {
-    color: #18332c !important;
+    position: relative;
+    z-index: 4;
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 13px clamp(10px, 4vw, 38px) 10px;
+    border-top: 1px solid var(--line);
+    background: rgba(255,255,255,.97);
 }
 
 .composer-inner {
-    background: #fff !important;
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 6px;
+    border: 1px solid #dfe9e4;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: var(--shadow);
+}
+
+#prompt,
+textarea#prompt,
+.composer textarea,
+.composer-area textarea {
+    display: block;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    max-height: 150px;
+    padding: 11px 14px;
+    resize: vertical;
+    border: 0;
+    border-radius: 14px;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+#prompt:focus,
+.composer textarea:focus {
+    border: 0;
+    box-shadow: none;
 }
 
 #send,
 button#send {
     position: static !important;
     inset: auto !important;
-    display: inline-flex !important;
-    flex: 0 0 48px !important;
-    width: 48px !important;
-    min-width: 48px !important;
-    height: 48px !important;
-    min-height: 48px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 15px !important;
-    background: var(--primary) !important;
-    color: white !important;
+    display: inline-flex;
+    flex: 0 0 48px;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    min-height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 15px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
 }
 
-#prompt,
-textarea#prompt {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-    background: transparent !important;
-    color: #18332c !important;
+#send:hover,
+button#send:hover {
+    background: var(--primary-dark);
 }
 
-@media screen and (max-width: 800px) {
+#send:disabled {
+    opacity: .65;
+    cursor: wait;
+}
+
+.send-icon {
+    display: inline-block;
+    font-size: 25px;
+    line-height: 1;
+}
+
+.composer-note {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px 8px;
+    max-width: 900px;
+    margin: 7px auto 0;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+}
+
+/* MOBILE SIDEBAR OVERLAY */
+
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(10,25,20,.48);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .22s ease, visibility .22s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* TABLET AND MOBILE */
+
+@media (max-width: 800px) {
+
+    body {
+        overflow: hidden;
+    }
+
     .app.chatgpt-layout {
-        width: 100% !important;
-        height: 100vh !important;
-        height: 100dvh !important;
+        display: flex;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
     }
 
     .sidebar {
-        position: fixed !important;
-        top: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        left: auto !important;
-        width: min(310px, 86vw) !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        transform: translateX(110%) !important;
-        transition: transform .25s ease !important;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: auto;
+        z-index: 50;
+        width: min(310px, 88vw);
+        height: 100vh;
+        height: 100dvh;
+        transform: translateX(105%);
+        transition: transform .25s ease;
+        box-shadow: none;
     }
 
     .sidebar.open {
-        transform: translateX(0) !important;
+        transform: translateX(0);
+        box-shadow: -12px 0 34px rgba(0,0,0,.16);
+    }
+
+    .mobile-menu {
+        display: inline-flex;
     }
 
     .main,
     .main.main-chat {
-        display: flex !important;
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: 100% !important;
-        flex: 1 1 100% !important;
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        flex: 1 1 auto;
+        height: 100%;
     }
 
-    .mobile-menu {
-        display: inline-flex !important;
+    .topbar,
+    .chat-navbar,
+    .main-header {
+        min-height: 60px;
+        padding: 8px 12px;
+        gap: 7px;
     }
 
     .messages {
-        padding: 16px 12px !important;
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 16px 12px;
+        gap: 12px;
+    }
+
+    .welcome-screen {
+        width: 100%;
+        min-height: 100%;
+        padding: 20px 8px 30px;
+    }
+
+    .welcome-logo {
+        width: 66px;
+        height: 66px;
+        flex-basis: 66px;
+        margin-bottom: 16px;
+        border-radius: 20px;
+        font-size: 33px;
+    }
+
+    .welcome-screen h1 {
+        font-size: clamp(24px, 7vw, 32px);
+    }
+
+    .welcome-screen p {
+        font-size: 15px;
     }
 
     .composer,
     .composer-area {
-        padding: 9px 10px calc(9px + env(safe-area-inset-bottom)) !important;
+        padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
     }
 
     .composer-inner {
-        display: flex !important;
-        width: 100% !important;
+        gap: 6px;
+        padding: 4px;
+        border-radius: 17px;
+    }
+
+    #prompt,
+    textarea#prompt,
+    .composer textarea,
+    .composer-area textarea {
+        min-height: 44px;
+        max-height: 125px;
+        padding: 8px 10px;
+        font-size: 16px;
     }
 
     #send,
     button#send {
-        flex-basis: 44px !important;
-        width: 44px !important;
-        min-width: 44px !important;
-        height: 44px !important;
-        min-height: 44px !important;
+        flex-basis: 44px;
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        min-height: 44px;
+        border-radius: 13px;
+    }
+
+    .composer-note {
+        font-size: 10px;
+    }
+
+    .message-content {
+        max-width: 92%;
+    }
+}
+
+/* SMALL PHONES */
+
+@media (max-width: 380px) {
+
+    .mobile-brand {
+        gap: 5px;
+        font-size: 14px;
+    }
+
+    .topbar,
+    .chat-navbar {
+        padding-right: 8px;
+        padding-left: 8px;
+    }
+
+    .messages {
+        padding-right: 9px;
+        padding-left: 9px;
+    }
+
+    .composer,
+    .composer-area {
+        padding-right: 6px;
+        padding-left: 6px;
+    }
+}
+
+/* REDUCED MOTION ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
     }
 }
