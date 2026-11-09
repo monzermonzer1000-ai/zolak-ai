@@ -1,197 +1,72 @@
-<!DOCTYPE html><html lang="ar" dir="rtl">
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <meta name="theme-color" content="{{ primary_color or '#08b991' }}">
-    <meta name="description" content="{{ site_description or 'مساعد ذكاء اصطناعي سوداني 🇸🇩🤖' }}"><title>{{ site_name or "زولك AI 🇸🇩" }}</title>
+    <meta name="description" content="{{ site_description or 'مساعد ذكاء اصطناعي سوداني 🇸🇩🤖' }}">
 
-<link rel="manifest" href="/manifest.json">
+    <title>{{ site_name or "زولك AI 🇸🇩" }}</title>
 
-<!-- Main design -->
-<link rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}?v=4">
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
 
-<style>
-    :root {
-        --zolak-primary: {{ primary_color or '#08b991' }};
-    }
+    <!-- Main Design -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}?v=5">
 
-    .app.chatgpt-layout {
-        {% if background_url %}
-        background-image: url("{{ background_url }}");
-        {% else %}
-        background-image: url("/static/sudan-flag-background.jpg");
-        {% endif %}
-        background-position: center;
-        background-size: cover;
-        background-repeat: no-repeat;
-    }
+    <style>
+        :root {
+            --primary: {{ primary_color or '#08b991' }};
+            --zolak-primary: {{ primary_color or '#08b991' }};
+        }
 
-    .brand-logo,
-    .welcome-logo,
-    .mobile-brand-logo,
-    #send {
-        background-color: var(--zolak-primary);
-    }
-
-    .new-chat {
-        border-color: var(--zolak-primary);
-    }
-
-    .online-indicator,
-    .account-status {
-        background-color: var(--zolak-primary);
-    }
-
-    .sidebar-link.active {
-        border-right: 3px solid var(--zolak-primary);
-    }
-</style>
-
-</head><body class="{% if theme == 'light' %}theme-light{% else %}theme-dark{% endif %}"><div class="app chatgpt-layout"><!-- Sidebar -->
-<aside class="sidebar">
-
-    <div class="brand">
-        <div class="brand-logo brand-icon">
-            {% if logo_url %}
-                <img
-                    src="{{ logo_url }}"
-                    alt="{{ site_name or 'زولك AI' }}"
-                    class="custom-logo">
+        .app.chatgpt-layout {
+            {% if background_url %}
+            background-image: url("{{ background_url }}");
             {% else %}
-                Z
+            background-image: url("/static/sudan-flag-background.jpg");
             {% endif %}
-        </div>
 
-        <div class="brand-text">
-            <strong>{{ site_name or "زولك AI" }}</strong>
-            <span>
-                {{ homepage_subtitle or site_description or "مساعدك السوداني 🇸🇩" }}
-            </span>
-        </div>
-    </div>
+            background-position: center center;
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
 
-    <button class="new-chat" id="newChat" type="button">
-        <span class="new-chat-icon">＋</span>
-        <span>محادثة جديدة</span>
-    </button>
+        .brand-logo,
+        .welcome-logo,
+        .mobile-brand-logo,
+        #send {
+            background-color: var(--zolak-primary);
+        }
 
-    <!-- Conversation history -->
-    <div class="conversation-list" id="conversationList">
-        <div class="conversation-list-title">محادثاتك</div>
-        <div class="conversation-items" id="conversationItems"></div>
-    </div>
+        .new-chat {
+            border-color: var(--zolak-primary);
+        }
 
-    <!-- Navigation -->
-    <div class="sidebar-section">
-        <span class="sidebar-heading">القائمة الرئيسية</span>
+        .online-indicator,
+        .account-status {
+            background-color: var(--zolak-primary);
+        }
 
-        <nav class="sidebar-links">
+        .sidebar-link.active {
+            border-right: 3px solid var(--zolak-primary);
+        }
+    </style>
+</head>
 
-            <a href="/" class="sidebar-link active">
-                <span class="nav-icon">⌂</span>
-                <span>الرئيسية</span>
-            </a>
+<body class="{% if theme == 'light' %}theme-light{% else %}theme-dark{% endif %}">
 
-            <a href="/login" id="loginLink" class="sidebar-link">
-                <span class="nav-icon">♙</span>
-                <span>تسجيل الدخول</span>
-            </a>
+<div class="app chatgpt-layout">
 
-            <a href="/admin" id="adminLink"
-               class="sidebar-link" hidden>
-                <span class="nav-icon">⚙</span>
-                <span>لوحة المدير</span>
-            </a>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-            <a href="/logout" id="logout"
-               class="sidebar-link" hidden>
-                <span class="nav-icon">⇥</span>
-                <span>تسجيل الخروج</span>
-            </a>
+        <div class="brand">
 
-        </nav>
-    </div>
-
-    <div class="sidebar-spacer"></div>
-
-    <!-- Account -->
-    <div class="account-box account sidebar-bottom">
-
-        <div class="account-avatar">ز</div>
-
-        <div class="account-info">
-            <div id="who" class="account-name">يا زول 👋</div>
-            <div id="credits" class="account-credits">
-                سجّل دخولك للبدء
-            </div>
-        </div>
-
-        <span class="account-status" aria-hidden="true"></span>
-
-    </div>
-
-    <div class="sidebar-footer">
-        <span>{{ site_name or "زولك AI" }} — صُنع في السودان</span>
-        <span>🇸🇩</span>
-    </div>
-
-</aside>
-
-<!-- Main application -->
-<main class="main main-chat">
-
-    <!-- Header -->
-    <header class="topbar chat-navbar">
-
-        <div class="topbar-right">
-
-            <button
-                class="mobile-menu"
-                id="mobileMenu"
-                type="button"
-                aria-label="فتح القائمة"
-                aria-expanded="false"
-                title="القائمة">
-                ☰
-            </button>
-
-            <div class="mobile-brand">
-
-                <span class="mobile-brand-logo">
-                    {% if logo_url %}
-                        <img
-                            src="{{ logo_url }}"
-                            alt="{{ site_name or 'زولك AI' }}"
-                            class="custom-logo">
-                    {% else %}
-                        Z
-                    {% endif %}
-                </span>
-
-                <strong>{{ site_name or "زولك AI" }}</strong>
-                <span class="sudan-badge">🇸🇩</span>
-
-            </div>
-
-        </div>
-
-        <div class="topbar-left">
-            <span class="online-indicator"></span>
-            <span class="assistant-status">مساعدك الذكي</span>
-        </div>
-
-    </header>
-
-    <!-- Chat messages -->
-    <section
-        class="messages"
-        id="messages"
-        aria-live="polite">
-
-        <div class="welcome-screen">
-
-            <div class="welcome-logo">
+            <div class="brand-logo brand-icon">
                 {% if logo_url %}
                     <img
                         src="{{ logo_url }}"
@@ -202,57 +77,224 @@
                 {% endif %}
             </div>
 
-            <span class="welcome-eyebrow">
-                {{ welcome or ("أهلاً بيك في " ~ (site_name or "زولك AI") ~ " 🇸🇩") }}
-            </span>
+            <div class="brand-text">
+                <strong>{{ site_name or "زولك AI" }}</strong>
 
-            <h1>
-                {{ homepage_title or "كيف أقدر أساعدك اليوم؟" }}
-            </h1>
-
-            <p>
-                {{ homepage_subtitle or site_description or "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة." }}
-            </p>
+                <span>
+                    {{ homepage_subtitle or site_description or "مساعدك السوداني 🇸🇩" }}
+                </span>
+            </div>
 
         </div>
 
-    </section>
+        <!-- NEW CHAT -->
+        <button class="new-chat" id="newChat" type="button">
+            <span class="new-chat-icon">＋</span>
+            <span>محادثة جديدة</span>
+        </button>
 
-    <!-- Message composer -->
-    <div class="composer composer-area">
+        <!-- CONVERSATION HISTORY -->
+        <div class="conversation-list" id="conversationList">
 
-        <div class="composer-inner">
+            <div class="conversation-list-title">
+                محادثاتك
+            </div>
 
-            <textarea
-                id="prompt"
-                placeholder="اكتب رسالتك هنا..."
-                rows="1"
-                aria-label="اكتب رسالتك"></textarea>
-
-            <button
-                id="send"
-                type="button"
-                aria-label="إرسال الرسالة"
-                title="إرسال">
-                <span class="send-icon">↑</span>
-            </button>
+            <div class="conversation-items" id="conversationItems"></div>
 
         </div>
 
-        <div class="composer-note">
-            <span>
-                {{ site_name or "زولك AI" }}
-                ممكن يخطئ أحياناً، راجع المعلومات المهمة.
+        <!-- NAVIGATION -->
+        <div class="sidebar-section">
+
+            <span class="sidebar-heading">
+                القائمة الرئيسية
             </span>
 
-            <span class="composer-flag">
-                صُنع في السودان 🇸🇩
-            </span>
+            <nav class="sidebar-links">
+
+                <a href="/" class="sidebar-link active">
+                    <span class="nav-icon">⌂</span>
+                    <span>الرئيسية</span>
+                </a>
+
+                <a href="/login" id="loginLink" class="sidebar-link">
+                    <span class="nav-icon">♙</span>
+                    <span>تسجيل الدخول</span>
+                </a>
+
+                <a href="/admin" id="adminLink"
+                   class="sidebar-link" hidden>
+                    <span class="nav-icon">⚙</span>
+                    <span>لوحة المدير</span>
+                </a>
+
+                <a href="/logout" id="logout"
+                   class="sidebar-link" hidden>
+                    <span class="nav-icon">⇥</span>
+                    <span>تسجيل الخروج</span>
+                </a>
+
+            </nav>
+
         </div>
 
-    </div>
+        <div class="sidebar-spacer"></div>
 
-</main>
+        <!-- ACCOUNT -->
+        <div class="account-box account sidebar-bottom">
 
-</div><!-- Application JavaScript --><script src="{{ url_for('static', filename='app.js') }}?v=4"></script></body>
+            <div class="account-avatar">ز</div>
+
+            <div class="account-info">
+
+                <div id="who" class="account-name">
+                    يا زول 👋
+                </div>
+
+                <div id="credits" class="account-credits">
+                    سجّل دخولك للبدء
+                </div>
+
+            </div>
+
+            <span class="account-status" aria-hidden="true"></span>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="sidebar-footer">
+            <span>{{ site_name or "زولك AI" }} — صُنع في السودان</span>
+            <span>🇸🇩</span>
+        </div>
+
+    </aside>
+
+    <!-- MAIN APPLICATION -->
+    <main class="main main-chat">
+
+        <!-- HEADER -->
+        <header class="topbar chat-navbar">
+
+            <div class="topbar-right">
+
+                <button
+                    class="mobile-menu"
+                    id="mobileMenu"
+                    type="button"
+                    aria-label="فتح القائمة"
+                    aria-expanded="false"
+                    title="القائمة">
+                    ☰
+                </button>
+
+                <div class="mobile-brand">
+
+                    <span class="mobile-brand-logo">
+                        {% if logo_url %}
+                            <img
+                                src="{{ logo_url }}"
+                                alt="{{ site_name or 'زولك AI' }}"
+                                class="custom-logo">
+                        {% else %}
+                            Z
+                        {% endif %}
+                    </span>
+
+                    <strong>{{ site_name or "زولك AI" }}</strong>
+
+                    <span class="sudan-badge">🇸🇩</span>
+
+                </div>
+
+            </div>
+
+            <div class="topbar-left">
+                <span class="online-indicator"></span>
+                <span class="assistant-status">مساعدك الذكي</span>
+            </div>
+
+        </header>
+
+        <!-- CHAT MESSAGES -->
+        <section
+            class="messages"
+            id="messages"
+            aria-live="polite">
+
+            <div class="welcome-screen">
+
+                <div class="welcome-logo">
+                    {% if logo_url %}
+                        <img
+                            src="{{ logo_url }}"
+                            alt="{{ site_name or 'زولك AI' }}"
+                            class="custom-logo">
+                    {% else %}
+                        Z
+                    {% endif %}
+                </div>
+
+                <span class="welcome-eyebrow">
+                    {{ welcome or ("أهلاً بيك في " ~ (site_name or "زولك AI") ~ " 🇸🇩") }}
+                </span>
+
+                <h1>
+                    {{ homepage_title or "كيف أقدر أساعدك اليوم؟" }}
+                </h1>
+
+                <p>
+                    {{ homepage_subtitle or site_description or "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة." }}
+                </p>
+
+            </div>
+
+        </section>
+
+        <!-- MESSAGE COMPOSER -->
+        <div class="composer composer-area">
+
+            <div class="composer-inner">
+
+                <textarea
+                    id="prompt"
+                    placeholder="اكتب رسالتك هنا..."
+                    rows="1"
+                    aria-label="اكتب رسالتك"></textarea>
+
+                <button
+                    id="send"
+                    type="button"
+                    aria-label="إرسال الرسالة"
+                    title="إرسال">
+
+                    <span class="send-icon">↑</span>
+
+                </button>
+
+            </div>
+
+            <div class="composer-note">
+
+                <span>
+                    {{ site_name or "زولك AI" }}
+                 ، راجع المعلومات المهمة.
+                </span>
+
+                <span class="composer-flag">
+                    صُنع في السودان 🇸🇩
+                </span>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<!-- APPLICATION JAVASCRIPT -->
+<script src="{{ url_for('static', filename='app.js') }}?v=5"></script>
+
+</body>
 </html>
