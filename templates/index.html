@@ -1,201 +1,389 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
-<head>
+<!DOCTYPE html><html lang="ar" dir="rtl"><head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <meta name="theme-color" content="{{ primary_color or '#00c896' }}">
-
     <meta name="description" content="{{ site_description or 'مساعد ذكاء اصطناعي سوداني 🇸🇩🤖' }}">
-
     <link rel="manifest" href="/manifest.json">
+    <title>{{ site_name or "زولك AI 🇸🇩" }}</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=3">
 
-    <title>{{ site_name or "زولك AI 🇸🇩" }}</title>
+<style>
+    [hidden] {
+        display: none !important;
+    }
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    :root {
+        --zolak-primary: {{ primary_color or '#00c896' }};
+    }
 
-    <style>
-        [hidden] {
-            display: none !important;
-        }
+    .app.chatgpt-layout {
+        {% if background_url %}
+        background-image: url("{{ background_url }}");
+        {% else %}
+        background-image: url("/static/sudan-flag-background.jpg");
+        {% endif %}
+        background-position: center;
+        background-size: cover;
+        background-repeat: no-repeat;
+    }
 
-        :root {
-            --zolak-primary: {{ primary_color or '#00c896' }};
-        }
+    /* Clear readable chat surfaces */
+    .main.main-chat {
+        background: rgba(255, 255, 255, .96);
+        color: #172b26;
+    }
 
-        .app.chatgpt-layout {
-            {% if background_url %}
-            background-image: url("{{ background_url }}") !important;
-            {% else %}
-            background-image: url("/static/sudan-flag-background.jpg") !important;
-            {% endif %}
-            background-position: center center !important;
-            background-size: cover !important;
-            background-repeat: no-repeat !important;
-        }
+    .messages {
+        background: #ffffff;
+        color: #172b26;
+    }
 
-        .main.main-chat,
-        .messages {
-            background: rgba(11, 16, 32, 0.12) !important;
-        }
+    .topbar,
+    .chat-navbar {
+        background: #ffffff;
+    }
 
-        .brand-logo,
-        .welcome-logo,
-        .mobile-brand-logo {
-            background: var(--zolak-primary) !important;
-        }
+    .brand-logo,
+    .welcome-logo,
+    .mobile-brand-logo {
+        background: var(--zolak-primary);
+    }
 
-        .new-chat {
-            border-color: var(--zolak-primary) !important;
-        }
+    .new-chat {
+        border-color: var(--zolak-primary);
+    }
 
-        .online-indicator,
-        .account-status {
-            background: var(--zolak-primary) !important;
-        }
+    .online-indicator,
+    .account-status {
+        background: var(--zolak-primary);
+    }
 
-        .sidebar-link.active {
-            border-right-color: var(--zolak-primary) !important;
-        }
+    .sidebar-link.active {
+        border-right-color: var(--zolak-primary);
+    }
 
-        #send {
-            background: var(--zolak-primary) !important;
-            left: 12px !important;
-            right: auto !important;
+    /* Composer */
+    .composer,
+    .composer-area {
+        background: #ffffff;
+    }
+
+    .composer-inner {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 6px;
+        border: 1px solid #e1e9e5;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 18px rgba(20, 50, 40, .06);
+    }
+
+    #prompt {
+        flex: 1;
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
+        max-height: 160px;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 12px;
+        outline: none;
+        resize: vertical;
+        background: transparent;
+        color: #172b26;
+        font-size: 16px;
+    }
+
+    #prompt:focus {
+        border: 0;
+        box-shadow: none;
+    }
+
+    #send {
+        position: static;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px 12px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--zolak-primary);
+        color: #ffffff;
+        cursor: pointer;
+    }
+
+    #send:hover {
+        filter: brightness(.92);
+    }
+
+    .send-icon {
+        font-size: 23px;
+        line-height: 1;
+    }
+
+    .composer-note {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px 8px;
+        padding-top: 7px;
+        color: #64766f;
+        font-size: 11px;
+        text-align: center;
+    }
+
+    /* Logo */
+    .custom-logo {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: inherit;
+    }
+
+    /* Conversation history */
+    .conversation-list {
+        margin-top: 12px;
+        padding: 0 4px;
+        max-height: 38vh;
+        overflow-y: auto;
+    }
+
+    .conversation-list-title {
+        padding: 8px 6px;
+        color: #718078;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .conversation-items {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .conversation-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        width: 100%;
+        padding: 9px 8px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background .2s ease;
+    }
+
+    .conversation-item:hover,
+    .conversation-item.active {
+        background: rgba(0, 200, 150, .12);
+    }
+
+    .conversation-title {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+
+    .conversation-delete {
+        padding: 0 4px;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        opacity: .6;
+        font-size: 18px;
+    }
+
+    .conversation-delete:hover {
+        opacity: 1;
+    }
+
+    /* Light theme */
+    body.theme-light {
+        background: #f4f7f6;
+    }
+
+    body.theme-light .sidebar {
+        background: #f8fcfa;
+        color: #172b26;
+    }
+
+    body.theme-light .main,
+    body.theme-light .messages {
+        background: #ffffff;
+        color: #172b26;
+    }
+
+    body.theme-light .composer-inner {
+        background: #ffffff;
+        border-color: #e1e9e5;
+    }
+
+    body.theme-light textarea {
+        color: #172b26;
+    }
+
+    body.theme-light .welcome-screen h1,
+    body.theme-light .welcome-screen p {
+        color: #172b26;
+    }
+
+    @media (max-width: 800px) {
+        .composer-inner {
+            gap: 5px;
+            padding: 4px;
         }
 
         #prompt {
-            padding-left: 64px !important;
-            padding-right: 8px !important;
+            min-height: 42px;
+            max-height: 135px;
+            padding: 8px;
+            font-size: 16px;
         }
 
-        body.theme-light {
-            background: #f5f7fa !important;
-        }
-
-        body.theme-light .sidebar {
-            background: rgba(255,255,255,0.96) !important;
-            color: #172033 !important;
-        }
-
-        body.theme-light .main,
-        body.theme-light .messages {
-            background: rgba(255,255,255,0.20) !important;
-            color: #172033 !important;
-        }
-
-        body.theme-light .composer-inner {
-            background: rgba(255,255,255,0.95) !important;
-            border-color: rgba(0,0,0,0.12) !important;
-        }
-
-        body.theme-light textarea {
-            color: #172033 !important;
-        }
-
-        body.theme-light .welcome-screen h1,
-        body.theme-light .welcome-screen p {
-            color: #172033 !important;
-        }
-
-        .custom-logo {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: inherit;
+        #send {
+            min-width: 42px;
+            min-height: 42px;
+            padding: 7px;
         }
 
         .conversation-list {
-            margin-top: 12px;
-            padding: 0 10px;
-            max-height: 42vh;
-            overflow-y: auto;
+            max-height: 32vh;
         }
 
-        .conversation-list-title {
-            font-size: 13px;
-            opacity: 0.65;
-            padding: 8px 6px;
-            font-weight: 600;
+        .messages {
+            padding: 14px 10px;
         }
+    }
+</style>
 
-        .conversation-items {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
+</head><body class="{% if theme == 'light' %}theme-light{% else %}theme-dark{% endif %}"><div class="app chatgpt-layout"><aside class="sidebar">
 
-        .conversation-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            width: 100%;
-            padding: 9px 8px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.2s ease, opacity 0.2s ease;
-            box-sizing: border-box;
-        }
+    <div class="brand">
+        <div class="brand-logo brand-icon">
+            {% if logo_url %}
+                <img src="{{ logo_url }}" alt="{{ site_name or 'زولك AI' }}" class="custom-logo">
+            {% else %}
+                Z
+            {% endif %}
+        </div>
 
-        .conversation-item:hover {
-            background: rgba(0, 200, 150, 0.10);
-        }
+        <div class="brand-text">
+            <strong>{{ site_name or "زولك AI" }}</strong>
+            <span>
+                {{
+                    homepage_subtitle
+                    or site_description
+                    or "مساعدك السوداني 🇸🇩"
+                }}
+            </span>
+        </div>
+    </div>
 
-        .conversation-item.active {
-            background: rgba(0, 200, 150, 0.15);
-        }
+    <button class="new-chat" id="newChat" type="button">
+        <span class="new-chat-icon">＋</span>
+        <span>محادثة جديدة</span>
+    </button>
 
-        .conversation-title {
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: 14px;
-        }
+    <div class="conversation-list" id="conversationList">
+        <div class="conversation-list-title">محادثاتك</div>
+        <div class="conversation-items" id="conversationItems"></div>
+    </div>
 
-        .conversation-delete {
-            border: 0;
-            background: transparent;
-            cursor: pointer;
-            opacity: 0.55;
-            font-size: 18px;
-            padding: 0 4px;
-        }
+    <div class="sidebar-section">
+        <span class="sidebar-heading">القائمة الرئيسية</span>
 
-        .conversation-delete:hover {
-            opacity: 1;
-        }
+        <nav class="sidebar-links">
+            <a href="/" class="sidebar-link active">
+                <span class="nav-icon">⌂</span>
+                <span>الرئيسية</span>
+            </a>
 
-        @media (max-width: 800px) {
-            #send {
-                left: 9px !important;
-                right: auto !important;
-                bottom: 9px !important;
-            }
+            <a href="/login" id="loginLink" class="sidebar-link">
+                <span class="nav-icon">♙</span>
+                <span>تسجيل الدخول</span>
+            </a>
 
-            #prompt {
-                padding-left: 58px !important;
-                padding-right: 8px !important;
-            }
+            <a href="/admin" id="adminLink" class="sidebar-link" hidden>
+                <span class="nav-icon">⚙</span>
+                <span>لوحة المدير</span>
+            </a>
 
-            .conversation-list {
-                max-height: 38vh;
-            }
-        }
-    </style>
-</head>
+            <a href="/logout" id="logout" class="sidebar-link" hidden>
+                <span class="nav-icon">⇥</span>
+                <span>تسجيل الخروج</span>
+            </a>
+        </nav>
+    </div>
 
-<body class="{% if theme == 'light' %}theme-light{% else %}theme-dark{% endif %}">
+    <div class="sidebar-spacer"></div>
 
-<div class="app chatgpt-layout">
+    <div class="account-box account sidebar-bottom">
+        <div class="account-avatar">ز</div>
 
-    <aside class="sidebar">
+        <div class="account-info">
+            <div id="who" class="account-name">يا زول 👋</div>
+            <div id="credits" class="account-credits">سجّل دخولك للبدء</div>
+        </div>
 
-        <div class="brand">
-            <div class="brand-logo brand-icon">
+        <span class="account-status" aria-hidden="true"></span>
+    </div>
+
+    <div class="sidebar-footer">
+        <span>{{ site_name or "زولك AI" }} — صُنع في السودان</span>
+        <span>🇸🇩</span>
+    </div>
+
+</aside>
+
+<main class="main main-chat">
+
+    <header class="topbar chat-navbar">
+        <div class="topbar-right">
+
+            <button
+                class="mobile-menu"
+                id="mobileMenu"
+                type="button"
+                aria-label="فتح القائمة"
+                aria-expanded="false"
+                title="القائمة"
+            >☰</button>
+
+            <div class="mobile-brand">
+                <span class="mobile-brand-logo">
+                    {% if logo_url %}
+                        <img src="{{ logo_url }}" alt="{{ site_name or 'زولك AI' }}" class="custom-logo">
+                    {% else %}
+                        Z
+                    {% endif %}
+                </span>
+
+                <strong>{{ site_name or "زولك AI" }}</strong>
+                <span class="sudan-badge">🇸🇩</span>
+            </div>
+
+        </div>
+
+        <div class="topbar-left">
+            <span class="online-indicator"></span>
+            <span class="assistant-status">مساعدك الذكي</span>
+        </div>
+    </header>
+
+    <section class="messages" id="messages" aria-live="polite">
+        <div class="welcome-screen">
+
+            <div class="welcome-logo">
                 {% if logo_url %}
                     <img src="{{ logo_url }}" alt="{{ site_name or 'زولك AI' }}" class="custom-logo">
                 {% else %}
@@ -203,182 +391,65 @@
                 {% endif %}
             </div>
 
-            <div class="brand-text">
-                <strong>{{ site_name or "زولك AI" }}</strong>
-                <span>
-                    {{
-                        homepage_subtitle
-                        or site_description
-                        or "مساعدك السوداني 🇸🇩"
-                    }}
-                </span>
-            </div>
+            <span class="welcome-eyebrow">
+                {{
+                    welcome
+                    or
+                    (
+                        "أهلاً بيك في "
+                        ~ (site_name or "زولك AI")
+                        ~ " 🇸🇩"
+                    )
+                }}
+            </span>
+
+            <h1>
+                {{ homepage_title or "كيف أقدر أساعدك اليوم؟" }}
+            </h1>
+
+            <p>
+                {{
+                    homepage_subtitle
+                    or site_description
+                    or "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة."
+                }}
+            </p>
+
+        </div>
+    </section>
+
+    <div class="composer composer-area">
+        <div class="composer-inner">
+
+            <textarea
+                id="prompt"
+                placeholder="اكتب رسالتك هنا..."
+                rows="1"
+                aria-label="اكتب رسالتك"
+            ></textarea>
+
+            <button
+                id="send"
+                type="button"
+                aria-label="إرسال الرسالة"
+                title="إرسال"
+            >
+                <span class="send-icon">↑</span>
+            </button>
+
         </div>
 
-        <button class="new-chat" id="newChat" type="button">
-            <span class="new-chat-icon">＋</span>
-            <span>محادثة جديدة</span>
-        </button>
+        <div class="composer-note">
+            <span>
+                {{ site_name or "زولك AI" }}
+                ممكن يخطئ أحياناً، راجع المعلومات المهمة.
+            </span>
 
-        <div class="conversation-list" id="conversationList">
-            <div class="conversation-list-title">محادثاتك</div>
-            <div class="conversation-items" id="conversationItems"></div>
+            <span class="composer-flag">صُنع في السودان 🇸🇩</span>
         </div>
+    </div>
 
-        <div class="sidebar-section">
-            <span class="sidebar-heading">القائمة الرئيسية</span>
+</main>
 
-            <nav class="sidebar-links">
-                <a href="/" class="sidebar-link active">
-                    <span class="nav-icon">⌂</span>
-                    <span>الرئيسية</span>
-                </a>
-
-                <a href="/login" id="loginLink" class="sidebar-link">
-                    <span class="nav-icon">♙</span>
-                    <span>تسجيل الدخول</span>
-                </a>
-
-                <a href="/admin" id="adminLink" class="sidebar-link" hidden>
-                    <span class="nav-icon">⚙</span>
-                    <span>لوحة المدير</span>
-                </a>
-
-                <a href="/logout" id="logout" class="sidebar-link" hidden>
-                    <span class="nav-icon">⇥</span>
-                    <span>تسجيل الخروج</span>
-                </a>
-            </nav>
-        </div>
-
-        <div class="sidebar-spacer"></div>
-
-        <div class="account-box account sidebar-bottom">
-            <div class="account-avatar">ز</div>
-
-            <div class="account-info">
-                <div id="who" class="account-name">يا زول 👋</div>
-                <div id="credits" class="account-credits">سجّل دخولك للبدء</div>
-            </div>
-
-            <span class="account-status" aria-hidden="true"></span>
-        </div>
-
-        <div class="sidebar-footer">
-            <span>{{ site_name or "زولك AI" }} — صُنع في السودان</span>
-            <span>🇸🇩</span>
-        </div>
-
-    </aside>
-
-    <main class="main main-chat">
-
-        <header class="topbar chat-navbar">
-            <div class="topbar-right">
-
-                <button
-                    class="mobile-menu"
-                    id="mobileMenu"
-                    type="button"
-                    aria-label="فتح القائمة"
-                    title="القائمة"
-                >☰</button>
-
-                <div class="mobile-brand">
-                    <span class="mobile-brand-logo">
-                        {% if logo_url %}
-                            <img src="{{ logo_url }}" alt="{{ site_name or 'زولك AI' }}" class="custom-logo">
-                        {% else %}
-                            Z
-                        {% endif %}
-                    </span>
-
-                    <strong>{{ site_name or "زولك AI" }}</strong>
-                    <span class="sudan-badge">🇸🇩</span>
-                </div>
-
-            </div>
-
-            <div class="topbar-left">
-                <span class="online-indicator"></span>
-                <span class="assistant-status">مساعدك الذكي</span>
-            </div>
-        </header>
-
-        <section class="messages" id="messages" aria-live="polite">
-            <div class="welcome-screen">
-
-                <div class="welcome-logo">
-                    {% if logo_url %}
-                        <img src="{{ logo_url }}" alt="{{ site_name or 'زولك AI' }}" class="custom-logo">
-                    {% else %}
-                        Z
-                    {% endif %}
-                </div>
-
-                <span class="welcome-eyebrow">
-                    {{
-                        welcome
-                        or
-                        (
-                            "أهلاً بيك في "
-                            ~ (site_name or "زولك AI")
-                            ~ " 🇸🇩"
-                        )
-                    }}
-                </span>
-
-                <h1>
-                    {{ homepage_title or "كيف أقدر أساعدك اليوم؟" }}
-                </h1>
-
-                <p>
-                    {{
-                        homepage_subtitle
-                        or site_description
-                        or "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة."
-                    }}
-                </p>
-
-            </div>
-        </section>
-
-        <div class="composer composer-area">
-            <div class="composer-inner">
-
-                <textarea
-                    id="prompt"
-                    placeholder="اكتب رسالتك هنا..."
-                    rows="1"
-                    aria-label="اكتب رسالتك"
-                ></textarea>
-
-                <button
-                    id="send"
-                    type="button"
-                    aria-label="إرسال الرسالة"
-                    title="إرسال"
-                >
-                    <span class="send-icon">↑</span>
-                </button>
-
-            </div>
-
-            <div class="composer-note">
-                <span>
-                    {{ site_name or "زولك AI" }}
-                    ممكن يخطئ أحياناً، راجع المعلومات المهمة.
-                </span>
-
-                <span class="composer-flag">صُنع في السودان 🇸🇩</span>
-            </div>
-        </div>
-
-    </main>
-
-</div>
-
-<script src="{{ url_for('static', filename='app.js') }}"></script>
-
-</body>
-    </html>
+</div><script src="{{ url_for('static', filename='app.js') }}?v=3"></script></body>
+</html>
