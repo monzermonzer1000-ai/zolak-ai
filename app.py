@@ -1885,15 +1885,30 @@ def admin_health():
             "message": "تعذر الاتصال بقاعدة البيانات: " + str(error)[:180]
         }
 
-    if os.getenv("GEMINI_API_KEY"):
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
+    requested_provider = os.getenv("AI_PROVIDER", "auto").strip().lower()
+
+    if requested_provider == "openai":
+        provider = "openai"
+    elif requested_provider == "gemini":
+        provider = "gemini"
+    else:
+        provider = "gemini" if gemini_key else "openai"
+
+    has_key = bool(
+        openai_key if provider == "openai" else gemini_key
+    )
+
+    if has_key:
         checks["gemini"] = {
             "status": "ok",
-            "message": "مفتاح Gemini موجود. لم يتم إرسال طلب مدفوع أثناء الفحص."
+            "message": "تم العثور على مفتاح " + provider.upper() + ". هذا فحص إعدادات فقط؛ استخدم اختبار الرد للتأكد من الاتصال الفعلي."
         }
     else:
         checks["gemini"] = {
             "status": "warning",
-            "message": "مفتاح GEMINI_API_KEY غير مضاف في إعدادات الاستضافة."
+            "message": "مفتاح " + ("OPENAI_API_KEY" if provider == "openai" else "GEMINI_API_KEY") + " غير موجود في إعدادات الاستضافة."
         }
 
     directory = os.path.dirname(os.path.abspath(DB)) or "."
@@ -1908,9 +1923,27 @@ def admin_health():
             "message": "مجلد قاعدة البيانات غير متاح للكتابة."
         }
 
-    checks["ai_model"] = setting("ai_model", "gemini-3.8-flash")
-    statuses = [checks["database"]["status"], checks["gemini"]["status"], checks["storage"]["status"]]
-    overall = "error" if "error" in statuses else ("warning" if "warning" in statuses else "ok")
+    configured_model = setting("ai_model", "").strip()
+    if provider == "openai":
+        model = os.getenv("OPENAI_MODEL", "").strip()
+        if not model:
+            model = configured_model if configured_model.startswith(("gpt-", "o")) else "gpt-6-luna"
+    else:
+        model = configured_model if configured_model.startswith("gemini-") else "gemini-3.8-flash"
+
+    checks["ai_model"] = model
+    checks["provider"] = provider
+
+    statuses = [
+        checks["database"]["status"],
+        checks["gemini"]["status"],
+        checks["storage"]["status"]
+    ]
+    overall = (
+        "error" if "error" in statuses
+        else "warning" if "warning" in statuses
+        else "ok"
+    )
 
     return jsonify(
         overall_status=overall,
@@ -1918,6 +1951,84 @@ def admin_health():
         checked_at=datetime.now(timezone.utc).isoformat(),
         db_path=os.path.abspath(DB)
     )
+
+
+@app.post("/api/admin/ai-test")
+@admin_required
+def admin_ai_test():
+
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
+    requested_provider = os.getenv("AI_PROVIDER", "auto").strip().lower()
+
+    if requested_provider == "openai":
+        provider = "openai"
+    elif requested_provider == "gemini":
+        provider = "gemini"
+    else:
+        provider = "gemini" if gemini_key else "openai"
+
+    try:
+        if provider == "openai":
+            if not openai_key:
+                return jsonify(
+                    ok=False,
+                    error="أضف OPENAI_API_KEY في إعدادات الاستضافة."
+                ), 503
+
+            from openai import OpenAI
+
+            configured_model = setting("ai_model", "").strip()
+            model = os.getenv("OPENAI_MODEL", "").strip()
+            if not model:
+                model = configured_model if configured_model.startswith(("gpt-", "o")) else "gpt-6-luna"
+
+            client = OpenAI(api_key=openai_key)
+            response = client.responses.create(
+                model=model,
+                instructions="أجب بكلمة واحدة فقط: جاهز",
+                input="اختبار اتصال زولك AI",
+                max_output_tokens=20
+            )
+            answer = (response.output_text or "").strip()
+
+        else:
+            if not gemini_key:
+                return jsonify(
+                    ok=False,
+                    error="أضف GEMINI_API_KEY في إعدادات الاستضافة."
+                ), 503
+
+            from google import genai
+
+            configured_model = setting("ai_model", "").strip()
+            model = configured_model if configured_model.startswith("gemini-") else "gemini-3.8-flash"
+            client = genai.Client(api_key=gemini_key)
+            response = client.models.generate_content(
+                model=model,
+                contents="أجب بكلمة واحدة فقط: جاهز",
+            )
+            answer = (response.text or "").strip()
+
+        if not answer:
+            return jsonify(
+                ok=False,
+                error="تم الاتصال بالمزود لكن لم يصل نص رد."
+            ), 502
+
+        return jsonify(
+            ok=True,
+            provider=provider,
+            model=model,
+            answer=answer
+        )
+
+    except Exception as error:
+        app.logger.exception("Admin AI connectivity test failed")
+        return jsonify(
+            ok=False,
+            error="فشل اختبار الاتصال: " + str(error)[:260]
+        ), 503
 
 
 # =========================================================
