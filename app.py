@@ -320,6 +320,26 @@ def web_manifest():
     )
 
 
+@app.get("/sw.js")
+def service_worker():
+
+    worker_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "static",
+        "sw.js"
+    )
+
+    response = send_file(
+        worker_path,
+        mimetype="application/javascript"
+    )
+
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache"
+
+    return response
+
+
 # =========================================================
 # الصلاحيات
 # =========================================================
