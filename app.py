@@ -554,13 +554,21 @@ def home():
 
     return render_template(
         "index.html",
-        site_name=setting(
-            "site_name",
-            "زولك AI 🇸🇩"
+        site_name=setting("site_name", "زولك AI 🇸🇩"),
+        welcome=setting("welcome", ""),
+        site_description=setting(
+            "site_description",
+            "مساعد ذكاء اصطناعي سوداني يساعدك في الكتابة والدراسة والترجمة والشغل والدردشة 🇸🇩🤖"
         ),
-        welcome=setting(
-            "welcome",
-            ""
+        primary_color=setting("primary_color", "#08b991"),
+        theme=setting("theme", "light"),
+        homepage_title=setting(
+            "homepage_title",
+            "كيف أقدر أساعدك اليوم؟"
+        ),
+        homepage_subtitle=setting(
+            "homepage_text",
+            "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة."
         )
     )
 
@@ -917,10 +925,18 @@ def chat():
             error="اكتب رسالتك أولاً."
         ), 400
 
-    if len(message) > 12000:
+    try:
+        max_message_length = int(
+            setting("max_message_length", "12000")
+        )
+        if max_message_length < 1:
+            max_message_length = 12000
+    except (TypeError, ValueError):
+        max_message_length = 12000
 
+    if len(message) > max_message_length:
         return jsonify(
-            error="الرسالة طويلة شديد. اختصرها وجرب تاني."
+            error=f"الرسالة طويلة شديد. الحد الأقصى {max_message_length} حرف."
         ), 400
 
     if setting(
@@ -1446,11 +1462,20 @@ def update_admin_settings():
 
     allowed = {
         "site_name",
-        "free_credits",
+        "homepage_title",
+        "homepage_text",
+        "site_description",
         "welcome",
+        "primary_color",
+        "theme",
+        "support_email",
+        "announcement",
+        "ai_model",
+        "free_credits",
+        "max_message_length",
+        "enable_history",
         "maintenance",
-        "allow_register",
-        "ai_model"
+        "allow_register"
     }
 
     for key, value in data.items():
