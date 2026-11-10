@@ -1911,15 +1911,14 @@ def admin_health():
         }
 
     configured_model = setting("ai_model", "").strip()
-    if provider == "openai":
-        model = os.getenv("OPENAI_MODEL", "").strip()
-        if not model:
-            model = configured_model if configured_model.startswith(("gpt-", "o")) else "gpt-6-luna"
-    else:
-        model = configured_model if configured_model.startswith("gemini-") else "gemini-3.8-flash"
+    model = (
+        configured_model
+        if configured_model.startswith("gemini-")
+        else "gemini-3.8-flash"
+    )
 
     checks["ai_model"] = model
-    checks["provider"] = provider
+    checks["provider"] = "gemini"
 
     statuses = [
         checks["database"]["status"],
