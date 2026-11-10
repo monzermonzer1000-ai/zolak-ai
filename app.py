@@ -95,6 +95,42 @@ def init_db():
     """)
 
     c.execute("""
+        CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL DEFAULT 'محادثة جديدة',
+            gemini_interaction_id TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    chat_columns = {
+        row["name"] for row in c.execute("PRAGMA table_info(chats)").fetchall()
+    }
+    if "conversation_id" not in chat_columns:
+        c.execute("ALTER TABLE chats ADD COLUMN conversation_id INTEGER")
+
+    old_users = c.execute("""
+        SELECT DISTINCT user_id FROM chats WHERE conversation_id IS NULL
+    """).fetchall()
+    for old_user in old_users:
+        user_id = old_user["user_id"]
+        first_message = c.execute("""
+            SELECT content FROM chats
+            WHERE user_id = ? AND role = 'user'
+            ORDER BY id ASC LIMIT 1
+        """, (user_id,)).fetchone()
+        title = str(first_message["content"])[:55] if first_message else "محادثة سابقة"
+        c.execute("INSERT INTO conversations(user_id, title) VALUES (?, ?)", (user_id, title))
+        conversation_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
+        c.execute("""
+            UPDATE chats SET conversation_id = ?
+            WHERE user_id = ? AND conversation_id IS NULL
+        """, (conversation_id, user_id))
+
+    c.execute("""
         CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
             value TEXT
@@ -856,9 +892,7 @@ def chat():
 
     user = c.execute(
         """
-        SELECT
-            credits,
-            gemini_interaction_id
+        SELECT credits
         FROM users
         WHERE id = ?
         """,
@@ -882,6 +916,34 @@ def chat():
         return jsonify(
             error="رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"
         ), 402
+
+    conversation_id = data.get("conversation_id")
+    if conversation_id is not None:
+        try:
+            conversation_id = int(conversation_id)
+        except (TypeError, ValueError):
+            c.close()
+            return jsonify(error="المحادثة المطلوبة غير صحيحة."), 400
+
+        conversation = c.execute("""
+            SELECT id, gemini_interaction_id
+            FROM conversations
+            WHERE id = ? AND user_id = ?
+        """, (conversation_id, session["uid"])).fetchone()
+
+        if not conversation:
+            c.close()
+            return jsonify(error="المحادثة غير موجودة."), 404
+    else:
+        c.execute("""
+            INSERT INTO conversations(user_id, title)
+            VALUES (?, ?)
+        """, (session["uid"], message[:55] or "محادثة جديدة"))
+        conversation_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
+        conversation = c.execute("""
+            SELECT id, gemini_interaction_id
+            FROM conversations WHERE id = ?
+        """, (conversation_id,)).fetchone()
 
     api_key = os.getenv(
         "GEMINI_API_KEY"
@@ -938,7 +1000,7 @@ def chat():
         # -------------------------------------------------
 
         previous_interaction_id = (
-            user["gemini_interaction_id"]
+            conversation["gemini_interaction_id"]
         )
 
         kwargs = {
@@ -987,12 +1049,14 @@ def chat():
 
             c.execute(
                 """
-                UPDATE users
-                SET gemini_interaction_id = ?
-                WHERE id = ?
+                UPDATE conversations
+                SET gemini_interaction_id = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND user_id = ?
                 """,
                 (
                     interaction_id,
+                    conversation_id,
                     session["uid"]
                 )
             )
@@ -1030,14 +1094,16 @@ def chat():
             (
                 user_id,
                 role,
-                content
+                content,
+                conversation_id
             )
-            VALUES (?, ?, ?)
+            VALUES (?, ?, ?, ?)
             """,
             (
                 session["uid"],
                 "user",
-                message
+                message,
+                conversation_id
             )
         )
 
@@ -1047,23 +1113,31 @@ def chat():
             (
                 user_id,
                 role,
-                content
+                content,
+                conversation_id
             )
-            VALUES (?, ?, ?)
+            VALUES (?, ?, ?, ?)
             """,
             (
                 session["uid"],
                 "assistant",
-                answer
+                answer,
+                conversation_id
             )
         )
 
         c.commit()
         c.close()
 
-        return jsonify(
-            answer=answer
-        )
+        c.execute("""
+            UPDATE conversations
+            SET title = CASE WHEN title = 'محادثة جديدة' THEN ? ELSE title END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?
+        """, (message[:55], conversation_id, session["uid"]))
+
+        c.commit()
+        return jsonify(answer=answer, conversation_id=conversation_id)
 
     except Exception as error:
 
@@ -1121,21 +1195,15 @@ def new_chat():
 
     c = db()
 
-    c.execute(
-        """
-        UPDATE users
-        SET gemini_interaction_id = NULL
-        WHERE id = ?
-        """,
-        (session["uid"],)
-    )
-
+    c.execute("""
+        INSERT INTO conversations(user_id, title)
+        VALUES (?, 'محادثة جديدة')
+    """, (session["uid"],))
+    conversation_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
     c.commit()
     c.close()
 
-    return jsonify(
-        ok=True
-    )
+    return jsonify(ok=True, conversation_id=conversation_id)
 
 
 # =========================================================
@@ -1170,6 +1238,79 @@ def chats():
             for row in reversed(rows)
         ]
     )
+
+
+@app.get("/api/conversations")
+@login_required
+def list_conversations():
+    c = db()
+    rows = c.execute("""
+        SELECT conversations.id, conversations.title,
+               conversations.updated_at, COUNT(chats.id) AS message_count
+        FROM conversations
+        LEFT JOIN chats ON chats.conversation_id = conversations.id
+        WHERE conversations.user_id = ?
+        GROUP BY conversations.id
+        HAVING COUNT(chats.id) > 0
+        ORDER BY conversations.updated_at DESC, conversations.id DESC
+        LIMIT 100
+    """, (session["uid"],)).fetchall()
+    c.close()
+    return jsonify(conversations=[dict(row) for row in rows])
+
+
+@app.post("/api/conversations")
+@login_required
+def create_conversation():
+    c = db()
+    c.execute("""
+        INSERT INTO conversations(user_id, title)
+        VALUES (?, 'محادثة جديدة')
+    """, (session["uid"],))
+    conversation_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
+    c.commit()
+    c.close()
+    return jsonify(ok=True, conversation_id=conversation_id)
+
+
+@app.get("/api/conversations/<int:conversation_id>")
+@login_required
+def get_conversation(conversation_id):
+    c = db()
+    conversation = c.execute("""
+        SELECT id, title FROM conversations
+        WHERE id = ? AND user_id = ?
+    """, (conversation_id, session["uid"])).fetchone()
+    if not conversation:
+        c.close()
+        return jsonify(error="المحادثة غير موجودة."), 404
+    rows = c.execute("""
+        SELECT role, content, created_at FROM chats
+        WHERE conversation_id = ? AND user_id = ?
+        ORDER BY id ASC
+    """, (conversation_id, session["uid"])).fetchall()
+    c.close()
+    return jsonify(conversation=dict(conversation), chats=[dict(row) for row in rows])
+
+
+@app.delete("/api/conversations/<int:conversation_id>")
+@login_required
+def delete_conversation(conversation_id):
+    c = db()
+    exists = c.execute("""
+        SELECT id FROM conversations
+        WHERE id = ? AND user_id = ?
+    """, (conversation_id, session["uid"])).fetchone()
+    if not exists:
+        c.close()
+        return jsonify(error="المحادثة غير موجودة."), 404
+    c.execute("DELETE FROM chats WHERE conversation_id = ? AND user_id = ?",
+              (conversation_id, session["uid"]))
+    c.execute("DELETE FROM conversations WHERE id = ? AND user_id = ?",
+              (conversation_id, session["uid"]))
+    c.commit()
+    c.close()
+    return jsonify(ok=True)
 
 
 # =========================================================
@@ -1669,45 +1810,52 @@ def admin_health():
 
     checks = {}
 
-    # قاعدة البيانات
     try:
-
         c = db()
-
-        c.execute(
-            "SELECT 1"
-        ).fetchone()
-
+        c.execute("SELECT 1").fetchone()
         c.close()
+        checks["database"] = {
+            "status": "ok",
+            "message": "اتصال قاعدة البيانات يعمل بصورة طبيعية."
+        }
+    except Exception as error:
+        checks["database"] = {
+            "status": "error",
+            "message": "تعذر الاتصال بقاعدة البيانات: " + str(error)[:180]
+        }
 
-        checks["database"] = "ok"
+    if os.getenv("GEMINI_API_KEY"):
+        checks["gemini"] = {
+            "status": "ok",
+            "message": "مفتاح Gemini موجود. لم يتم إرسال طلب مدفوع أثناء الفحص."
+        }
+    else:
+        checks["gemini"] = {
+            "status": "warning",
+            "message": "مفتاح GEMINI_API_KEY غير مضاف في إعدادات الاستضافة."
+        }
 
-    except Exception:
+    directory = os.path.dirname(os.path.abspath(DB)) or "."
+    if os.path.isdir(directory) and os.access(directory, os.W_OK):
+        checks["storage"] = {
+            "status": "ok",
+            "message": "مسار قاعدة البيانات متاح للكتابة."
+        }
+    else:
+        checks["storage"] = {
+            "status": "error",
+            "message": "مجلد قاعدة البيانات غير متاح للكتابة."
+        }
 
-        checks["database"] = "error"
-
-    # مفتاح Gemini
-    checks["gemini_key"] = (
-        "ok"
-        if os.getenv("GEMINI_API_KEY")
-        else "missing"
-    )
-
-    # الموديل
-    model = setting(
-        "ai_model",
-        "gemini-3.8-flash"
-    )
-
-    if model == "gemini-2.5-flash":
-
-        model = "gemini-3.8-flash"
-
-    checks["ai_model"] = model
+    checks["ai_model"] = setting("ai_model", "gemini-3.8-flash")
+    statuses = [checks["database"]["status"], checks["gemini"]["status"], checks["storage"]["status"]]
+    overall = "error" if "error" in statuses else ("warning" if "warning" in statuses else "ok")
 
     return jsonify(
-        status="ok",
-        checks=checks
+        overall_status=overall,
+        checks=checks,
+        checked_at=datetime.now(timezone.utc).isoformat(),
+        db_path=os.path.abspath(DB)
     )
 
 
