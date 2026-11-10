@@ -1,0 +1,100 @@
+name: Check Zolak AI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: zolak-ci-secret-key-not-for-production
+      ADMIN_EMAIL: admin@example.test
+      ADMIN_PASSWORD: ci-test-password
+      ADMIN_NAME: CI Test Admin
+      DATABASE_PATH: /tmp/zolak-ci.db
+      COOKIE_SECURE: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check Python and JavaScript syntax
+        run: |
+          python -m compileall -q app.py
+          node --check static/app.js
+          python -m json.tool manifest.json > /dev/null
+
+      - name: Smoke-test website and account APIs
+        run: |
+          python - <<'PY'
+          import app
+
+          client = app.app.test_client()
+
+          assert client.get("/").status_code == 200
+          assert client.get("/health").status_code == 200
+          assert client.get("/manifest.json").status_code == 200
+          assert client.get("/sw.js").status_code == 200
+
+          registered = client.post("/api/register", json={
+              "name": "CI User",
+              "email": "user@example.test",
+              "password": "test-password"
+          })
+          assert registered.status_code == 200, registered.get_json()
+
+          me = client.get("/api/me").get_json()
+          assert me.get("logged_in") is True, me
+
+          created = client.post("/api/conversations", json={})
+          assert created.status_code == 200, created.get_json()
+          conversation_id = created.get_json()["conversation_id"]
+
+          opened = client.get(f"/api/conversations/{conversation_id}")
+          assert opened.status_code == 200, opened.get_json()
+
+          deleted = client.delete(f"/api/conversations/{conversation_id}")
+          assert deleted.status_code == 200, deleted.get_json()
+
+          # With no external API key in CI, the app must return a clear
+          # configuration error instead of crashing or consuming credits.
+          ai = client.post("/api/chat", json={"message": "اختبار"})
+          assert ai.status_code == 503, ai.get_json()
+          assert "GEMINI_API_KEY" in ai.get_json().get("error", "")
+
+          client.get("/logout")
+          admin_login = client.post("/api/login", json={
+              "email": "admin@example.test",
+              "password": "ci-test-password"
+          })
+          assert admin_login.status_code == 200, admin_login.get_json()
+
+          health = client.get("/api/admin/health")
+          assert health.status_code == 200, health.get_json()
+
+          ai_test = client.post("/api/admin/ai-test", json={})
+          assert ai_test.status_code == 503, ai_test.get_json()
+
+          print("Zolak AI smoke tests passed.")
+          PY
