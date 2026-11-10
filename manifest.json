@@ -8,6 +8,14 @@
   "scope": "/",
   "short_name": "زولك",
   "start_url": "/",
-  "theme_color": "hsl(0, 0%, 0%)",
+  "theme_color": "#08b991",
+  "icons": [
+    {
+      "src": "/static/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
   "id": "zolak-ai"
 }
