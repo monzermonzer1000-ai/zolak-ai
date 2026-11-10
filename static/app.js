@@ -325,6 +325,29 @@ async function openConversation(conversationId) {
 }
 
 /* =========================
+   WELCOME SCREEN
+========================= */
+
+function showWelcome(focusInput = true) {
+    if (!messages) return;
+
+    messages.innerHTML = `
+        <div class="welcome-screen">
+            <div class="welcome-logo">ز</div>
+            <span class="welcome-eyebrow">أهلاً بيك في زولك AI 🇸🇩</span>
+            <h1>كيف أقدر أساعدك اليوم؟</h1>
+            <p>اسأل، اتعلّم، اكتب، أو ناقش أي فكرة. أنا هنا عشان أساعدك.</p>
+        </div>
+    `;
+
+    if (promptBox) {
+        promptBox.value = "";
+        if (focusInput) promptBox.focus();
+    }
+}
+
+
+/* =========================
    NEW CONVERSATION
 ========================= */
 
