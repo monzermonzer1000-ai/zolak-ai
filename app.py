@@ -1062,70 +1062,60 @@ def chat():
         )
 
         # -------------------------------------------------
-        # استكمال المحادثة السابقة
+        # بناء سياق المحادثة من قاعدة البيانات
         # -------------------------------------------------
 
-        previous_interaction_id = (
-            conversation["gemini_interaction_id"]
+        from google.genai import types
+
+        contents = []
+
+        if history_enabled():
+            history_rows = c.execute("""
+                SELECT role, content
+                FROM chats
+                WHERE conversation_id = ?
+                  AND user_id = ?
+                ORDER BY id DESC
+                LIMIT 24
+            """, (conversation_id, session["uid"])).fetchall()
+
+            for row in reversed(history_rows):
+                role = "user" if row["role"] == "user" else "model"
+                contents.append(
+                    types.Content(
+                        role=role,
+                        parts=[types.Part.from_text(text=row["content"])]
+                    )
+                )
+
+        contents.append(
+            types.Content(
+                role="user",
+                parts=[types.Part.from_text(text=message)]
+            )
         )
 
-        kwargs = {
-            "model": model,
-            "input": message,
-            "system_instruction": system_instruction
-        }
-
-        if previous_interaction_id:
-
-            kwargs[
-                "previous_interaction_id"
-            ] = previous_interaction_id
-
         # -------------------------------------------------
-        # الطلب
+        # طلب الرد عبر Generate Content API المستقر
         # -------------------------------------------------
 
-        interaction = client.interactions.create(
-            **kwargs
+        response = client.models.generate_content(
+            model=model,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.7,
+                max_output_tokens=2048
+            )
         )
 
-        answer = (
-            interaction.output_text or ""
-        ).strip()
+        answer = (response.text or "").strip()
 
         if not answer:
-
             c.close()
-
             return jsonify(
-                error="ما قدرنا نستخرج رد من الذكاء الاصطناعي. جرّب تاني."
+                error="وصلنا رد فارغ من خدمة الذكاء الاصطناعي. جرّب صياغة سؤالك بطريقة مختلفة."
             ), 502
-
-        # -------------------------------------------------
-        # حفظ Interaction ID
-        # -------------------------------------------------
-
-        interaction_id = getattr(
-            interaction,
-            "id",
-            None
-        )
-
-        if interaction_id:
-
-            c.execute(
-                """
-                UPDATE conversations
-                SET gemini_interaction_id = ?,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = ? AND user_id = ?
-                """,
-                (
-                    interaction_id,
-                    conversation_id,
-                    session["uid"]
-                )
-            )
 
         # -------------------------------------------------
         # خصم الرصيد
@@ -1223,31 +1213,55 @@ def chat():
             error_text
         )
 
+        upper_error = error_text.upper()
+
         if (
-            "503" in error_text
-            or "UNAVAILABLE" in error_text
-            or "high demand" in error_text.lower()
+            "API_KEY_INVALID" in upper_error
+            or "INVALID API KEY" in upper_error
+            or "UNAUTHENTICATED" in upper_error
+            or "PERMISSION_DENIED" in upper_error
+            or "403" in upper_error
         ):
-
             return jsonify(
-                error=(
-                    "خدمة الذكاء الاصطناعي عليها ضغط حالياً. "
-                    "جرّب تاني بعد شوية."
-                )
+                error="مفتاح Gemini غير صحيح أو ما عنده صلاحية استخدام الخدمة. راجع GEMINI_API_KEY في إعدادات الاستضافة."
             ), 503
 
-        if "gemini-2.5-flash" in error_text:
-
+        if (
+            "RESOURCE_EXHAUSTED" in upper_error
+            or "QUOTA" in upper_error
+            or "429" in upper_error
+        ):
             return jsonify(
-                error=(
-                    "إعداد موديل قديم موجود في الخدمة. "
-                    "تم اكتشاف المشكلة، جرّب بعد إعادة تشغيل الموقع."
-                )
+                error="تم الوصول لحد استخدام Gemini أو الرصيد المتاح للمفتاح. راجع الحصة والفوترة في Google AI Studio."
             ), 503
+
+        if (
+            "NOT_FOUND" in upper_error
+            or "404" in upper_error
+            or "MODEL" in upper_error and "NOT FOUND" in upper_error
+        ):
+            return jsonify(
+                error="موديل الذكاء الاصطناعي المحدد غير متاح لهذا المفتاح. اختَر موديل Gemini متاحاً من لوحة الإدارة."
+            ), 503
+
+        if (
+            "503" in upper_error
+            or "UNAVAILABLE" in upper_error
+            or "HIGH DEMAND" in upper_error
+            or "INTERNAL" in upper_error
+        ):
+            return jsonify(
+                error="خدمة Gemini مشغولة حالياً أو فيها عطل مؤقت. انتظر قليلاً ثم حاول مجدداً."
+            ), 503
+
+        if "INVALID_ARGUMENT" in upper_error or "400" in upper_error:
+            return jsonify(
+                error="إعداد طلب الذكاء الاصطناعي غير مقبول. راجع اسم الموديل وإعداداته من لوحة الإدارة."
+            ), 502
 
         return jsonify(
-            error="حصلت مشكلة في خدمة الذكاء الاصطناعي. جرّب تاني."
-        ), 500
+            error="تعذر الحصول على رد من Gemini. راجع سجل الأخطاء في الاستضافة للتفاصيل، ثم حاول مجدداً."
+        ), 502
 
 
 # =========================================================
