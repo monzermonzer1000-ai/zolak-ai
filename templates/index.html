@@ -15,7 +15,7 @@
 
     <!-- Main Design -->
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}?v=5">
+          href="{{ url_for('static', filename='style.css') }}?v=6">
 
     <style>
         :root {
@@ -294,7 +294,18 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=5"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=6"></script>
+
+<script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+        navigator.serviceWorker.register("/sw.js", { scope: "/" })
+            .catch(function (error) {
+                console.error("Zolak service worker:", error);
+            });
+    });
+}
+</script>
 
 </body>
 </html>
