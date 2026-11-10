@@ -329,14 +329,27 @@ async function openConversation(conversationId) {
 ========================= */
 
 async function createNewConversation() {
-    currentConversationId = null;
+    try {
+        const response = await fetch("/api/conversations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+        const data = await response.json();
 
-    showWelcome(false);
-    closeSidebar();
+        if (!response.ok) {
+            addMessage(data.error || "ما قدرنا نبدأ محادثة جديدة.", "assistant");
+            return;
+        }
 
-    await loadConversations();
-
-    if (promptBox) promptBox.focus();
+        currentConversationId = Number(data.conversation_id);
+        showWelcome(false);
+        closeSidebar();
+        await loadConversations();
+        if (promptBox) promptBox.focus();
+    } catch (error) {
+        console.error("خطأ في بدء محادثة جديدة:", error);
+        addMessage("ما قدرنا نبدأ محادثة جديدة. تأكد من اتصالك وحاول تاني.", "assistant");
+    }
 }
 
 const newChatButton = document.querySelector(".new-chat");
