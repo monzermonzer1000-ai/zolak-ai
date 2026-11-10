@@ -11,17 +11,10 @@
 | `SECRET_KEY` | مفتاح جلسات عشوائي طويل وثابت |
 | `ADMIN_EMAIL` | بريد حساب المدير |
 | `ADMIN_PASSWORD` | كلمة مرور المدير عند إنشاء الحساب أو تحديثها |
-| `AI_PROVIDER` | `auto` أو `openai` أو `gemini` |
-| `OPENAI_API_KEY` | مفتاح OpenAI عند استخدام OpenAI |
-| `OPENAI_MODEL` | اختياري؛ الافتراضي `gpt-6-luna` |
-| `GEMINI_API_KEY` | مفتاح Google Gemini عند استخدام Gemini |
+| `GEMINI_API_KEY` | مفتاح Google Gemini لتشغيل الردود الذكية |
 | `DATABASE_PATH` | مسار قاعدة البيانات على قرص دائم إن كانت الاستضافة توفره |
 
-عند ضبط `AI_PROVIDER=auto`، يستخدم التطبيق Gemini إذا كان `GEMINI_API_KEY` موجوداً، وإلا يستخدم OpenAI إذا كان `OPENAI_API_KEY` موجوداً.
-
-**مهم:** مفتاح ChatGPT أو اشتراك ChatGPT لا يغني عن مفتاح OpenAI API. يتم إنشاء مفتاح API من منصة OpenAI وتكون له فوترة/حدود استخدام منفصلة.
-
-لا تضع مفاتيح API أو كلمات المرور داخل ملفات GitHub أو ترسلها في المحادثات. أضفها فقط في Environment Variables داخل الاستضافة.
+أنشئ مفتاح Gemini من Google AI Studio، ثم أضفه في Environment Variables باسم `GEMINI_API_KEY`. لا تضع المفتاح داخل ملفات GitHub أو ترسله في المحادثات.
 
 ## تشغيل التطبيق
 
