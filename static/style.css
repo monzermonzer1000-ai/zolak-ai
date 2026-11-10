@@ -1668,3 +1668,29 @@ body.theme-light textarea#prompt::placeholder {
         background: rgba(4, 25, 20, .80);
     }
 }
+
+
+/* FINAL FLAG CLARITY — remove the washed-out / transparent look */
+.app.chatgpt-layout {
+    background-color: #063d2c !important;
+    background-image: url("/static/sudan-flag-background.jpg") !important;
+    background-size: cover !important;
+    background-position: center center !important;
+}
+.app.chatgpt-layout::before {
+    background-image: url("/static/sudan-flag-background.jpg") !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    filter: saturate(2.15) contrast(1.30) brightness(1.02) !important;
+    opacity: 1 !important;
+}
+.app.chatgpt-layout > .main,
+.app.chatgpt-layout > .main .messages {
+    background: rgba(2, 15, 13, .01) !important;
+}
+@media (max-width: 800px) {
+    .app.chatgpt-layout::before {
+        filter: saturate(2.2) contrast(1.32) brightness(1.03) !important;
+    }
+}
