@@ -1,7 +1,7 @@
 {
-  "background_color": "rgb(255, 252, 252)",
+  "background_color": "#071d18",
   "description": "مساعد ذكاء اصطناعي سوداني يساعدك في الكتابة والدراسة والترجمة والشغل والدردشة 🇸🇩🤖",
-  "dir": "ltr",
+  "dir": "rtl",
   "display": "standalone",
   "name": "زولك AI",
   "orientation": "any",
