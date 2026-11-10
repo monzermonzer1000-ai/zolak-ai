@@ -458,58 +458,6 @@ if (promptBox) {
 }
 
 /* =========================
-   SUGGESTION CARDS
-========================= */
-
-document.addEventListener("click", function (event) {
-    const card = event.target.closest(".suggestion-card");
-
-    if (!card || !promptBox) return;
-
-    const text = card.getAttribute("data-prompt");
-
-    if (!text) return;
-
-    event.preventDefault();
-    promptBox.value = text;
-    sendMessage();
-});
-
-/* =========================
-   WELCOME SCREEN
-========================= */
-
-function showWelcome(focusInput = true) {
-    if (!messages) return;
-
-    messages.innerHTML = `
-        <div class="welcome-screen">
-            <div class="welcome-logo">ز</div>
-
-            <span class="welcome-eyebrow">
-                أهلاً بيك في زولك AI 🇸🇩
-            </span>
-
-            <h1>كيف أقدر أساعدك اليوم؟</h1>
-
-            <p>
-                اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.
-                <br>
-                أنا هنا عشان أساعدك.
-            </p>
-        </div>
-    `;
-
-    if (promptBox) {
-        promptBox.value = "";
-
-        if (focusInput) {
-            promptBox.focus();
-        }
-    }
-}
-
-/* =========================
    INITIALIZE
 ========================= */
 
