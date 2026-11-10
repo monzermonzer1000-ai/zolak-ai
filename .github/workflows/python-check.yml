@@ -77,11 +77,62 @@ jobs:
           deleted = client.delete(f"/api/conversations/{conversation_id}")
           assert deleted.status_code == 200, deleted.get_json()
 
-          # With no external API key in CI, the app must return a clear
-          # configuration error instead of crashing or consuming credits.
+          # Missing API keys must produce a clear configuration error.
           ai = client.post("/api/chat", json={"message": "اختبار"})
           assert ai.status_code == 503, ai.get_json()
           assert "GEMINI_API_KEY" in ai.get_json().get("error", "")
+
+          # Mock Gemini so CI can exercise a successful response without
+          # storing or spending a real API key.
+          import os
+          import sys
+          import types as pytypes
+          from types import SimpleNamespace
+
+          class FakePart:
+              @classmethod
+              def from_text(cls, text):
+                  return SimpleNamespace(text=text)
+
+          class FakeContent:
+              def __init__(self, role, parts):
+                  self.role = role
+                  self.parts = parts
+
+          class FakeConfig:
+              def __init__(self, **kwargs):
+                  self.options = kwargs
+
+          class FakeModels:
+              def generate_content(self, **kwargs):
+                  return SimpleNamespace(text="رد تجريبي من زولك AI")
+
+          class FakeClient:
+              def __init__(self, api_key):
+                  self.models = FakeModels()
+
+          google_module = pytypes.ModuleType("google")
+          genai_module = pytypes.ModuleType("google.genai")
+          genai_types = pytypes.ModuleType("google.genai.types")
+          genai_module.Client = FakeClient
+          genai_module.types = genai_types
+          genai_types.Part = FakePart
+          genai_types.Content = FakeContent
+          genai_types.GenerateContentConfig = FakeConfig
+          google_module.genai = genai_module
+          sys.modules["google"] = google_module
+          sys.modules["google.genai"] = genai_module
+          sys.modules["google.genai.types"] = genai_types
+          os.environ["GEMINI_API_KEY"] = "ci-fake-key"
+
+          ai_ok = client.post("/api/chat", json={"message": "اختبار الرد"})
+          assert ai_ok.status_code == 200, ai_ok.get_json()
+          assert ai_ok.get_json().get("answer") == "رد تجريبي من زولك AI"
+          conversation_id = ai_ok.get_json()["conversation_id"]
+
+          history = client.get(f"/api/conversations/{conversation_id}")
+          assert history.status_code == 200, history.get_json()
+          assert len(history.get_json()["chats"]) == 2
 
           client.get("/logout")
           admin_login = client.post("/api/login", json={
@@ -92,9 +143,11 @@ jobs:
 
           health = client.get("/api/admin/health")
           assert health.status_code == 200, health.get_json()
+          assert health.get_json()["checks"]["gemini"]["status"] == "ok"
 
           ai_test = client.post("/api/admin/ai-test", json={})
-          assert ai_test.status_code == 503, ai_test.get_json()
+          assert ai_test.status_code == 200, ai_test.get_json()
+          assert ai_test.get_json()["answer"] == "رد تجريبي من زولك AI"
 
           print("Zolak AI smoke tests passed.")
           PY
