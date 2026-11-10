@@ -903,7 +903,7 @@ placeholder="#00c896"
 </div>
 
 <div class="info">
-مفتاح Gemini لا يظهر داخل لوحة الإدارة حفاظاً على الأمان.
+مفاتيح API لا تظهر داخل لوحة الإدارة حفاظاً على الأمان. اختبار الرد يرسل طلباً قصيراً وقد يستهلك كمية بسيطة من رصيد مزود الخدمة.
 </div>
 
 <div class="actions">
@@ -1019,13 +1019,22 @@ onclick="downloadBackup()">
 
 </div>
 
+<div class="actions">
 <button
 type="button"
 id="healthButton"
 class="btn green"
 onclick="runHealthCheck()">
-🔍 فحص الآن
+🔍 فحص النظام
 </button>
+<button
+type="button"
+id="healthAiTestButton"
+class="btn blue"
+onclick="runAiTest()">
+🤖 اختبار رد الذكاء الاصطناعي
+</button>
+</div>
 
 </div>
 
@@ -1057,7 +1066,7 @@ style="margin-top:15px">
 <div class="health-card">
 
 <div class="health-title">
-Gemini API
+خدمة الذكاء الاصطناعي
 </div>
 
 <div id="healthGemini" class="health-status warning">
@@ -2448,6 +2457,63 @@ function updateHealthSettings(){
 /* =========================
    فحص الموقع
 ========================= */
+
+async function runAiTest(){
+
+    const button = document.getElementById("healthAiTestButton");
+
+    if(button){
+        button.disabled = true;
+        button.textContent = "⏳ جاري اختبار الرد...";
+    }
+
+    try{
+        const data = await api("/api/admin/ai-test", {
+            method: "POST",
+            body: JSON.stringify({})
+        });
+
+        updateHealthCard(
+            "healthGemini",
+            "healthGeminiMessage",
+            {
+                status: "ok",
+                message: "نجح الاتصال فعلياً عبر " + data.provider.toUpperCase() +
+                    " (" + data.model + "). رد الاختبار: " + data.answer
+            }
+        );
+
+        const modelBox = document.getElementById("healthModel");
+        const modelMessage = document.getElementById("healthModelMessage");
+
+        if(modelBox){
+            modelBox.textContent = data.model;
+            modelBox.className = "health-status ok";
+        }
+        if(modelMessage){
+            modelMessage.textContent = "مزود الخدمة: " + data.provider.toUpperCase();
+        }
+
+        showMessage("اختبار الذكاء الاصطناعي نجح. الخدمة ردّت بصورة طبيعية.", "success");
+
+    }catch(error){
+        updateHealthCard(
+            "healthGemini",
+            "healthGeminiMessage",
+            {
+                status: "error",
+                message: error.message
+            }
+        );
+        showMessage(error.message, "error");
+    }finally{
+        if(button){
+            button.disabled = false;
+            button.textContent = "🤖 اختبار رد الذكاء الاصطناعي";
+        }
+    }
+}
+
 
 async function runHealthCheck(){
 
