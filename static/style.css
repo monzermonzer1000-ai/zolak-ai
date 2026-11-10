@@ -1169,3 +1169,335 @@ body.theme-dark .conversation-delete:hover {
     color: #ffc4c4;
     background: rgba(190, 55, 55, .18);
 }
+
+
+
+/* =====================================================
+   ZOLAK AI — PREMIUM DARK GLASS / HIGH-CONTRAST FLAG
+   ===================================================== */
+
+:root {
+    --primary: #12d6a4;
+    --primary-dark: #079873;
+    --primary-soft: rgba(18,214,164,.14);
+    --ink: #f3fbf7;
+    --muted: #b7cec4;
+    --line: rgba(220,255,240,.14);
+    --paper: rgba(7,28,23,.90);
+    --canvas: transparent;
+    --shadow: 0 18px 50px rgba(0,0,0,.24);
+}
+
+body,
+body.theme-dark {
+    color: #f3fbf7;
+    background: #071d18;
+}
+
+.app.chatgpt-layout {
+    background-color: #071d18;
+    background-image:
+        linear-gradient(125deg, rgba(1,20,15,.08), rgba(1,15,24,.14)),
+        url("/static/sudan-flag-background.jpg");
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.app.chatgpt-layout::before {
+    background:
+        radial-gradient(ellipse at 15% 18%, rgba(18,214,164,.15), transparent 42%),
+        linear-gradient(120deg, rgba(2,18,15,.08), rgba(3,17,26,.12));
+}
+
+.sidebar {
+    color: #effbf5;
+    background: rgba(4,23,19,.88);
+    border-left: 1px solid rgba(255,255,255,.13);
+    box-shadow: 12px 0 42px rgba(0,0,0,.20);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+.brand-text strong,
+.account-name,
+.conversation-title {
+    color: #f3fbf7;
+}
+
+.brand-text span,
+.sidebar-heading,
+.account-credits,
+.sidebar-footer,
+.conversation-empty {
+    color: #a9c5b9;
+}
+
+.brand-logo,
+.brand-icon,
+.mobile-brand-logo,
+.account-avatar {
+    background: linear-gradient(145deg,#15d9a7,#08785e);
+    box-shadow: 0 8px 22px rgba(18,214,164,.22);
+}
+
+.new-chat,
+#newChat {
+    color: #eafff7;
+    background: rgba(13,73,57,.62);
+    border-color: rgba(18,214,164,.42);
+    box-shadow: 0 8px 22px rgba(0,0,0,.16);
+}
+
+.new-chat:hover,
+.sidebar-link:hover,
+.sidebar-link.active,
+.conversation-item:hover,
+.conversation-item.active {
+    color: #fff;
+    background: rgba(18,214,164,.17);
+}
+
+.sidebar-link {
+    color: #d4e8df;
+}
+
+.main,
+.main.main-chat {
+    color: #f3fbf7;
+    background: rgba(2,16,14,.07);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.topbar,
+.chat-navbar,
+.main-header {
+    color: #f4fff9;
+    background: rgba(4,24,20,.78);
+    border-bottom: 1px solid rgba(255,255,255,.14);
+    box-shadow: 0 8px 28px rgba(0,0,0,.13);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+}
+
+.mobile-menu {
+    color: #f3fbf7;
+    background: rgba(255,255,255,.08);
+    border-color: rgba(255,255,255,.18);
+}
+
+.mobile-brand {
+    color: #f3fbf7;
+}
+
+.topbar-left {
+    color: #c5e4d6;
+}
+
+.messages {
+    background: rgba(2,15,13,.08);
+    color: #f3fbf7;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.welcome-screen {
+    width: min(100%, 850px);
+    padding: clamp(25px,4vw,46px);
+    color: #f3fbf7;
+    background: rgba(4,25,20,.84);
+    border: 1px solid rgba(220,255,240,.20);
+    border-radius: 30px;
+    box-shadow: 0 26px 80px rgba(0,0,0,.32);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.welcome-screen h1 {
+    color: #fff;
+    font-size: clamp(27px,4vw,42px);
+    font-weight: 850;
+    letter-spacing: -.7px;
+}
+
+.welcome-screen p {
+    color: #c2ddd1;
+}
+
+.welcome-eyebrow {
+    color: #baffea;
+    background: rgba(18,214,164,.13);
+    border-color: rgba(18,214,164,.28);
+}
+
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 11px;
+    width: min(100%,650px);
+    margin: 27px auto 0;
+}
+
+.suggestion-card {
+    display: grid;
+    grid-template-columns: 38px minmax(0,1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 2px 10px;
+    min-height: 76px;
+    padding: 13px 15px;
+    text-align: right;
+    color: #f1fff8;
+    background: rgba(255,255,255,.075);
+    border: 1px solid rgba(220,255,240,.16);
+    border-radius: 17px;
+    transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(18,214,164,.58);
+    background: rgba(18,214,164,.13);
+}
+
+.suggestion-icon {
+    grid-row: 1 / 3;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    color: #aaffdf;
+    background: rgba(18,214,164,.15);
+    font-size: 20px;
+}
+
+.suggestion-title {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.suggestion-description {
+    color: #a9c9bb;
+    font-size: 11px;
+}
+
+.message-content {
+    color: #f3fbf7;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.20);
+}
+
+.message.user .message-content {
+    color: #f4fffa;
+    background: linear-gradient(145deg,rgba(7,126,94,.96),rgba(5,91,70,.96));
+    border: 1px solid rgba(97,255,207,.28);
+}
+
+.message.assistant .message-content {
+    color: #f3fbf7;
+    background: rgba(5,29,23,.91);
+    border: 1px solid rgba(220,255,240,.16);
+}
+
+.composer,
+.composer-area {
+    background: rgba(4,23,19,.86);
+    border-top: 1px solid rgba(255,255,255,.14);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+}
+
+.composer-inner {
+    background: rgba(10,38,30,.96);
+    border-color: rgba(173,235,211,.24);
+    box-shadow: 0 14px 36px rgba(0,0,0,.24);
+}
+
+#prompt,
+textarea#prompt,
+.composer textarea,
+.composer-area textarea {
+    color: #f4fff9;
+}
+
+#prompt::placeholder,
+.composer textarea::placeholder {
+    color: #9bb9ab;
+}
+
+.composer-note {
+    color: #a9c9bb;
+}
+
+.account-box {
+    color: #f3fbf7;
+    background: rgba(255,255,255,.07);
+    border-color: rgba(255,255,255,.14);
+}
+
+.conversation-delete {
+    color: #b6d0c3;
+}
+
+.conversation-delete:hover {
+    color: #fff;
+    background: rgba(255,80,80,.18);
+}
+
+@media (max-width: 800px) {
+    .app.chatgpt-layout {
+        background-position: center;
+    }
+    .sidebar {
+        background: rgba(4,23,19,.97);
+    }
+    .topbar,
+    .chat-navbar,
+    .main-header {
+        background: rgba(4,24,20,.88);
+    }
+    .welcome-screen {
+        width: 100%;
+        padding: 24px 15px;
+        border-radius: 23px;
+        background: rgba(4,25,20,.88);
+    }
+    .suggestions-grid {
+        gap: 8px;
+        margin-top: 22px;
+    }
+    .suggestion-card {
+        min-height: 70px;
+        padding: 10px 9px;
+        grid-template-columns: 31px minmax(0,1fr);
+        gap: 2px 7px;
+    }
+    .suggestion-icon {
+        width: 31px;
+        height: 31px;
+        border-radius: 10px;
+        font-size: 17px;
+    }
+    .suggestion-title {
+        font-size: 12px;
+    }
+    .suggestion-description {
+        font-size: 10px;
+    }
+    .composer,
+    .composer-area {
+        background: rgba(4,23,19,.93);
+    }
+}
+
+@media (max-width: 360px) {
+    .suggestions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .suggestion-card { transition: none; }
+}
