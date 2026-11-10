@@ -3,9 +3,10 @@
 const CACHE_NAME = "zolak-ai-assets-v5";
 const ASSETS = [
   "/manifest.json",
-  "/static/style.css?v=8",
+  "/static/style.css?v=9",
   "/static/app.js?v=8",
-  "/static/icon.svg"
+  "/static/icon.svg",
+  "/static/sudan-flag-background.jpg"
 ];
 
 self.addEventListener("install", event => {
