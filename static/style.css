@@ -1630,3 +1630,8 @@ body.theme-light #prompt::placeholder,
 body.theme-light textarea#prompt::placeholder {
     color: #82958c;
 }
+
+
+/* Keep the slide-out navigation above the chat surface. */
+.app.chatgpt-layout > .sidebar { z-index: 50; }
+.app.chatgpt-layout > .main { z-index: 1; }
