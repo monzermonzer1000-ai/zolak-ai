@@ -567,7 +567,7 @@ def home():
             "مساعد ذكاء اصطناعي سوداني يساعدك في الكتابة والدراسة والترجمة والشغل والدردشة 🇸🇩🤖"
         ),
         primary_color=setting("primary_color", "#08b991"),
-        theme=setting("theme", "light"),
+        theme=setting("theme", "dark"),
         homepage_title=setting(
             "homepage_title",
             "كيف أقدر أساعدك اليوم؟"
@@ -1011,46 +1011,36 @@ def chat():
             FROM conversations WHERE id = ?
         """, (conversation_id,)).fetchone()
 
-    api_key = os.getenv(
-        "GEMINI_API_KEY"
-    )
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
+    requested_provider = os.getenv("AI_PROVIDER", "auto").strip().lower()
 
-    if not api_key:
-
+    if requested_provider not in ("auto", "gemini", "openai"):
         c.close()
-
         return jsonify(
-            error="مفتاح الذكاء الاصطناعي ما مضاف في إعدادات الاستضافة."
+            error="قيمة AI_PROVIDER غير صحيحة. استخدم auto أو gemini أو openai."
+        ), 503
+
+    if requested_provider == "openai":
+        provider = "openai"
+    elif requested_provider == "gemini":
+        provider = "gemini"
+    else:
+        provider = "gemini" if gemini_key else "openai"
+
+    if provider == "gemini" and not gemini_key:
+        c.close()
+        return jsonify(
+            error="أضف GEMINI_API_KEY أو غيّر AI_PROVIDER إلى openai مع إضافة OPENAI_API_KEY."
+        ), 503
+
+    if provider == "openai" and not openai_key:
+        c.close()
+        return jsonify(
+            error="أضف OPENAI_API_KEY أو غيّر AI_PROVIDER إلى gemini مع إضافة GEMINI_API_KEY."
         ), 503
 
     try:
-
-        from google import genai
-
-        client = genai.Client(
-            api_key=api_key
-        )
-
-        # -------------------------------------------------
-        # الموديل
-        # -------------------------------------------------
-
-        model = setting(
-            "ai_model",
-            "gemini-3.8-flash"
-        ).strip()
-
-        if (
-            not model
-            or model == "gemini-2.5-flash"
-        ):
-
-            model = "gemini-3.8-flash"
-
-        # -------------------------------------------------
-        # التعليمات
-        # -------------------------------------------------
-
         system_instruction = (
             "أنت زولك AI، مساعد ذكاء اصطناعي سوداني ودود. "
             "أجب بوضوح ودقة. "
@@ -1061,14 +1051,7 @@ def chat():
             "لا تخترع معلومات."
         )
 
-        # -------------------------------------------------
-        # بناء سياق المحادثة من قاعدة البيانات
-        # -------------------------------------------------
-
-        from google.genai import types
-
-        contents = []
-
+        history_rows = []
         if history_enabled():
             history_rows = c.execute("""
                 SELECT role, content
@@ -1079,6 +1062,45 @@ def chat():
                 LIMIT 24
             """, (conversation_id, session["uid"])).fetchall()
 
+        if provider == "openai":
+            from openai import OpenAI
+
+            client = OpenAI(api_key=openai_key)
+            configured_model = setting("ai_model", "").strip()
+            model = os.getenv("OPENAI_MODEL", "").strip()
+            if not model:
+                model = (
+                    configured_model
+                    if configured_model.startswith(("gpt-", "o"))
+                    else "gpt-6-luna"
+                )
+
+            input_messages = []
+            for row in reversed(history_rows):
+                input_messages.append({
+                    "role": "user" if row["role"] == "user" else "assistant",
+                    "content": row["content"]
+                })
+            input_messages.append({"role": "user", "content": message})
+
+            response = client.responses.create(
+                model=model,
+                instructions=system_instruction,
+                input=input_messages,
+                max_output_tokens=2048
+            )
+            answer = (response.output_text or "").strip()
+
+        else:
+            from google import genai
+            from google.genai import types
+
+            client = genai.Client(api_key=gemini_key)
+            model = setting("ai_model", "gemini-3.8-flash").strip()
+            if not model.startswith("gemini-"):
+                model = "gemini-3.8-flash"
+
+            contents = []
             for row in reversed(history_rows):
                 role = "user" if row["role"] == "user" else "model"
                 contents.append(
@@ -1087,29 +1109,23 @@ def chat():
                         parts=[types.Part.from_text(text=row["content"])]
                     )
                 )
-
-        contents.append(
-            types.Content(
-                role="user",
-                parts=[types.Part.from_text(text=message)]
+            contents.append(
+                types.Content(
+                    role="user",
+                    parts=[types.Part.from_text(text=message)]
+                )
             )
-        )
 
-        # -------------------------------------------------
-        # طلب الرد عبر Generate Content API المستقر
-        # -------------------------------------------------
-
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.7,
-                max_output_tokens=2048
+            response = client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.7,
+                    max_output_tokens=2048
+                )
             )
-        )
-
-        answer = (response.text or "").strip()
+            answer = (response.text or "").strip()
 
         if not answer:
             c.close()
@@ -1221,18 +1237,20 @@ def chat():
             or "UNAUTHENTICATED" in upper_error
             or "PERMISSION_DENIED" in upper_error
             or "403" in upper_error
+            or "401" in upper_error
         ):
             return jsonify(
-                error="مفتاح Gemini غير صحيح أو ما عنده صلاحية استخدام الخدمة. راجع GEMINI_API_KEY في إعدادات الاستضافة."
+                error="مفتاح خدمة الذكاء الاصطناعي غير صحيح أو ما عنده صلاحية. راجع مفتاح API وإعداد AI_PROVIDER في الاستضافة."
             ), 503
 
         if (
             "RESOURCE_EXHAUSTED" in upper_error
             or "QUOTA" in upper_error
             or "429" in upper_error
+            or "RATE_LIMIT" in upper_error
         ):
             return jsonify(
-                error="تم الوصول لحد استخدام Gemini أو الرصيد المتاح للمفتاح. راجع الحصة والفوترة في Google AI Studio."
+                error="وصلت خدمة الذكاء الاصطناعي لحد الاستخدام أو الرصيد المتاح للمفتاح. راجع حدود الاستخدام والفوترة لدى مزود الخدمة."
             ), 503
 
         if (
@@ -1260,7 +1278,7 @@ def chat():
             ), 502
 
         return jsonify(
-            error="تعذر الحصول على رد من Gemini. راجع سجل الأخطاء في الاستضافة للتفاصيل، ثم حاول مجدداً."
+            error="تعذر الحصول على رد من خدمة الذكاء الاصطناعي. راجع سجل الأخطاء في الاستضافة للتفاصيل، ثم حاول مجدداً."
         ), 502
 
 
