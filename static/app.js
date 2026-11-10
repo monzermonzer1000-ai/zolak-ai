@@ -497,20 +497,6 @@ function showWelcome(focusInput = true) {
                 <br>
                 أنا هنا عشان أساعدك.
             </p>
-            <div class="suggestions-grid" aria-label="ابدأ باستخدام زولك">
-                <button type="button" class="suggestion-card" data-prompt="ساعدني أفهم موضوعاً صعباً واشرحه لي خطوة بخطوة.">
-                    <span class="suggestion-icon">✦</span><span class="suggestion-title">اشرح لي موضوع</span><span class="suggestion-description">شرح واضح وبالأمثلة</span>
-                </button>
-                <button type="button" class="suggestion-card" data-prompt="ساعدني أكتب نصاً احترافياً ومنظماً عن الموضوع التالي: ">
-                    <span class="suggestion-icon">✎</span><span class="suggestion-title">اكتب لي محتوى</span><span class="suggestion-description">كتابة وصياغة احترافية</span>
-                </button>
-                <button type="button" class="suggestion-card" data-prompt="ترجم النص التالي ترجمة دقيقة وطبيعية مع الحفاظ على المعنى: ">
-                    <span class="suggestion-icon">文</span><span class="suggestion-title">ترجمة ذكية</span><span class="suggestion-description">بين العربية واللغات</span>
-                </button>
-                <button type="button" class="suggestion-card" data-prompt="ساعدني أذاكر هذا الموضوع، ولخّص أهم النقاط ثم اختبر فهمي: ">
-                    <span class="suggestion-icon">⌘</span><span class="suggestion-title">ساعدني أدرس</span><span class="suggestion-description">تلخيص ومراجعة وأسئلة</span>
-                </button>
-            </div>
         </div>
     `;
 
