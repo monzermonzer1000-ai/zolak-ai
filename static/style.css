@@ -1205,9 +1205,23 @@ body.theme-dark {
 }
 
 .app.chatgpt-layout::before {
-    background:
-        radial-gradient(ellipse at 15% 18%, rgba(18,214,164,.15), transparent 42%),
-        linear-gradient(120deg, rgba(2,18,15,.08), rgba(3,17,26,.12));
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(120deg, rgba(2,18,15,.10), rgba(3,17,26,.10)),
+        url("/static/sudan-flag-background.jpg");
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    filter: saturate(1.85) contrast(1.16) brightness(.88);
+}
+
+.app.chatgpt-layout > * {
+    position: relative;
+    z-index: 1;
 }
 
 .sidebar {
