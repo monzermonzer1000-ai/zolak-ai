@@ -1126,9 +1126,6 @@ def chat():
             )
         )
 
-        c.commit()
-        c.close()
-
         c.execute("""
             UPDATE conversations
             SET title = CASE WHEN title = 'محادثة جديدة' THEN ? ELSE title END,
@@ -1137,6 +1134,7 @@ def chat():
         """, (message[:55], conversation_id, session["uid"]))
 
         c.commit()
+        c.close()
         return jsonify(answer=answer, conversation_id=conversation_id)
 
     except Exception as error:
