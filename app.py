@@ -680,11 +680,11 @@ def register():
     if (
         not name
         or not email
-        or len(password) < 4
+        or len(password) < 8
     ):
 
         return jsonify(
-            error="أدخل البيانات كاملة، وكلمة المرور 4 أحرف على الأقل."
+            error="أدخل البيانات كاملة، وكلمة المرور 8 أحرف على الأقل."
         ), 400
 
     if len(name) > 100 or len(email) > 200:
@@ -1762,23 +1762,31 @@ def update_user(uid):
 @admin_required
 def ban_user(uid):
 
+    if uid == session.get("uid"):
+        return jsonify(error="ما ممكن توقف حساب المدير الحالي."), 400
+
     c = db()
+    target = c.execute(
+        "SELECT id, is_admin FROM users WHERE id = ?",
+        (uid,)
+    ).fetchone()
+
+    if not target:
+        c.close()
+        return jsonify(error="المستخدم ما موجود."), 404
+
+    if target["is_admin"]:
+        c.close()
+        return jsonify(error="ما ممكن توقف حساب مدير."), 403
 
     c.execute(
-        """
-        UPDATE users
-        SET is_banned = 1
-        WHERE id = ?
-        """,
+        "UPDATE users SET is_banned = 1 WHERE id = ?",
         (uid,)
     )
-
     c.commit()
     c.close()
 
-    return jsonify(
-        ok=True
-    )
+    return jsonify(ok=True)
 
 
 @app.post("/api/admin/user/<int:uid>/unban")
@@ -1809,27 +1817,27 @@ def unban_user(uid):
 def delete_user(uid):
 
     if uid == session.get("uid"):
-
-        return jsonify(
-            error="ما ممكن تحذف حساب المدير الحالي."
-        ), 400
+        return jsonify(error="ما ممكن تحذف حساب المدير الحالي."), 400
 
     c = db()
-
-    c.execute(
-        """
-        DELETE FROM users
-        WHERE id = ?
-        """,
+    target = c.execute(
+        "SELECT id, is_admin FROM users WHERE id = ?",
         (uid,)
-    )
+    ).fetchone()
 
+    if not target:
+        c.close()
+        return jsonify(error="المستخدم ما موجود."), 404
+
+    if target["is_admin"]:
+        c.close()
+        return jsonify(error="ما ممكن تحذف حساب مدير."), 403
+
+    c.execute("DELETE FROM users WHERE id = ?", (uid,))
     c.commit()
     c.close()
 
-    return jsonify(
-        ok=True
-    )
+    return jsonify(ok=True)
 
 
 # =========================================================
