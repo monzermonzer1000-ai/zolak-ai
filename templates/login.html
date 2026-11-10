@@ -7,7 +7,7 @@
 
     <title>تسجيل الدخول — زولك AI</title>
 
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=9">
 
     <style>
         .auth {
@@ -134,7 +134,91 @@
             font-size: 12px;
             margin-top: 15px;
         }
-    </style>
+    
+        .auth {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            background:
+                linear-gradient(125deg, rgba(2,18,15,.34), rgba(3,17,26,.48)),
+                url("/static/sudan-flag-background.jpg") center / cover no-repeat,
+                #071d18;
+        }
+
+        .auth::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at 20% 15%, rgba(18,214,164,.22), transparent 42%);
+            backdrop-filter: saturate(1.5);
+        }
+
+        .auth-box { position: relative; max-width: 440px; }
+
+        .auth-logo {
+            color: #f2fff8;
+            font-size: 32px;
+            letter-spacing: -.5px;
+            text-shadow: 0 8px 28px rgba(0,0,0,.28);
+        }
+
+        .auth-logo span { color: #68e7bd; }
+
+        .auth-card {
+            padding: 32px;
+            color: #f4fff9;
+            background: rgba(4,25,20,.88);
+            border: 1px solid rgba(220,255,240,.20);
+            border-radius: 25px;
+            box-shadow: 0 28px 90px rgba(0,0,0,.34);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+        }
+
+        .auth-card h2 { color: #fff; }
+        .auth-subtitle { color: #b8d2c6; }
+
+        .auth-input {
+            min-height: 49px;
+            color: #f4fff9;
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(220,255,240,.18);
+            border-radius: 13px;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .auth-input::placeholder { color: #a8c4b7; }
+
+        .auth-input:focus {
+            border-color: rgba(18,214,164,.75);
+            box-shadow: 0 0 0 4px rgba(18,214,164,.12);
+        }
+
+        .login-button {
+            min-height: 49px;
+            color: #04251b;
+            background: linear-gradient(145deg,#19dfad,#0a9b74);
+            border-radius: 13px;
+            box-shadow: 0 10px 24px rgba(18,214,164,.22);
+            transition: transform .18s ease, filter .18s ease;
+        }
+
+        .login-button:hover {
+            filter: brightness(1.06);
+            transform: translateY(-1px);
+        }
+
+        .ghost { color: #b9d6c9; }
+        .ghost:hover { color: #fff; }
+        #err { color: #ff9c9c; }
+
+        @media (max-width: 480px) {
+            .auth { padding: 16px; }
+            .auth-card { padding: 24px 19px; border-radius: 21px; }
+            .auth-logo { font-size: 28px; }
+        }
+</style>
 </head>
 
 <body>
