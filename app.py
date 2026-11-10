@@ -2,6 +2,7 @@ import os
 import sqlite3
 import io
 import time
+import secrets
 from functools import wraps
 from datetime import datetime, timezone
 
@@ -23,10 +24,7 @@ from werkzeug.security import (
 
 app = Flask(__name__)
 
-app.secret_key = os.getenv(
-    "SECRET_KEY",
-    "change-this-secret-in-production"
-)
+app.secret_key = os.getenv("SECRET_KEY")
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -165,6 +163,21 @@ def init_db():
             ADD COLUMN gemini_interaction_id TEXT
         """)
 
+    # Preserve the legacy Gemini context when migrating old chat history.
+    c.execute("""
+        UPDATE conversations
+        SET gemini_interaction_id = (
+            SELECT users.gemini_interaction_id
+            FROM users
+            WHERE users.id = conversations.user_id
+        )
+        WHERE gemini_interaction_id IS NULL
+          AND EXISTS (
+              SELECT 1 FROM chats
+              WHERE chats.conversation_id = conversations.id
+          )
+    """)
+
     defaults = [
         (
             "site_name",
@@ -215,10 +228,7 @@ def init_db():
         "admin@zolak.ai"
     ).strip().lower()
 
-    admin_password = os.getenv(
-        "ADMIN_PASSWORD",
-        "admin123"
-    )
+    admin_password = os.getenv("ADMIN_PASSWORD")
 
     admin_name = os.getenv(
         "ADMIN_NAME",
@@ -234,8 +244,7 @@ def init_db():
         (admin_email,)
     ).fetchone()
 
-    if not existing_admin:
-
+    if not existing_admin and admin_password:
         c.execute(
             """
             INSERT INTO users
@@ -252,34 +261,38 @@ def init_db():
             (
                 admin_name,
                 admin_email,
-                generate_password_hash(
-                    admin_password
-                ),
+                generate_password_hash(admin_password),
                 999999
             )
         )
 
-    else:
-
-        c.execute(
-            """
-            UPDATE users
-            SET
-                name = ?,
-                password = ?,
-                credits = 999999,
-                is_admin = 1,
-                is_banned = 0
-            WHERE email = ?
-            """,
-            (
-                admin_name,
-                generate_password_hash(
-                    admin_password
-                ),
-                admin_email
+    elif existing_admin:
+        if admin_password:
+            c.execute(
+                """
+                UPDATE users
+                SET name = ?, password = ?, credits = 999999,
+                    is_admin = 1, is_banned = 0
+                WHERE email = ?
+                """,
+                (
+                    admin_name,
+                    generate_password_hash(admin_password),
+                    admin_email
+                )
             )
-        )
+        else:
+            # Preserve the existing administrator password unless an
+            # explicit ADMIN_PASSWORD environment variable is supplied.
+            c.execute(
+                """
+                UPDATE users
+                SET name = ?, credits = 999999,
+                    is_admin = 1, is_banned = 0
+                WHERE email = ?
+                """,
+                (admin_name, admin_email)
+            )
 
     # -----------------------------------------------------
     # إصلاح أي إعداد قديم
@@ -336,6 +349,37 @@ def save_setting(c, key, value):
 
 
 init_db()
+
+
+def configure_secret_key():
+    configured_key = os.getenv("SECRET_KEY")
+    if configured_key:
+        app.secret_key = configured_key
+        return
+
+    c = db()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS app_secrets (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    """)
+    c.execute("""
+        INSERT OR IGNORE INTO app_secrets(key, value)
+        VALUES ('flask_secret_key', ?)
+    """, (secrets.token_urlsafe(48),))
+    c.commit()
+
+    row = c.execute("""
+        SELECT value FROM app_secrets
+        WHERE key = 'flask_secret_key'
+    """).fetchone()
+    c.close()
+
+    app.secret_key = row["value"]
+
+
+configure_secret_key()
 
 
 # =========================================================
