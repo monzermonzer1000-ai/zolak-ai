@@ -348,6 +348,12 @@ def save_setting(c, key, value):
     )
 
 
+def history_enabled():
+    return setting("enable_history", "true").strip().lower() not in (
+        "false", "0", "off", "no"
+    )
+
+
 init_db()
 
 
@@ -1148,43 +1154,44 @@ def chat():
         # حفظ الرسائل
         # -------------------------------------------------
 
-        c.execute(
-            """
-            INSERT INTO chats
-            (
-                user_id,
-                role,
-                content,
-                conversation_id
+        if history_enabled():
+            c.execute(
+                """
+                INSERT INTO chats
+                (
+                    user_id,
+                    role,
+                    content,
+                    conversation_id
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    session["uid"],
+                    "user",
+                    message,
+                    conversation_id
+                )
             )
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                session["uid"],
-                "user",
-                message,
-                conversation_id
-            )
-        )
 
-        c.execute(
-            """
-            INSERT INTO chats
-            (
-                user_id,
-                role,
-                content,
-                conversation_id
+            c.execute(
+                """
+                INSERT INTO chats
+                (
+                    user_id,
+                    role,
+                    content,
+                    conversation_id
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    session["uid"],
+                    "assistant",
+                    answer,
+                    conversation_id
+                )
             )
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                session["uid"],
-                "assistant",
-                answer,
-                conversation_id
-            )
-        )
 
         c.execute("""
             UPDATE conversations
@@ -1301,6 +1308,9 @@ def chats():
 @app.get("/api/conversations")
 @login_required
 def list_conversations():
+    if not history_enabled():
+        return jsonify(conversations=[])
+
     c = db()
     rows = c.execute("""
         SELECT conversations.id, conversations.title,
@@ -1334,6 +1344,9 @@ def create_conversation():
 @app.get("/api/conversations/<int:conversation_id>")
 @login_required
 def get_conversation(conversation_id):
+    if not history_enabled():
+        return jsonify(error="حفظ المحادثات متوقف حالياً."), 403
+
     c = db()
     conversation = c.execute("""
         SELECT id, title FROM conversations
