@@ -1744,3 +1744,60 @@ body.theme-light textarea#prompt::placeholder {
         background: rgba(3, 25, 19, .64) !important;
     }
 }
+
+
+/* LIGHT THEME FLAG VISIBILITY FIX */
+body.theme-light .app.chatgpt-layout {
+    background-color: #063d2c !important;
+    background-image: url("/static/sudan-flag-background.jpg") !important;
+    background-position: center center !important;
+    background-size: cover !important;
+}
+body.theme-light .app.chatgpt-layout::before {
+    background-image: linear-gradient(120deg, rgba(255,255,255,.10), rgba(255,255,255,.04)), url("/static/sudan-flag-background.jpg") !important;
+    background-position: center center !important;
+    background-size: cover !important;
+    filter: saturate(2.35) contrast(1.28) brightness(1.08) !important;
+    opacity: 1 !important;
+}
+body.theme-light .app.chatgpt-layout > .main,
+body.theme-light .app.chatgpt-layout > .main .messages {
+    background: rgba(255,255,255,.08) !important;
+}
+body.theme-light .app.chatgpt-layout > .main .topbar,
+body.theme-light .app.chatgpt-layout > .main .chat-navbar,
+body.theme-light .app.chatgpt-layout > .main .main-header,
+body.theme-light .app.chatgpt-layout > .main .composer,
+body.theme-light .app.chatgpt-layout > .main .composer-area {
+    color: #f3fbf7 !important;
+    background: rgba(4,24,20,.72) !important;
+    border-color: rgba(255,255,255,.18) !important;
+}
+body.theme-light .app.chatgpt-layout > .main .topbar-left,
+body.theme-light .app.chatgpt-layout > .main .composer-note {
+    color: #d5e9df !important;
+}
+body.theme-light .app.chatgpt-layout > .main .welcome-screen {
+    color: #18332c !important;
+    background: rgba(250,253,251,.68) !important;
+    border-color: rgba(255,255,255,.55) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+body.theme-light .app.chatgpt-layout > .main .welcome-screen h1 {
+    color: #123d30 !important;
+}
+body.theme-light .app.chatgpt-layout > .main .welcome-screen p {
+    color: #31594b !important;
+}
+body.theme-light .app.chatgpt-layout > .main .composer-inner {
+    background: rgba(255,255,255,.94) !important;
+}
+@media (max-width: 800px) {
+    body.theme-light .app.chatgpt-layout::before {
+        filter: saturate(2.5) contrast(1.32) brightness(1.10) !important;
+    }
+    body.theme-light .app.chatgpt-layout > .main .welcome-screen {
+        background: rgba(250,253,251,.64) !important;
+    }
+}
