@@ -1885,6 +1885,7 @@ def admin_health():
             "message": "تعذر الاتصال بقاعدة البيانات: " + str(error)[:180]
         }
 
+    provider = "gemini"
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     if gemini_key:
         checks["gemini"] = {
@@ -1894,7 +1895,7 @@ def admin_health():
     else:
         checks["gemini"] = {
             "status": "warning",
-            "message": "مفتاح GEMINI_API_KEY غير موجود في إعدادات الاستضافة."
+            "message": "مفتاح GEMINI_API_KEY غير موجود في إعدادات الاستضافة. لن تعمل الردود الذكية قبل إضافته."
         }
 
     directory = os.path.dirname(os.path.abspath(DB)) or "."
