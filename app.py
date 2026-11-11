@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import psycopg
 import io
 import time
 import secrets
@@ -47,17 +48,22 @@ DB = os.getenv(
 # =========================================================
 
 def db():
-    connection = sqlite3.connect(
-        DB,
-        timeout=20
-    )
+    database_url = os.getenv("DATABASE_URL", "").strip()
 
+    if database_url:
+        from db_adapter import connect_database
+        return connect_database(database_url)
+
+    # Vercel's deployment filesystem is read-only and ephemeral.
+    # Never silently create a local SQLite database in production.
+    if os.getenv("VERCEL") == "1":
+        raise RuntimeError(
+            "DATABASE_URL is missing. Configure the Supabase transaction-pooler URI in Vercel."
+        )
+
+    connection = sqlite3.connect(DB, timeout=20)
     connection.row_factory = sqlite3.Row
-
-    connection.execute(
-        "PRAGMA foreign_keys = ON"
-    )
-
+    connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
 
@@ -748,7 +754,7 @@ def register():
             (email,)
         ).fetchone()
 
-    except sqlite3.IntegrityError:
+    except (sqlite3.IntegrityError, psycopg.IntegrityError):
 
         c.close()
 
@@ -1714,7 +1720,7 @@ def update_user(uid):
                     )
                 )
 
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, psycopg.IntegrityError):
 
                 c.close()
 
