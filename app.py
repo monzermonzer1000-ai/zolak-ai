@@ -1059,7 +1059,7 @@ def chat():
         client = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
-                timeout=3000,
+                timeout=10000,
                 retry_options=types.HttpRetryOptions(
                     attempts=1,
                     initial_delay=0.8,
@@ -2066,7 +2066,7 @@ def admin_ai_test():
         # occupy a Vercel function until the platform's hard timeout.
         client = genai.Client(
             api_key=api_key,
-            http_options=types.HttpOptions(timeout=3000)
+            http_options=types.HttpOptions(timeout=10000)
         )
         response = client.models.generate_content(
             model=model,
