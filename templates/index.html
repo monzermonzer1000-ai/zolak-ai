@@ -16,7 +16,7 @@
 
     <!-- Main Design -->
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}?v=13">
+          href="{{ url_for('static', filename='style.css') }}?v=14">
 
     <style>
         :root {
@@ -56,6 +56,7 @@
             border-right: 3px solid var(--zolak-primary);
         }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='mobile-fixes.css') }}?v=1">
 </head>
 
 <body class="{% if theme == 'light' %}theme-light{% else %}theme-dark{% endif %}">
@@ -295,7 +296,7 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=12"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=13"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
