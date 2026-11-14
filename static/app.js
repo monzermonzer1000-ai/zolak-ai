@@ -593,6 +593,7 @@ async function openConversation(conversationId) {
         }
 
         currentConversationId = Number(conversationId);
+        if (homeQuickActions) homeQuickActions.hidden = true;
 
         if (messages) {
             messages.innerHTML = "";
@@ -621,6 +622,7 @@ async function openConversation(conversationId) {
 
 function showWelcome(focusInput = true) {
     if (!messages) return;
+    if (homeQuickActions) homeQuickActions.hidden = false;
 
     messages.innerHTML = `
         <div class="welcome-screen">
@@ -697,6 +699,7 @@ async function sendMessage() {
     if (!question) return;
 
     isSending = true;
+    if (homeQuickActions) homeQuickActions.hidden = true;
 
     addMessage(question, "user");
     promptBox.value = "";
@@ -757,6 +760,14 @@ async function sendMessage() {
         if (promptBox) promptBox.focus();
     }
 }
+
+const composerInner = document.querySelector(".composer-inner");
+function updateComposerMode() {
+    if (!composerInner || !promptBox) return;
+    composerInner.classList.toggle("has-text", Boolean(promptBox.value.trim()));
+}
+if (promptBox) promptBox.addEventListener("input", updateComposerMode);
+updateComposerMode();
 
 /* =========================
    SEND BUTTON
