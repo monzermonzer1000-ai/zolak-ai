@@ -3,7 +3,7 @@
 const CACHE_NAME = "zolak-ai-assets-v16";
 const ASSETS = [
   "/manifest.json",
-  "/static/style.css?v=16",
+  "/static/style.css?v=20",
   "/static/mobile-fixes.css?v=1",
   "/static/performance.css?v=1",
   "/static/app.js?v=19",
