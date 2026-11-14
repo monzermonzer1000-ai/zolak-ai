@@ -956,7 +956,7 @@ def chat():
 
     allowed_mimes = {
         "image/jpeg", "image/png", "image/webp", "image/gif",
-        "application/pdf", "text/plain", "text/markdown", "text/csv"
+        "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "text/markdown", "text/csv"
     }
     attachments = []
     total_bytes = 0
@@ -983,6 +983,9 @@ def chat():
             return jsonify(error="إجمالي حجم المرفقات يجب ألا يتجاوز 2.5 ميجابايت."), 413
         if mime_type == "application/pdf" and not file_bytes.startswith(b"%PDF-"):
             return jsonify(error="الملف لا يبدو مستند PDF صالحاً."), 400
+        if mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            if not file_bytes.startswith(b"PK"):
+                return jsonify(error="الملف لا يبدو مستند Word صالحاً."), 400
         if mime_type.startswith("image/"):
             signatures = {
                 "image/jpeg": file_bytes.startswith(b"\xff\xd8\xff"),
@@ -998,8 +1001,25 @@ def chat():
                 text_content = file_bytes.decode("utf-8-sig")
             except UnicodeDecodeError:
                 return jsonify(error="الملف النصي يجب أن يكون بترميز UTF-8."), 400
-            if len(text_content) > 100_000:
-                return jsonify(error="الملف النصي طويل جداً. الحد 100 ألف حرف."), 413
+        elif mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            import zipfile
+            import xml.etree.ElementTree as ET
+            try:
+                with zipfile.ZipFile(io.BytesIO(file_bytes)) as docx:
+                    info = docx.getinfo("word/document.xml")
+                    if info.file_size > 4_000_000:
+                        return jsonify(error="مستند Word يحتوي على نص أكبر من الحد المسموح."), 413
+                    document_xml = docx.read("word/document.xml")
+                root = ET.fromstring(document_xml)
+                text_content = "\n".join(
+                    " ".join(part.strip() for part in paragraph.itertext() if part.strip())
+                    for paragraph in root.iter()
+                    if paragraph.tag.endswith("}p")
+                )
+            except (KeyError, zipfile.BadZipFile, ET.ParseError, OSError):
+                return jsonify(error="تعذر قراءة مستند Word. تأكد أنه ملف DOCX سليم."), 400
+        if text_content is not None and len(text_content) > 100_000:
+            return jsonify(error="الملف النصي طويل جداً. الحد 100 ألف حرف."), 413
         attachments.append({
             "name": name,
             "mime_type": mime_type,
