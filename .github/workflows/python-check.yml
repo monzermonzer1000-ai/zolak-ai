@@ -95,7 +95,7 @@ jobs:
           # Missing API keys must produce a clear configuration error.
           ai = client.post("/api/chat", json={"message": "اختبار"})
           assert ai.status_code == 503, ai.get_json()
-          assert "GEMINI_API_KEY" in ai.get_json().get("error", "")
+          assert "مفتاح Gemini" in ai.get_json().get("error", "")
 
           # Mock Gemini so CI can exercise a successful response without
           # storing or spending a real API key.
