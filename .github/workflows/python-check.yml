@@ -118,7 +118,7 @@ jobs:
                   return SimpleNamespace(text="رد تجريبي من زولك AI")
 
           class FakeClient:
-              def __init__(self, api_key):
+              def __init__(self, api_key, http_options=None):
                   self.models = FakeModels()
 
           google_module = pytypes.ModuleType("google")
