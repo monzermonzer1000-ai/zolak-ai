@@ -56,7 +56,7 @@ jobs:
           assert client.get("/health").status_code == 200
           assert client.get("/manifest.json").status_code == 200
           assert client.get("/sw.js").status_code == 200
-          assert "zolak-ai-assets-v19" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v20" in client.get("/sw.js").get_data(as_text=True)
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=1" in home_html
