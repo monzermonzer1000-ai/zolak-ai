@@ -16,7 +16,7 @@
 
     <!-- Main Design -->
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}?v=17">
+          href="{{ url_for('static', filename='style.css') }}?v=20">
 
     <style>
         :root {
@@ -64,169 +64,83 @@
 
 <div class="app chatgpt-layout">
 
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR: ChatGPT-inspired mobile drawer -->
     <aside class="sidebar">
-
-        <div class="brand">
-
-            <div class="brand-logo brand-icon">
-                {% if logo_url %}
-                    <img
-                        src="{{ logo_url }}"
-                        alt="{{ site_name or 'زولك AI' }}"
-                        class="custom-logo">
-                {% else %}
-                    Z
-                {% endif %}
-            </div>
-
-            <div class="brand-text">
-                <strong>{{ site_name or "زولك AI" }}</strong>
-
-                <span>
-                    {{ homepage_subtitle or site_description or "مساعدك السوداني 🇸🇩" }}
-                </span>
-            </div>
-
+        <div class="sidebar-top">
+            <button class="sidebar-search-button" id="sidebarSearch" type="button" aria-label="بحث في المحادثات" title="بحث">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg>
+            </button>
+            <div class="sidebar-brand-name">{{ site_name or "زولك AI" }}</div>
         </div>
 
-        <!-- NEW CHAT -->
-        <button class="new-chat" id="newChat" type="button">
-            <span class="new-chat-icon">＋</span>
-            <span>محادثة جديدة</span>
-        </button>
+        <nav class="sidebar-tools" aria-label="أدوات زولك">
+            <button class="sidebar-tool" type="button" data-tool="images">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="14" height="14" rx="3"></rect><path d="m7 16 3-3 2 2 2-2 3 3M8 4h10a3 3 0 0 1 3 3v10"></path><circle cx="12" cy="11" r="1"></circle></svg><span>الصور</span>
+            </button>
+            <button class="sidebar-tool" type="button" data-tool="library">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5 9 3l2 17-4 1.5zM12 3h4l2 18h-4zM19 3h2v18h-2z"></path></svg><span>المكتبة</span>
+            </button>
+            <button class="sidebar-tool" type="button" data-tool="customize">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2.5"></circle><circle cx="9" cy="17" r="2.5"></circle></svg><span>تخصيص</span>
+            </button>
+            <button class="sidebar-tool" type="button" data-tool="projects">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M3 10h18"></path></svg><span>المشروعات</span>
+            </button>
+            <button class="sidebar-tool" type="button" data-tool="remote">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="13" rx="2"></rect><path d="M8 20h8M12 16v4M5 23h.01M9 23h.01M13 23h.01M17 23h.01M21 23h.01"></path></svg><span>التحكم عن بعد</span>
+            </button>
+            <button class="sidebar-tool" type="button" data-tool="explore">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><path d="m17.5 13 4 4-4 4-4-4z"></path></svg><span>استكشاف</span>
+            </button>
+        </nav>
 
-        <!-- CONVERSATION HISTORY -->
-        <div class="conversation-list" id="conversationList">
+        <section class="sidebar-pinned">
+            <div class="sidebar-section-label">مثبت</div>
+        </section>
 
-            <div class="conversation-list-title">
-                محادثاتك
-            </div>
-
-            <label class="conversation-search" for="conversationSearch">
-                <span aria-hidden="true">⌕</span>
-                <input
-                    id="conversationSearch"
-                    type="search"
-                    placeholder="ابحث في محادثاتك..."
-                    autocomplete="off"
-                    aria-label="ابحث في المحادثات">
-            </label>
-
+        <section class="conversation-list sidebar-history" id="conversationList">
+            <div class="conversation-list-title">الدردشات</div>
             <div class="conversation-items" id="conversationItems"></div>
+        </section>
 
-        </div>
-
-        <!-- NAVIGATION -->
-        <div class="sidebar-section">
-
-            <span class="sidebar-heading">
-                القائمة الرئيسية
-            </span>
-
-            <nav class="sidebar-links">
-
-                <a href="/" class="sidebar-link active">
-                    <span class="nav-icon">⌂</span>
-                    <span>الرئيسية</span>
-                </a>
-
-                <a href="/login" id="loginLink" class="sidebar-link">
-                    <span class="nav-icon">♙</span>
-                    <span>تسجيل الدخول</span>
-                </a>
-
-                <a href="/admin" id="adminLink"
-                   class="sidebar-link" hidden>
-                    <span class="nav-icon">⚙</span>
-                    <span>لوحة المدير</span>
-                </a>
-
-                <a href="/logout" id="logout"
-                   class="sidebar-link" hidden>
-                    <span class="nav-icon">⇥</span>
-                    <span>تسجيل الخروج</span>
-                </a>
-
-            </nav>
-
-        </div>
-
-        <div class="sidebar-spacer"></div>
-
-        <!-- ACCOUNT -->
-        <div class="account-box account sidebar-bottom">
-
-            <div class="account-avatar">ز</div>
-
-            <div class="account-info">
-
-                <div id="who" class="account-name">
-                    يا زول 👋
+        <div class="sidebar-bottom">
+            <div class="account-box account">
+                <div class="account-avatar">ز</div>
+                <div class="account-info">
+                    <div id="who" class="account-name">يا زول 👋</div>
+                    <div id="credits" class="account-credits">سجّل دخولك للبدء</div>
                 </div>
-
-                <div id="credits" class="account-credits">
-                    سجّل دخولك للبدء
-                </div>
-
+                <span class="account-status" aria-hidden="true"></span>
             </div>
-
-            <span class="account-status" aria-hidden="true"></span>
-
+            <button class="new-chat" id="newChat" type="button">
+                <span>الدردشة</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"></path></svg>
+            </button>
+            <div class="sidebar-account-links">
+                <a href="/" class="sidebar-link active"><span class="nav-icon">⌂</span><span>الرئيسية</span></a>
+                <a href="/login" id="loginLink" class="sidebar-link"><span class="nav-icon">♙</span><span>تسجيل الدخول</span></a>
+                <a href="/admin" id="adminLink" class="sidebar-link" hidden><span class="nav-icon">⚙</span><span>لوحة المدير</span></a>
+                <a href="/logout" id="logout" class="sidebar-link" hidden><span class="nav-icon">⇥</span><span>تسجيل الخروج</span></a>
+            </div>
         </div>
-
-        <!-- FOOTER -->
-        <div class="sidebar-footer">
-            <span>{{ site_name or "زولك AI" }} — صُنع في السودان</span>
-            <span>🇸🇩</span>
-        </div>
-
     </aside>
 
     <!-- MAIN APPLICATION -->
     <main class="main main-chat">
 
-        <!-- HEADER -->
+        <!-- CHATGPT-INSPIRED MOBILE HEADER -->
         <header class="topbar chat-navbar">
-
-            <div class="topbar-right">
-
-                <button
-                    class="mobile-menu"
-                    id="mobileMenu"
-                    type="button"
-                    aria-label="فتح القائمة"
-                    aria-expanded="false"
-                    title="القائمة">
-                    ☰
+            <div class="home-header-side home-header-left">
+                <button class="home-icon-button" id="historyButton" type="button" aria-label="المحادثات الأخيرة">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 0 1 13.6-5.7L20 7.5M20 3.5v4h-4M20 13a8 8 0 0 1-13.6 5.7L4 16.5M4 20.5v-4h4"></path></svg>
                 </button>
-
-                <div class="mobile-brand">
-
-                    <span class="mobile-brand-logo">
-                        {% if logo_url %}
-                            <img
-                                src="{{ logo_url }}"
-                                alt="{{ site_name or 'زولك AI' }}"
-                                class="custom-logo">
-                        {% else %}
-                            Z
-                        {% endif %}
-                    </span>
-
-                    <strong>{{ site_name or "زولك AI" }}</strong>
-
-                    <span class="sudan-badge">🇸🇩</span>
-
-                </div>
-
             </div>
-
-            <div class="topbar-left">
-                <span class="online-indicator"></span>
-                <span class="assistant-status">مساعدك الذكي</span>
+            <button class="plus-subscribe" id="plusSubscribe" type="button"><span class="plus-sparkle">✦</span><span>اشترك في <b>زولاك بلس</b></span></button>
+            <div class="home-header-side home-header-right">
+                <button class="home-icon-button" id="mobileMenu" type="button" aria-label="فتح القائمة" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"></path></svg>
+                </button>
             </div>
-
         </header>
 
         <!-- CHAT MESSAGES -->
@@ -267,42 +181,23 @@
 
         </section>
 
-        <!-- MESSAGE COMPOSER -->
+        <div class="home-quick-actions" id="homeQuickActions">
+            <button class="home-quick-action" type="button" data-prompt="ساعدني في إنشاء صورة أو ملصق عن: ">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg><span>إنشاء صورة أو ملصق</span>
+            </button>
+            <button class="home-quick-action" type="button" data-prompt="ساعدني في كتابة أو تحرير النص التالي: ">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5 5 5M4 20l4.2-.8L20 7.4a2.1 2.1 0 0 0-3-3L5.2 16.2 4 20z"></path></svg><span>الكتابة أو التحرير</span>
+            </button>
+        </div>
         <div class="composer composer-area">
-
             <div class="composer-inner">
-
-                <textarea
-                    id="prompt"
-                    placeholder="اكتب رسالتك هنا..."
-                    rows="1"
-                    aria-label="اكتب رسالتك"></textarea>
-
-                <button
-                    id="send"
-                    type="button"
-                    aria-label="إرسال الرسالة"
-                    title="إرسال">
-
-                    <span class="send-icon">↑</span>
-
-                </button>
-
+                <button class="composer-icon-button composer-add" id="composerAdd" type="button" aria-label="إضافة"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
+                <textarea id="prompt" placeholder="اسأل زولك AI" rows="1" aria-label="اكتب رسالتك"></textarea>
+                <button class="composer-icon-button composer-mic" id="composerMic" type="button" aria-label="الإملاء الصوتي"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v4M9 22h6"></path></svg></button>
+                <button class="composer-voice" id="composerVoice" type="button" aria-label="الصوت"><span>الصوت</span><svg viewBox="0 0 24 24"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 6v12M22 10v4"></path></svg></button>
+                <button id="send" type="button" aria-label="إرسال الرسالة" title="إرسال"><span class="send-icon">↑</span></button>
             </div>
-
-            <div class="composer-note">
-
-                <span>
-                    {{ site_name or "زولك AI" }}
-                 ، راجع المعلومات المهمة.
-                </span>
-
-                <span class="composer-flag">
-                    صُنع في السودان 🇸🇩
-                </span>
-
-            </div>
-
+            <div class="composer-note"><span>زولك AI قد يخطئ، راجع المعلومات المهمة.</span><span class="composer-flag">صُنع في السودان 🇸🇩</span></div>
         </div>
 
     </main>
@@ -310,7 +205,7 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=15"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=18"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
