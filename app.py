@@ -985,8 +985,8 @@ def chat():
             return jsonify(error="الملف لا يبدو مستند PDF صالحاً."), 400
         if mime_type.startswith("image/"):
             signatures = {
-                "image/jpeg": file_bytes.startswith(b"\\xff\\xd8\\xff"),
-                "image/png": file_bytes.startswith(b"\\x89PNG\\r\\n\\x1a\\n"),
+                "image/jpeg": file_bytes.startswith(b"\xff\xd8\xff"),
+                "image/png": file_bytes.startswith(b"\x89PNG\r\n\x1a\n"),
                 "image/gif": file_bytes.startswith((b"GIF87a", b"GIF89a")),
                 "image/webp": len(file_bytes) > 12 and file_bytes[:4] == b"RIFF" and file_bytes[8:12] == b"WEBP"
             }
