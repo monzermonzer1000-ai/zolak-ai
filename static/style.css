@@ -2001,3 +2001,76 @@ body.theme-light .app.chatgpt-layout > .main .composer-inner {
         padding: 10px;
     }
 }
+
+
+/* Sidebar refinement: clean recent list and contextual conversation actions */
+.conversation-list-title {
+    padding: 14px 10px 8px;
+    color: #a9c5b9;
+    font-size: 12px;
+    font-weight: 700;
+}
+.conversation-item {
+    position: relative;
+    min-height: 40px;
+    padding: 3px 5px;
+    border-radius: 9px;
+}
+.conversation-title {
+    min-height: 34px;
+    font-size: 13px;
+}
+.conversation-more {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 8px;
+    color: #b7cec4;
+    background: transparent;
+    font-size: 21px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity .15s ease, background .15s ease;
+}
+.conversation-item:hover .conversation-more,
+.conversation-item:focus-within .conversation-more,
+.conversation-item.active .conversation-more {
+    opacity: 1;
+}
+.conversation-more:hover {
+    color: #fff;
+    background: rgba(255,255,255,.12);
+}
+.conversation-menu {
+    position: absolute;
+    z-index: 80;
+    top: 34px;
+    left: 4px;
+    display: flex;
+    flex-direction: column;
+    min-width: 150px;
+    padding: 5px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 11px;
+    background: #102a22;
+    box-shadow: 0 12px 30px rgba(0,0,0,.32);
+}
+.conversation-menu[hidden] { display: none !important; }
+.conversation-menu-action {
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 7px;
+    color: #edf8f2;
+    background: transparent;
+    text-align: right;
+    font-size: 12px;
+}
+.conversation-menu-action:hover { background: rgba(255,255,255,.10); }
+.conversation-menu-action.danger { color: #ffb4b4; }
+@media (max-width: 800px) {
+    .conversation-more { opacity: 1; }
+}
