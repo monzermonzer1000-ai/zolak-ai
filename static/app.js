@@ -136,6 +136,48 @@ if (sidebar) {
     });
 }
 
+
+/* HOME HEADER + COMPOSER CONTROLS */
+const historyButton = document.getElementById("historyButton");
+if (historyButton) historyButton.addEventListener("click", openSidebar);
+function showSidebarNotice(message) {
+    let notice = document.querySelector(".sidebar-feature-notice");
+    if (!notice) { notice = document.createElement("div"); notice.className = "sidebar-feature-notice"; document.body.appendChild(notice); }
+    notice.textContent = message; notice.hidden = false;
+    window.clearTimeout(notice._hideTimer);
+    notice._hideTimer = window.setTimeout(function () { notice.hidden = true; }, 2400);
+}
+const plusSubscribe = document.getElementById("plusSubscribe");
+if (plusSubscribe) plusSubscribe.addEventListener("click", function () { showSidebarNotice("اشتراك زولاك بلس قيد التجهيز."); });
+document.querySelectorAll(".home-quick-action").forEach(function (button) {
+    button.addEventListener("click", function () {
+        if (!promptBox) return;
+        promptBox.value = button.dataset.prompt || "";
+        promptBox.focus();
+        promptBox.setSelectionRange(promptBox.value.length, promptBox.value.length);
+    });
+});
+const composerAdd = document.getElementById("composerAdd");
+if (composerAdd) composerAdd.addEventListener("click", function () { showSidebarNotice("إرفاق الصور والملفات قيد التطوير."); });
+const composerMic = document.getElementById("composerMic");
+if (composerMic) composerMic.addEventListener("click", function () {
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) { showSidebarNotice("الإملاء الصوتي غير مدعوم في المتصفح الحالي."); return; }
+    const recognition = new Recognition(); recognition.lang = "ar"; recognition.interimResults = false;
+    composerMic.classList.add("is-listening");
+    recognition.onresult = function (event) { promptBox.value = (promptBox.value ? promptBox.value + " " : "") + event.results[0][0].transcript; promptBox.focus(); };
+    recognition.onerror = function () { showSidebarNotice("ما قدرنا نلتقط الصوت. حاول تاني."); };
+    recognition.onend = function () { composerMic.classList.remove("is-listening"); };
+    try { recognition.start(); } catch (error) { composerMic.classList.remove("is-listening"); }
+});
+const composerVoice = document.getElementById("composerVoice");
+if (composerVoice) composerVoice.addEventListener("click", function () {
+    const last = messages ? Array.from(messages.querySelectorAll(".message.assistant .message-content")).pop() : null;
+    if (!last) { showSidebarNotice("لما يوصلك رد، اضغط هنا لسماعه بالصوت."); return; }
+    if (!("speechSynthesis" in window)) { showSidebarNotice("قراءة الرد صوتياً غير مدعومة."); return; }
+    window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(last.textContent); utterance.lang = "ar"; window.speechSynthesis.speak(utterance);
+});
+
 /* =========================
    MESSAGES
 ========================= */
