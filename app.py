@@ -1058,7 +1058,17 @@ def chat():
         # occupy a Vercel function until the platform's hard timeout.
         client = genai.Client(
             api_key=api_key,
-            http_options=types.HttpOptions(timeout=45000)
+            http_options=types.HttpOptions(
+                timeout=45000,
+                retry_options=types.HttpRetryOptions(
+                    attempts=2,
+                    initial_delay=0.8,
+                    max_delay=2.0,
+                    exp_base=2.0,
+                    jitter=0.2,
+                    http_status_codes=[500, 502, 503, 504]
+                )
+            )
         )
         model = setting("ai_model", "gemini-3.8-flash").strip()
         if not model.startswith("gemini-"):
@@ -1080,15 +1090,43 @@ def chat():
             )
         )
 
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.7,
-                max_output_tokens=2048
-            )
+        generation_config = types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            temperature=0.7,
+            max_output_tokens=2048
         )
+
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=generation_config
+            )
+        except Exception as primary_error:
+            primary_error_text = str(primary_error).upper()
+            is_temporary_overload = (
+                "503" in primary_error_text
+                or "UNAVAILABLE" in primary_error_text
+                or "HIGH DEMAND" in primary_error_text
+            )
+            fallback_model = os.getenv(
+                "GEMINI_FALLBACK_MODEL",
+                "gemini-3.5-flash-lite"
+            ).strip()
+
+            if not is_temporary_overload or not fallback_model.startswith("gemini-") or fallback_model == model:
+                raise
+
+            app.logger.warning(
+                "Primary Gemini model %s is temporarily unavailable; trying fallback model %s",
+                model,
+                fallback_model
+            )
+            response = client.models.generate_content(
+                model=fallback_model,
+                contents=contents,
+                config=generation_config
+            )
         answer = (response.text or "").strip()
 
         if not answer:
