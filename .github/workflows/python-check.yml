@@ -89,6 +89,14 @@ jobs:
           opened = client.get(f"/api/conversations/{conversation_id}")
           assert opened.status_code == 200, opened.get_json()
 
+          # Pin/unpin must persist and appear in the dedicated list data.
+          pinned = client.patch(f"/api/conversations/{conversation_id}", json={"is_pinned": True})
+          assert pinned.status_code == 200, pinned.get_json()
+          listed = client.get("/api/conversations").get_json()["conversations"]
+          assert any(row["id"] == conversation_id and row["is_pinned"] for row in listed)
+          unpinned = client.patch(f"/api/conversations/{conversation_id}", json={"is_pinned": False})
+          assert unpinned.status_code == 200, unpinned.get_json()
+
           deleted = client.delete(f"/api/conversations/{conversation_id}")
           assert deleted.status_code == 200, deleted.get_json()
 
@@ -127,6 +135,11 @@ jobs:
                       raise RuntimeError(self.primary_error)
                   return SimpleNamespace(text="رد تجريبي من زولك AI")
 
+              def generate_content_stream(self, **kwargs):
+                  if self.fail_primary and kwargs.get("model") == "gemini-3.8-flash":
+                      raise RuntimeError(self.primary_error)
+                  yield SimpleNamespace(text="رد تجريبي من زولك AI")
+
           class FakeClient:
               def __init__(self, api_key, http_options=None):
                   self.models = FakeModels()
@@ -147,25 +160,42 @@ jobs:
           sys.modules["google.genai.types"] = genai_types
           os.environ["GEMINI_API_KEY"] = "ci-fake-key"
 
+          import json
+
+          def parse_sse(response):
+              events = []
+              for block in response.get_data(as_text=True).split("\\n\\n"):
+                  event_name = None
+                  data_line = None
+                  for line in block.splitlines():
+                      if line.startswith("event: "):
+                          event_name = line[7:]
+                      elif line.startswith("data: "):
+                          data_line = line[6:]
+                  if event_name and data_line:
+                      events.append((event_name, json.loads(data_line)))
+              return events
+
           ai_ok = client.post("/api/chat", json={"message": "اختبار الرد"})
-          assert ai_ok.status_code == 200, ai_ok.get_json()
-          assert ai_ok.get_json().get("answer") == "رد تجريبي من زولك AI"
+          assert ai_ok.status_code == 200
+          ok_events = parse_sse(ai_ok)
+          assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in ok_events)
+          conversation_id = next(payload["conversation_id"] for name, payload in ok_events if name == "meta")
 
           # A temporary 503 from the primary model must use the lighter fallback.
           FakeModels.fail_primary = True
           ai_fallback = client.post("/api/chat", json={"message": "اختبار الموديل الاحتياطي"})
           FakeModels.fail_primary = False
-          assert ai_fallback.status_code == 200, ai_fallback.get_json()
-          assert ai_fallback.get_json().get("answer") == "رد تجريبي من زولك AI"
+          assert ai_fallback.status_code == 200
+          assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in parse_sse(ai_fallback))
 
           # A deadline timeout from the primary model must also use fallback.
           FakeModels.primary_error = "504 DEADLINE_EXCEEDED: upstream deadline"
+          FakeModels.fail_primary = True
           ai_timeout_fallback = client.post("/api/chat", json={"message": "اختبار مهلة الموديل"})
           FakeModels.fail_primary = False
-          assert ai_timeout_fallback.status_code == 200, ai_timeout_fallback.get_json()
-          assert ai_timeout_fallback.get_json().get("answer") == "رد تجريبي من زولك AI"
-
-          conversation_id = ai_ok.get_json()["conversation_id"]
+          assert ai_timeout_fallback.status_code == 200
+          assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in parse_sse(ai_timeout_fallback))
 
           history = client.get(f"/api/conversations/{conversation_id}")
           assert history.status_code == 200, history.get_json()
