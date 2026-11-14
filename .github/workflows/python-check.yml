@@ -160,6 +160,24 @@ jobs:
           assert ai_test.status_code == 200, ai_test.get_json()
           assert ai_test.get_json()["answer"] == "رد تجريبي من زولك AI"
 
+          # Administrator role changes must persist, and the active/last admin
+          # must not be able to remove their own access.
+          promoted = client.patch(f"/api/admin/user/{user_id}", json={"is_admin": True})
+          assert promoted.status_code == 200, promoted.get_json()
+          users_after_promotion = client.get("/api/admin/users").get_json()["users"]
+          promoted_user = next(user for user in users_after_promotion if user["id"] == user_id)
+          assert promoted_user["is_admin"] in (1, True)
+
+          demoted = client.patch(f"/api/admin/user/{user_id}", json={"is_admin": False})
+          assert demoted.status_code == 200, demoted.get_json()
+          users_after_demotion = client.get("/api/admin/users").get_json()["users"]
+          demoted_user = next(user for user in users_after_demotion if user["id"] == user_id)
+          assert demoted_user["is_admin"] in (0, False)
+
+          admin_id = client.get("/api/me").get_json()["id"]
+          self_demote = client.patch(f"/api/admin/user/{admin_id}", json={"is_admin": False})
+          assert self_demote.status_code == 400, self_demote.get_json()
+
           # Administrator settings and backup must include conversations.
           settings = client.get("/api/admin/settings")
           assert settings.status_code == 200, settings.get_json()
@@ -169,8 +187,11 @@ jobs:
           })
           assert saved.status_code == 200, saved.get_json()
 
+          # The backup download endpoint must return an actual attachment.
           backup = client.get("/api/admin/backup/download")
           assert backup.status_code == 200
+          assert "attachment" in backup.headers.get("Content-Disposition", "").lower()
+          assert "zolak-ai-backup.json" in backup.headers.get("Content-Disposition", "")
           import json
           backup_data = json.loads(backup.data.decode("utf-8"))
           assert "conversations" in backup_data
@@ -186,6 +207,15 @@ jobs:
           assert unbanned.status_code == 200, unbanned.get_json()
           deleted_user = client.delete(f"/api/admin/user/{user_id}")
           assert deleted_user.status_code == 200, deleted_user.get_json()
+
+          # The new-chat welcome screen must use the admin-configured copy.
+          home_source = open("templates/index.html", encoding="utf-8").read()
+          app_source = open("static/app.js", encoding="utf-8").read()
+          admin_source = open("templates/admin.html", encoding="utf-8").read()
+          assert 'data-welcome="{{ welcome or' in home_source
+          assert 'messages.dataset.welcome' in app_source
+          assert 'messages.dataset.homeTitle' in app_source
+          assert '"/api/admin/backup/download"' in admin_source
 
           print("Zolak AI smoke tests passed.")
           PY
