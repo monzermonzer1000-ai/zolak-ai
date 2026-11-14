@@ -9,6 +9,8 @@ const sendButton = document.getElementById("send");
 const messages = document.getElementById("messages");
 const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
+const conversationSearch = document.getElementById("conversationSearch");
+let conversationSearchTimer = null;
 
 let currentConversationId = null;
 let isSending = false;
@@ -196,12 +198,12 @@ function getConversationItems() {
     return items;
 }
 
-async function loadConversations() {
+async function loadConversations(searchTerm = "") {
     const items = getConversationItems();
     if (!items) return;
 
     try {
-        const response = await fetch("/api/conversations");
+        const response = await fetch("/api/conversations" + (searchTerm ? "?q=" + encodeURIComponent(searchTerm) : ""));
 
         if (response.status === 401) return;
 
@@ -212,7 +214,7 @@ async function loadConversations() {
 
         if (conversations.length === 0) {
             const empty = document.createElement("div");
-            empty.textContent = "ما عندك محادثات محفوظة";
+            empty.textContent = searchTerm ? "ما لقينا محادثات مطابقة للبحث" : "ما عندك محادثات محفوظة";
             empty.className = "conversation-empty";
             items.appendChild(empty);
             return;
@@ -230,6 +232,35 @@ async function loadConversations() {
             title.type = "button";
             title.className = "conversation-title";
             title.textContent = conversation.title || "محادثة جديدة";
+
+            const renameButton = document.createElement("button");
+            renameButton.type = "button";
+            renameButton.className = "conversation-rename";
+            renameButton.textContent = "✎";
+            renameButton.title = "إعادة تسمية المحادثة";
+            renameButton.setAttribute("aria-label", "إعادة تسمية المحادثة");
+
+            renameButton.addEventListener("click", async function (event) {
+                event.stopPropagation();
+                const nextTitle = prompt("اكتب الاسم الجديد للمحادثة:", conversation.title || "");
+                if (nextTitle === null || !nextTitle.trim()) return;
+                try {
+                    const renameResponse = await fetch("/api/conversations/" + conversation.id, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ title: nextTitle.trim() })
+                    });
+                    const result = await renameResponse.json();
+                    if (!renameResponse.ok) {
+                        alert(result.error || "ما قدرنا نغيّر اسم المحادثة.");
+                        return;
+                    }
+                    await loadConversations(conversationSearch ? conversationSearch.value.trim() : "");
+                } catch (error) {
+                    console.error("خطأ في إعادة تسمية المحادثة:", error);
+                    alert("حصل خطأ، حاول تاني.");
+                }
+            });
 
             const deleteButton = document.createElement("button");
             deleteButton.type = "button";
@@ -273,6 +304,7 @@ async function loadConversations() {
             });
 
             item.appendChild(title);
+            item.appendChild(renameButton);
             item.appendChild(deleteButton);
             items.appendChild(item);
         });
@@ -487,6 +519,29 @@ if (promptBox) {
         }
     });
 }
+
+/* =========================
+   CONVERSATION SEARCH
+========================= */
+
+if (conversationSearch) {
+    conversationSearch.addEventListener("input", function () {
+        window.clearTimeout(conversationSearchTimer);
+        conversationSearchTimer = window.setTimeout(function () {
+            loadConversations(conversationSearch.value.trim());
+        }, 250);
+    });
+}
+
+document.addEventListener("keydown", function (event) {
+    const isSearchShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
+    if (!isSearchShortcut) return;
+    event.preventDefault();
+    if (conversationSearch) {
+        conversationSearch.focus();
+        conversationSearch.select();
+    }
+});
 
 /* =========================
    INITIALIZE
