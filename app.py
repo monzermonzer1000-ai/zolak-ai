@@ -1763,7 +1763,31 @@ def update_user(uid):
             TypeError
         ):
 
-            pass
+            c.close()
+            return jsonify(error="الرصيد غير صحيح."), 400
+
+    if "is_admin" in data:
+        requested_admin = data["is_admin"] in (
+            True, 1, "1", "true", "True", "TRUE"
+        )
+        current_admin = bool(user["is_admin"])
+
+        if uid == session.get("uid") and requested_admin != current_admin:
+            c.close()
+            return jsonify(error="ما ممكن تغيّر صلاحية حساب المدير المستخدم حالياً."), 400
+
+        if current_admin and not requested_admin:
+            admin_count = c.execute(
+                "SELECT COUNT(*) AS n FROM users WHERE is_admin = 1"
+            ).fetchone()["n"]
+            if admin_count <= 1:
+                c.close()
+                return jsonify(error="لا يمكن سحب صلاحية آخر مدير في النظام."), 400
+
+        c.execute(
+            "UPDATE users SET is_admin = ? WHERE id = ?",
+            (1 if requested_admin else 0, uid)
+        )
 
     c.commit()
     c.close()

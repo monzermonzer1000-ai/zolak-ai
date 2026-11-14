@@ -334,11 +334,19 @@ function showWelcome(focusInput = true) {
     messages.innerHTML = `
         <div class="welcome-screen">
             <div class="welcome-logo">ز</div>
-            <span class="welcome-eyebrow">أهلاً بيك في زولك AI 🇸🇩</span>
-            <h1>كيف أقدر أساعدك اليوم؟</h1>
-            <p>اسأل، اتعلّم، اكتب، أو ناقش أي فكرة. أنا هنا عشان أساعدك.</p>
+            <span class="welcome-eyebrow"></span>
+            <h1></h1>
+            <p></p>
         </div>
     `;
+
+    const welcome = messages.querySelector(".welcome-eyebrow");
+    const title = messages.querySelector("h1");
+    const subtitle = messages.querySelector("p");
+
+    if (welcome) welcome.textContent = messages.dataset.welcome || "أهلاً بيك في زولك AI 🇸🇩";
+    if (title) title.textContent = messages.dataset.homeTitle || "كيف أقدر أساعدك اليوم؟";
+    if (subtitle) subtitle.textContent = messages.dataset.homeSubtitle || "اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.";
 
     if (promptBox) {
         promptBox.value = "";
