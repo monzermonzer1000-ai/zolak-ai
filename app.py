@@ -2071,11 +2071,22 @@ def backup():
         ).fetchall()
     ]
 
+    conversations_data = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT id, user_id, title, created_at, updated_at
+            FROM conversations
+            """
+        ).fetchall()
+    ]
+
     c.close()
 
     return jsonify(
         users=users,
         chats=chats_data,
+        conversations=conversations_data,
         settings=settings_data
     )
 
@@ -2128,6 +2139,16 @@ def backup_download():
         ).fetchall()
     ]
 
+    conversations_data = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT id, user_id, title, created_at, updated_at
+            FROM conversations
+            """
+        ).fetchall()
+    ]
+
     c.close()
 
     import json
@@ -2138,6 +2159,7 @@ def backup_download():
         ).isoformat(),
         "users": users,
         "chats": chats_data,
+        "conversations": conversations_data,
         "settings": settings_data
     }
 
