@@ -164,7 +164,7 @@ jobs:
 
           def parse_sse(response):
               events = []
-              for block in response.get_data(as_text=True).split("\\n\\n"):
+              for block in response.get_data(as_text=True).split("\n\n"):
                   event_name = None
                   data_line = None
                   for line in block.splitlines():
