@@ -89,6 +89,69 @@ img {
     background-repeat: no-repeat;
 }
 
+/* CONVERSATION SEARCH + ACTIONS */
+
+.conversation-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    margin: 4px 0 12px;
+    padding: 0 11px;
+    border: 1px solid #dce8e2;
+    border-radius: 11px;
+    color: #71827b;
+    background: rgba(255,255,255,.94);
+}
+
+.conversation-search span {
+    flex: 0 0 auto;
+    font-size: 21px;
+    line-height: 1;
+}
+
+.conversation-search input {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 0;
+    border: 0;
+    outline: 0;
+    color: #18332c;
+    background: transparent;
+    font-size: 12px;
+}
+
+.conversation-search input:focus {
+    outline: 0;
+    box-shadow: none;
+}
+
+.conversation-item {
+    gap: 3px;
+}
+
+.conversation-rename,
+.conversation-delete {
+    flex: 0 0 30px;
+    width: 30px;
+    min-width: 30px;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    color: #667a71;
+    background: transparent;
+}
+
+.conversation-rename:hover {
+    color: var(--primary-dark);
+    background: var(--primary-soft);
+}
+
+.conversation-delete:hover {
+    color: #b42318;
+    background: #fff0ee;
+}
+
 /* SIDEBAR */
 
 .sidebar {
