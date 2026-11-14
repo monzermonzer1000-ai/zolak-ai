@@ -89,14 +89,6 @@ jobs:
           opened = client.get(f"/api/conversations/{conversation_id}")
           assert opened.status_code == 200, opened.get_json()
 
-          # Pin/unpin must persist and appear in the dedicated list data.
-          pinned = client.patch(f"/api/conversations/{conversation_id}", json={"is_pinned": True})
-          assert pinned.status_code == 200, pinned.get_json()
-          listed = client.get("/api/conversations").get_json()["conversations"]
-          assert any(row["id"] == conversation_id and row["is_pinned"] for row in listed)
-          unpinned = client.patch(f"/api/conversations/{conversation_id}", json={"is_pinned": False})
-          assert unpinned.status_code == 200, unpinned.get_json()
-
           deleted = client.delete(f"/api/conversations/{conversation_id}")
           assert deleted.status_code == 200, deleted.get_json()
 
@@ -181,6 +173,14 @@ jobs:
           ok_events = parse_sse(ai_ok)
           assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in ok_events)
           conversation_id = next(payload["conversation_id"] for name, payload in ok_events if name == "meta")
+
+          # Pin/unpin must persist and appear in the dedicated list data.
+          pinned = client.patch(f"/api/conversations/{conversation_id}", json={"is_pinned": True})
+          assert pinned.status_code == 200, pinned.get_json()
+          listed = client.get("/api/conversations").get_json()["conversations"]
+          assert any(row["id"] == conversation_id and row["is_pinned"] for row in listed)
+          unpinned = client.patch(f"/api/conversations/{conversation_id}", json={"is_pinned": False})
+          assert unpinned.status_code == 200, unpinned.get_json()
 
           # A temporary 503 from the primary model must use the lighter fallback.
           FakeModels.fail_primary = True
