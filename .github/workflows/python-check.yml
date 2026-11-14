@@ -2,7 +2,7 @@ name: Check Zolak AI
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -66,6 +66,11 @@ jobs:
 
           me = client.get("/api/me").get_json()
           assert me.get("logged_in") is True, me
+          user_id = me["id"]
+
+          # A normal account must never access administrator APIs.
+          forbidden = client.get("/api/admin/stats")
+          assert forbidden.status_code == 403, forbidden.get_json()
 
           created = client.post("/api/conversations", json={})
           assert created.status_code == 200, created.get_json()
@@ -148,6 +153,33 @@ jobs:
           ai_test = client.post("/api/admin/ai-test", json={})
           assert ai_test.status_code == 200, ai_test.get_json()
           assert ai_test.get_json()["answer"] == "رد تجريبي من زولك AI"
+
+          # Administrator settings and backup must include conversations.
+          settings = client.get("/api/admin/settings")
+          assert settings.status_code == 200, settings.get_json()
+          saved = client.post("/api/admin/settings", json={
+              "announcement": "CI announcement",
+              "enable_history": "true"
+          })
+          assert saved.status_code == 200, saved.get_json()
+
+          backup = client.get("/api/admin/backup/download")
+          assert backup.status_code == 200
+          import json
+          backup_data = json.loads(backup.data.decode("utf-8"))
+          assert "conversations" in backup_data
+          assert len(backup_data["conversations"]) >= 1
+          assert len(backup_data["chats"]) >= 2
+
+          # Exercise credit, ban, unban, and delete operations.
+          credit = client.post(f"/api/admin/user/{user_id}/credits", json={"amount": 5})
+          assert credit.status_code == 200, credit.get_json()
+          banned = client.post(f"/api/admin/user/{user_id}/ban")
+          assert banned.status_code == 200, banned.get_json()
+          unbanned = client.post(f"/api/admin/user/{user_id}/unban")
+          assert unbanned.status_code == 200, unbanned.get_json()
+          deleted_user = client.delete(f"/api/admin/user/{user_id}")
+          assert deleted_user.status_code == 200, deleted_user.get_json()
 
           print("Zolak AI smoke tests passed.")
           PY

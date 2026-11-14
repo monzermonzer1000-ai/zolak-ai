@@ -1,10 +1,11 @@
 "use strict";
 
-const CACHE_NAME = "zolak-ai-assets-v12";
+const CACHE_NAME = "zolak-ai-assets-v14";
 const ASSETS = [
   "/manifest.json",
-  "/static/style.css?v=13",
-  "/static/app.js?v=12",
+  "/static/style.css?v=14",
+  "/static/mobile-fixes.css?v=1",
+  "/static/app.js?v=13",
   "/static/icon.svg",
   "/static/sudan-flag-background.jpg"
 ];
@@ -35,6 +36,7 @@ self.addEventListener("fetch", event => {
 
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
+  // Never cache authenticated pages, API responses, or user-specific data.
   if (
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/admin") ||
