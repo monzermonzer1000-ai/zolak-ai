@@ -1353,14 +1353,14 @@ def list_conversations():
         """, (session["uid"], pattern, pattern)).fetchall()
     else:
         rows = c.execute("""
-            SELECT conversations.id, conversations.title,
+            SELECT conversations.id, conversations.title, conversations.is_pinned,
                    conversations.updated_at, COUNT(chats.id) AS message_count
             FROM conversations
             LEFT JOIN chats ON chats.conversation_id = conversations.id
             WHERE conversations.user_id = ?
             GROUP BY conversations.id
             HAVING COUNT(chats.id) > 0
-            ORDER BY conversations.updated_at DESC, conversations.id DESC
+            ORDER BY conversations.is_pinned DESC, conversations.updated_at DESC, conversations.id DESC
             LIMIT 100
         """, (session["uid"],)).fetchall()
     c.close()
