@@ -184,6 +184,8 @@
             </button>
         </div>
         <div class="composer composer-area">
+            <input id="attachmentInput" type="file" hidden multiple accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,text/plain,text/markdown,text/csv,.pdf,.txt,.md,.csv">
+            <div id="attachmentPreview" class="attachment-preview" hidden></div>
             <div class="composer-inner">
                 <button class="composer-icon-button composer-add" id="composerAdd" type="button" aria-label="إضافة"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
                 <textarea id="prompt" placeholder="اسأل زولك AI" rows="1" aria-label="اكتب رسالتك"></textarea>
@@ -199,7 +201,7 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=18"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=19"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
