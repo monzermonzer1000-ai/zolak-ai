@@ -222,6 +222,9 @@
         <section
             class="messages"
             id="messages"
+            data-welcome="{{ welcome or ('أهلاً بيك في ' ~ (site_name or 'زولك AI') ~ ' 🇸🇩') }}"
+            data-home-title="{{ homepage_title or 'كيف أقدر أساعدك اليوم؟' }}"
+            data-home-subtitle="{{ homepage_subtitle or site_description or 'اسأل، اتعلّم، اكتب، أو ناقش أي فكرة.' }}"
             aria-live="polite">
 
             <div class="welcome-screen">
