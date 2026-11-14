@@ -56,9 +56,14 @@ jobs:
           assert client.get("/health").status_code == 200
           assert client.get("/manifest.json").status_code == 200
           assert client.get("/sw.js").status_code == 200
+          assert "zolak-ai-assets-v15" in client.get("/sw.js").get_data(as_text=True)
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
+          assert "/static/performance.css?v=1" in home_html
           assert client.get("/static/mobile-fixes.css").status_code == 200
+          performance_css = client.get("/static/performance.css").get_data(as_text=True)
+          assert "backdrop-filter: none" in performance_css
+          assert "display: none" in performance_css
           assert client.get("/static/style.css").status_code == 200
           assert client.get("/static/app.js").status_code == 200
 
@@ -114,7 +119,11 @@ jobs:
                   self.options = kwargs
 
           class FakeModels:
+              fail_primary = False
+
               def generate_content(self, **kwargs):
+                  if self.fail_primary and kwargs.get("model") == "gemini-3.8-flash":
+                      raise RuntimeError("503 UNAVAILABLE: temporary high demand")
                   return SimpleNamespace(text="رد تجريبي من زولك AI")
 
           class FakeClient:
@@ -130,6 +139,7 @@ jobs:
           genai_types.Content = FakeContent
           genai_types.GenerateContentConfig = FakeConfig
           genai_types.HttpOptions = FakeConfig
+          genai_types.HttpRetryOptions = FakeConfig
           google_module.genai = genai_module
           sys.modules["google"] = google_module
           sys.modules["google.genai"] = genai_module
@@ -139,6 +149,14 @@ jobs:
           ai_ok = client.post("/api/chat", json={"message": "اختبار الرد"})
           assert ai_ok.status_code == 200, ai_ok.get_json()
           assert ai_ok.get_json().get("answer") == "رد تجريبي من زولك AI"
+
+          # A temporary 503 from the primary model must use the lighter fallback.
+          FakeModels.fail_primary = True
+          ai_fallback = client.post("/api/chat", json={"message": "اختبار الموديل الاحتياطي"})
+          FakeModels.fail_primary = False
+          assert ai_fallback.status_code == 200, ai_fallback.get_json()
+          assert ai_fallback.get_json().get("answer") == "رد تجريبي من زولك AI"
+
           conversation_id = ai_ok.get_json()["conversation_id"]
 
           history = client.get(f"/api/conversations/{conversation_id}")
