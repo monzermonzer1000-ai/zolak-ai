@@ -163,6 +163,17 @@ const attachmentInput = document.getElementById("attachmentInput");
 const attachmentPreview = document.getElementById("attachmentPreview");
 let selectedAttachments = [];
 
+function attachmentMime(file) {
+    if (file.type) return file.type;
+    const extension = (file.name.split(".").pop() || "").toLowerCase();
+    const byExtension = {
+        jpg:"image/jpeg", jpeg:"image/jpeg", png:"image/png", webp:"image/webp",
+        gif:"image/gif", pdf:"application/pdf", docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        txt:"text/plain", md:"text/markdown", csv:"text/csv"
+    };
+    return byExtension[extension] || "";
+}
+
 function formatAttachmentSize(bytes) {
     return bytes < 1024 * 1024
         ? Math.max(1, Math.round(bytes / 1024)) + " KB"
@@ -178,7 +189,7 @@ function renderAttachmentPreview() {
     selectedAttachments.forEach(function (file, index) {
         const chip = document.createElement("div");
         chip.className = "attachment-chip";
-        if (file.type.startsWith("image/")) {
+        if (attachmentMime(file).startsWith("image/")) {
             const image = document.createElement("img");
             image.src = URL.createObjectURL(file);
             image.alt = file.name;
@@ -213,11 +224,12 @@ if (composerAdd && attachmentInput) {
     attachmentInput.addEventListener("change", function () {
         const accepted = new Set([
             "image/jpeg", "image/png", "image/webp", "image/gif",
-            "application/pdf", "text/plain", "text/markdown", "text/csv"
+            "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "text/markdown", "text/csv"
         ]);
         const incoming = Array.from(attachmentInput.files || []);
         for (const file of incoming) {
-            if (!accepted.has(file.type)) {
+            const mimeType = attachmentMime(file);
+            if (!accepted.has(mimeType)) {
                 showSidebarNotice("نوع الملف غير مدعوم. أرفق صورة أو PDF أو TXT أو MD أو CSV.");
                 continue;
             }
@@ -251,7 +263,7 @@ function fileToPayload(file) {
             if (comma < 0) return reject(new Error("تعذر قراءة الملف " + file.name));
             resolve({
                 name: file.name,
-                mime_type: file.type,
+                mime_type: attachmentMime(file),
                 data: result.slice(comma + 1)
             });
         };
@@ -820,7 +832,7 @@ async function sendMessage() {
     isSending = true;
     if (homeQuickActions) homeQuickActions.hidden = true;
     const filesForBubble = selectedAttachments.map(function (file) {
-        return {name:file.name,type:file.type,preview:file.type.startsWith("image/") ? URL.createObjectURL(file) : null};
+        return {name:file.name,type:attachmentMime(file),preview:attachmentMime(file).startsWith("image/") ? URL.createObjectURL(file) : null};
     });
     const attachmentNames = selectedAttachments.map(function (file) { return file.name; });
     addMessage(question || "راجع المرفقات التالية:", "user", filesForBubble);
