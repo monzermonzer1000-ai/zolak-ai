@@ -56,6 +56,11 @@ jobs:
           assert client.get("/health").status_code == 200
           assert client.get("/manifest.json").status_code == 200
           assert client.get("/sw.js").status_code == 200
+          home_html = client.get("/").get_data(as_text=True)
+          assert "/static/mobile-fixes.css?v=1" in home_html
+          assert client.get("/static/mobile-fixes.css").status_code == 200
+          assert client.get("/static/style.css").status_code == 200
+          assert client.get("/static/app.js").status_code == 200
 
           registered = client.post("/api/register", json={
               "name": "CI User",
