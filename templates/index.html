@@ -16,7 +16,7 @@
 
     <!-- Main Design -->
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}?v=15">
+          href="{{ url_for('static', filename='style.css') }}?v=16">
 
     <style>
         :root {
@@ -102,6 +102,16 @@
             <div class="conversation-list-title">
                 محادثاتك
             </div>
+
+            <label class="conversation-search" for="conversationSearch">
+                <span aria-hidden="true">⌕</span>
+                <input
+                    id="conversationSearch"
+                    type="search"
+                    placeholder="ابحث في محادثاتك..."
+                    autocomplete="off"
+                    aria-label="ابحث في المحادثات">
+            </label>
 
             <div class="conversation-items" id="conversationItems"></div>
 
@@ -300,7 +310,7 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=13"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=14"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
