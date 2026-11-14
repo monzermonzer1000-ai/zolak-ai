@@ -16,7 +16,7 @@
 
     <!-- Main Design -->
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}?v=19">
+          href="{{ url_for('static', filename='style.css') }}?v=20">
 
     <style>
         :root {
@@ -128,47 +128,19 @@
     <!-- MAIN APPLICATION -->
     <main class="main main-chat">
 
-        <!-- HEADER -->
+        <!-- CHATGPT-INSPIRED MOBILE HEADER -->
         <header class="topbar chat-navbar">
-
-            <div class="topbar-right">
-
-                <button
-                    class="mobile-menu"
-                    id="mobileMenu"
-                    type="button"
-                    aria-label="فتح القائمة"
-                    aria-expanded="false"
-                    title="القائمة">
-                    ☰
+            <div class="home-header-side home-header-left">
+                <button class="home-icon-button" id="historyButton" type="button" aria-label="المحادثات الأخيرة">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 0 1 13.6-5.7L20 7.5M20 3.5v4h-4M20 13a8 8 0 0 1-13.6 5.7L4 16.5M4 20.5v-4h4"></path></svg>
                 </button>
-
-                <div class="mobile-brand">
-
-                    <span class="mobile-brand-logo">
-                        {% if logo_url %}
-                            <img
-                                src="{{ logo_url }}"
-                                alt="{{ site_name or 'زولك AI' }}"
-                                class="custom-logo">
-                        {% else %}
-                            Z
-                        {% endif %}
-                    </span>
-
-                    <strong>{{ site_name or "زولك AI" }}</strong>
-
-                    <span class="sudan-badge">🇸🇩</span>
-
-                </div>
-
             </div>
-
-            <div class="topbar-left">
-                <span class="online-indicator"></span>
-                <span class="assistant-status">مساعدك الذكي</span>
+            <button class="plus-subscribe" id="plusSubscribe" type="button"><span class="plus-sparkle">✦</span><span>اشترك في <b>زولاك بلس</b></span></button>
+            <div class="home-header-side home-header-right">
+                <button class="home-icon-button" id="mobileMenu" type="button" aria-label="فتح القائمة" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"></path></svg>
+                </button>
             </div>
-
         </header>
 
         <!-- CHAT MESSAGES -->
@@ -209,42 +181,23 @@
 
         </section>
 
-        <!-- MESSAGE COMPOSER -->
+        <div class="home-quick-actions" id="homeQuickActions">
+            <button class="home-quick-action" type="button" data-prompt="ساعدني في إنشاء صورة أو ملصق عن: ">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg><span>إنشاء صورة أو ملصق</span>
+            </button>
+            <button class="home-quick-action" type="button" data-prompt="ساعدني في كتابة أو تحرير النص التالي: ">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5 5 5M4 20l4.2-.8L20 7.4a2.1 2.1 0 0 0-3-3L5.2 16.2 4 20z"></path></svg><span>الكتابة أو التحرير</span>
+            </button>
+        </div>
         <div class="composer composer-area">
-
             <div class="composer-inner">
-
-                <textarea
-                    id="prompt"
-                    placeholder="اكتب رسالتك هنا..."
-                    rows="1"
-                    aria-label="اكتب رسالتك"></textarea>
-
-                <button
-                    id="send"
-                    type="button"
-                    aria-label="إرسال الرسالة"
-                    title="إرسال">
-
-                    <span class="send-icon">↑</span>
-
-                </button>
-
+                <button class="composer-icon-button composer-add" id="composerAdd" type="button" aria-label="إضافة"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
+                <textarea id="prompt" placeholder="اسأل زولك AI" rows="1" aria-label="اكتب رسالتك"></textarea>
+                <button class="composer-icon-button composer-mic" id="composerMic" type="button" aria-label="الإملاء الصوتي"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v4M9 22h6"></path></svg></button>
+                <button class="composer-voice" id="composerVoice" type="button" aria-label="الصوت"><span>الصوت</span><svg viewBox="0 0 24 24"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 6v12M22 10v4"></path></svg></button>
+                <button id="send" type="button" aria-label="إرسال الرسالة" title="إرسال"><span class="send-icon">↑</span></button>
             </div>
-
-            <div class="composer-note">
-
-                <span>
-                    {{ site_name or "زولك AI" }}
-                 ، راجع المعلومات المهمة.
-                </span>
-
-                <span class="composer-flag">
-                    صُنع في السودان 🇸🇩
-                </span>
-
-            </div>
-
+            <div class="composer-note"><span>زولك AI قد يخطئ، راجع المعلومات المهمة.</span><span class="composer-flag">صُنع في السودان 🇸🇩</span></div>
         </div>
 
     </main>
@@ -252,7 +205,7 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=17"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=18"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
