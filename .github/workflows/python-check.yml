@@ -139,6 +139,7 @@ jobs:
           genai_types.Content = FakeContent
           genai_types.GenerateContentConfig = FakeConfig
           genai_types.HttpOptions = FakeConfig
+          genai_types.HttpRetryOptions = FakeConfig
           google_module.genai = genai_module
           sys.modules["google"] = google_module
           sys.modules["google.genai"] = genai_module
