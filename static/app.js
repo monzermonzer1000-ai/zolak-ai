@@ -6,6 +6,7 @@
 
 const promptBox = document.getElementById("prompt");
 const sendButton = document.getElementById("send");
+const homeQuickActions = document.getElementById("homeQuickActions");
 const messages = document.getElementById("messages");
 const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
