@@ -690,38 +690,34 @@ if (newChatButton) {
 ========================= */
 
 async function sendMessage() {
-    if (!promptBox || !sendButton || !messages || isSending) {
-        return;
-    }
+    if (!promptBox || !sendButton || !messages || isSending) return;
 
     const question = promptBox.value.trim();
-
     if (!question) return;
 
     isSending = true;
     if (homeQuickActions) homeQuickActions.hidden = true;
-
     addMessage(question, "user");
     promptBox.value = "";
+    updateComposerMode();
     sendButton.disabled = true;
     sendButton.innerHTML = '<span class="send-icon">…</span>';
 
+    let liveMessage = null;
+    let liveContent = null;
+    let streamedText = "";
+    let streamError = "";
+    let completed = false;
+
     try {
         const body = { message: question };
-
-        if (currentConversationId !== null) {
-            body.conversation_id = currentConversationId;
-        }
+        if (currentConversationId !== null) body.conversation_id = currentConversationId;
 
         const response = await fetch("/api/chat", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
             body: JSON.stringify(body)
         });
-
-        const data = await response.json();
 
         if (response.status === 401) {
             window.location.href = "/login";
@@ -729,34 +725,83 @@ async function sendMessage() {
         }
 
         if (!response.ok) {
+            const data = await response.json().catch(function () { return {}; });
             addMessage(data.error || "حصل خطأ، جرّب تاني.", "assistant");
             await refreshAccount();
             return;
         }
 
-        if (data.conversation_id) {
-            currentConversationId = Number(data.conversation_id);
+        if (!response.body || !response.body.getReader) {
+            throw new Error("المتصفح لا يدعم استقبال الرد المباشر.");
         }
 
-        addMessage(
-            data.answer || data.error || "حصل خطأ، جرّب تاني.",
-            "assistant"
-        );
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        function handleEvent(rawEvent) {
+            const lines = rawEvent.split(/\r?\n/);
+            let eventName = "message";
+            let payloadText = "";
+            lines.forEach(function (line) {
+                if (line.startsWith("event:")) eventName = line.slice(6).trim();
+                if (line.startsWith("data:")) payloadText += line.slice(5).trim();
+            });
+            if (!payloadText) return;
+            let payload;
+            try { payload = JSON.parse(payloadText); } catch (_) { return; }
+
+            if (eventName === "meta" && payload.conversation_id) {
+                currentConversationId = Number(payload.conversation_id);
+            } else if (eventName === "token" && payload.text) {
+                if (!liveMessage) {
+                    liveMessage = document.createElement("div");
+                    liveMessage.className = "message assistant";
+                    liveContent = document.createElement("div");
+                    liveContent.className = "message-content streaming-content";
+                    liveMessage.appendChild(liveContent);
+                    messages.appendChild(liveMessage);
+                }
+                streamedText += payload.text;
+                liveContent.textContent = streamedText;
+                messages.scrollTop = messages.scrollHeight;
+            } else if (eventName === "error") {
+                streamError = payload.error || "حصل خطأ أثناء توليد الرد.";
+            } else if (eventName === "done") {
+                completed = true;
+                if (payload.conversation_id) currentConversationId = Number(payload.conversation_id);
+            }
+        }
+
+        while (true) {
+            const result = await reader.read();
+            if (result.done) break;
+            buffer += decoder.decode(result.value, { stream: true });
+            const events = buffer.split(/\r?\n\r?\n/);
+            buffer = events.pop() || "";
+            events.forEach(handleEvent);
+        }
+        buffer += decoder.decode();
+        if (buffer.trim()) handleEvent(buffer);
+
+        if (liveMessage) liveMessage.remove();
+        if (streamedText) addMessage(streamedText, "assistant");
+        if (streamError) addMessage(streamError, "assistant");
+        else if (!completed) addMessage("انقطع الاتصال قبل اكتمال الرد. حاول تاني.", "assistant");
 
         await refreshAccount();
         await loadConversations();
     } catch (error) {
         console.error("خطأ في إرسال الرسالة:", error);
-
+        if (liveMessage) liveMessage.remove();
         addMessage(
-            "ما قدرنا نتصل بالخدمة، تأكد من اتصالك وحاول تاني.",
+            "ما قدرنا نكمل الاتصال بالخدمة. تأكد من الإنترنت وحاول تاني.",
             "assistant"
         );
     } finally {
         isSending = false;
         sendButton.disabled = false;
         sendButton.innerHTML = '<span class="send-icon">↑</span>';
-
         if (promptBox) promptBox.focus();
     }
 }
