@@ -1912,16 +1912,20 @@ def admin_health():
             "message": "مفتاح GEMINI_API_KEY غير موجود في إعدادات الاستضافة. لن تعمل الردود الذكية قبل إضافته."
         }
 
-    directory = os.path.dirname(os.path.abspath(DB)) or "."
-    if os.path.isdir(directory) and os.access(directory, os.W_OK):
+    if os.getenv("DATABASE_URL", "").strip():
         checks["storage"] = {
             "status": "ok",
-            "message": "مسار قاعدة البيانات متاح للكتابة."
+            "message": "التخزين الدائم مربوط بقاعدة PostgreSQL الخارجية (Supabase)."
         }
     else:
+        directory = os.path.dirname(os.path.abspath(DB)) or "."
+        writable = os.path.isdir(directory) and os.access(directory, os.W_OK)
         checks["storage"] = {
-            "status": "error",
-            "message": "مجلد قاعدة البيانات غير متاح للكتابة."
+            "status": "ok" if writable else "error",
+            "message": (
+                "مسار قاعدة البيانات المحلية متاح للكتابة."
+                if writable else "مجلد قاعدة البيانات المحلية غير متاح للكتابة."
+            )
         }
 
     configured_model = setting("ai_model", "").strip()
