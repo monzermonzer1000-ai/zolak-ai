@@ -120,10 +120,11 @@ jobs:
 
           class FakeModels:
               fail_primary = False
+              primary_error = "503 UNAVAILABLE: temporary high demand"
 
               def generate_content(self, **kwargs):
                   if self.fail_primary and kwargs.get("model") == "gemini-3.8-flash":
-                      raise RuntimeError("503 UNAVAILABLE: temporary high demand")
+                      raise RuntimeError(self.primary_error)
                   return SimpleNamespace(text="رد تجريبي من زولك AI")
 
           class FakeClient:
@@ -156,6 +157,13 @@ jobs:
           FakeModels.fail_primary = False
           assert ai_fallback.status_code == 200, ai_fallback.get_json()
           assert ai_fallback.get_json().get("answer") == "رد تجريبي من زولك AI"
+
+          # A deadline timeout from the primary model must also use fallback.
+          FakeModels.primary_error = "504 DEADLINE_EXCEEDED: upstream deadline"
+          ai_timeout_fallback = client.post("/api/chat", json={"message": "اختبار مهلة الموديل"})
+          FakeModels.fail_primary = False
+          assert ai_timeout_fallback.status_code == 200, ai_timeout_fallback.get_json()
+          assert ai_timeout_fallback.get_json().get("answer") == "رد تجريبي من زولك AI"
 
           conversation_id = ai_ok.get_json()["conversation_id"]
 
