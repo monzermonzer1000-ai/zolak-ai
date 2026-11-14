@@ -1864,3 +1864,140 @@ body.theme-light .app.chatgpt-layout > .main .composer-inner {
         background: rgba(250,253,251,.64) !important;
     }
 }
+
+
+/* RICH ASSISTANT RESPONSES */
+
+.message.assistant .message-content {
+    white-space: normal;
+}
+
+.message-content > p {
+    margin: 0 0 10px;
+}
+
+.message-content > p:last-child {
+    margin-bottom: 0;
+}
+
+.message-content h2,
+.message-content h3 {
+    margin: 14px 0 7px;
+    line-height: 1.45;
+}
+
+.message-content h2 {
+    font-size: 1.15rem;
+}
+
+.message-content h3 {
+    font-size: 1.05rem;
+}
+
+.message-content ul,
+.message-content ol {
+    margin: 7px 0 12px;
+    padding-inline-start: 25px;
+}
+
+.message-content li {
+    margin: 4px 0;
+}
+
+.message-content blockquote {
+    margin: 10px 0;
+    padding: 7px 12px;
+    border-right: 3px solid var(--primary);
+    color: #53675f;
+    background: rgba(8,185,145,.06);
+}
+
+.message-content a {
+    color: var(--primary-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.message-content p code,
+.message-content li code {
+    padding: 2px 6px;
+    border-radius: 5px;
+    color: #9b2452;
+    background: rgba(15,23,42,.07);
+    direction: ltr;
+    unicode-bidi: plaintext;
+}
+
+.code-block {
+    margin: 12px 0;
+    overflow: hidden;
+    border: 1px solid #263b4b;
+    border-radius: 12px;
+    color: #e5edf5;
+    background: #101b28;
+}
+
+.code-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 11px;
+    color: #c5d2df;
+    background: #1b2a3a;
+    font-size: 12px;
+}
+
+.code-copy,
+.message-copy {
+    border: 1px solid rgba(130,150,170,.35);
+    border-radius: 7px;
+    padding: 5px 9px;
+    color: inherit;
+    background: transparent;
+    font-size: 11px;
+}
+
+.code-copy:hover,
+.message-copy:hover {
+    background: rgba(130,150,170,.15);
+}
+
+.code-block pre {
+    max-width: 100%;
+    margin: 0;
+    padding: 13px;
+    overflow-x: auto;
+    direction: ltr;
+    text-align: left;
+    white-space: pre;
+    tab-size: 4;
+}
+
+.code-block code {
+    color: #e5edf5;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.message-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 10px;
+}
+
+.message-copy {
+    color: #667a71;
+}
+
+@media (max-width: 600px) {
+    .message-content {
+        max-width: 94%;
+        padding: 11px 13px;
+    }
+
+    .code-block pre {
+        padding: 10px;
+    }
+}
