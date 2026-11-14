@@ -112,6 +112,164 @@ if (sidebar) {
    MESSAGES
 ========================= */
 
+function appendInlineMarkdown(container, source) {
+    const pattern = /(\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|__([^_]+)__|\*([^*\n]+)\*|_([^_\n]+)_)/g;
+    let cursor = 0;
+    let match;
+
+    while ((match = pattern.exec(source)) !== null) {
+        if (match.index > cursor) {
+            container.appendChild(document.createTextNode(source.slice(cursor, match.index)));
+        }
+
+        let node;
+        if (match[3]) {
+            node = document.createElement("a");
+            node.textContent = match[2];
+            node.href = match[3];
+            node.target = "_blank";
+            node.rel = "noopener noreferrer";
+        } else if (match[4]) {
+            node = document.createElement("code");
+            node.textContent = match[4];
+        } else if (match[5] || match[6]) {
+            node = document.createElement("strong");
+            node.textContent = match[5] || match[6];
+        } else {
+            node = document.createElement("em");
+            node.textContent = match[7] || match[8];
+        }
+
+        container.appendChild(node);
+        cursor = pattern.lastIndex;
+    }
+
+    if (cursor < source.length) {
+        container.appendChild(document.createTextNode(source.slice(cursor)));
+    }
+}
+
+function renderAssistantMarkdown(container, source) {
+    const lines = String(source || "").replace(/\r\n/g, "\n").split("\n");
+    let paragraph = [];
+    let list = null;
+    let codeLines = null;
+
+    function flushParagraph() {
+        if (!paragraph.length) return;
+        const p = document.createElement("p");
+        paragraph.forEach(function (line, index) {
+            if (index) p.appendChild(document.createElement("br"));
+            appendInlineMarkdown(p, line);
+        });
+        container.appendChild(p);
+        paragraph = [];
+    }
+
+    function flushList() {
+        if (!list) return;
+        container.appendChild(list);
+        list = null;
+    }
+
+    function appendCodeBlock(code) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-block";
+        const toolbar = document.createElement("div");
+        toolbar.className = "code-toolbar";
+        const label = document.createElement("span");
+        label.textContent = "كود";
+        const copy = document.createElement("button");
+        copy.type = "button";
+        copy.className = "code-copy";
+        copy.textContent = "نسخ الكود";
+        copy.addEventListener("click", async function () {
+            try {
+                await navigator.clipboard.writeText(code);
+                copy.textContent = "تم النسخ ✓";
+            } catch (error) {
+                copy.textContent = "تعذر النسخ";
+            }
+        });
+        toolbar.appendChild(label);
+        toolbar.appendChild(copy);
+        const pre = document.createElement("pre");
+        const codeElement = document.createElement("code");
+        codeElement.textContent = code;
+        pre.appendChild(codeElement);
+        wrapper.appendChild(toolbar);
+        wrapper.appendChild(pre);
+        container.appendChild(wrapper);
+    }
+
+    lines.forEach(function (line) {
+        if (codeLines !== null) {
+            if (/^\s*```/.test(line)) {
+                appendCodeBlock(codeLines.join("\n"));
+                codeLines = null;
+            } else {
+                codeLines.push(line);
+            }
+            return;
+        }
+
+        if (/^\s*```/.test(line)) {
+            flushParagraph();
+            flushList();
+            codeLines = [];
+            return;
+        }
+
+        if (!line.trim()) {
+            flushParagraph();
+            flushList();
+            return;
+        }
+
+        const heading = line.match(/^(#{1,3})\s+(.+)$/);
+        if (heading) {
+            flushParagraph();
+            flushList();
+            const h = document.createElement(heading[1].length === 1 ? "h2" : "h3");
+            appendInlineMarkdown(h, heading[2]);
+            container.appendChild(h);
+            return;
+        }
+
+        const bullet = line.match(/^\s*[-*]\s+(.+)$/);
+        const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+        if (bullet || numbered) {
+            flushParagraph();
+            const wantedTag = bullet ? "ul" : "ol";
+            if (!list || list.tagName.toLowerCase() !== wantedTag) {
+                flushList();
+                list = document.createElement(wantedTag);
+            }
+            const li = document.createElement("li");
+            appendInlineMarkdown(li, (bullet || numbered)[1]);
+            list.appendChild(li);
+            return;
+        }
+
+        const quote = line.match(/^\s*&gt;\s*(.*)$/) || line.match(/^\s*>\s*(.*)$/);
+        if (quote) {
+            flushParagraph();
+            flushList();
+            const blockquote = document.createElement("blockquote");
+            appendInlineMarkdown(blockquote, quote[1]);
+            container.appendChild(blockquote);
+            return;
+        }
+
+        flushList();
+        paragraph.push(line);
+    });
+
+    if (codeLines !== null) appendCodeBlock(codeLines.join("\n"));
+    flushParagraph();
+    flushList();
+}
+
 function addMessage(text, type) {
     if (!messages) return;
 
@@ -120,11 +278,30 @@ function addMessage(text, type) {
 
     const content = document.createElement("div");
     content.className = "message-content";
-    content.textContent = text;
+    if (type === "assistant") {
+        renderAssistantMarkdown(content, text);
+        const actions = document.createElement("div");
+        actions.className = "message-actions";
+        const copyButton = document.createElement("button");
+        copyButton.type = "button";
+        copyButton.className = "message-copy";
+        copyButton.textContent = "نسخ الرد";
+        copyButton.addEventListener("click", async function () {
+            try {
+                await navigator.clipboard.writeText(String(text || ""));
+                copyButton.textContent = "تم النسخ ✓";
+            } catch (error) {
+                copyButton.textContent = "تعذر النسخ";
+            }
+        });
+        actions.appendChild(copyButton);
+        content.appendChild(actions);
+    } else {
+        content.textContent = text;
+    }
 
     message.appendChild(content);
     messages.appendChild(message);
-
     messages.scrollTop = messages.scrollHeight;
 }
 
