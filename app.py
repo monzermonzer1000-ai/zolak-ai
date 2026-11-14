@@ -1360,20 +1360,67 @@ def list_conversations():
     if not history_enabled():
         return jsonify(conversations=[])
 
+    query = str(request.args.get("q", "")).strip()[:120]
     c = db()
-    rows = c.execute("""
-        SELECT conversations.id, conversations.title,
-               conversations.updated_at, COUNT(chats.id) AS message_count
-        FROM conversations
-        LEFT JOIN chats ON chats.conversation_id = conversations.id
-        WHERE conversations.user_id = ?
-        GROUP BY conversations.id
-        HAVING COUNT(chats.id) > 0
-        ORDER BY conversations.updated_at DESC, conversations.id DESC
-        LIMIT 100
-    """, (session["uid"],)).fetchall()
+    if query:
+        pattern = f"%{query}%"
+        rows = c.execute("""
+            SELECT conversations.id, conversations.title,
+                   conversations.updated_at, COUNT(chats.id) AS message_count
+            FROM conversations
+            LEFT JOIN chats ON chats.conversation_id = conversations.id
+            WHERE conversations.user_id = ?
+              AND (
+                conversations.title LIKE ?
+                OR EXISTS (
+                    SELECT 1 FROM chats AS matching_chat
+                    WHERE matching_chat.conversation_id = conversations.id
+                      AND matching_chat.user_id = conversations.user_id
+                      AND matching_chat.content LIKE ?
+                )
+              )
+            GROUP BY conversations.id
+            HAVING COUNT(chats.id) > 0
+            ORDER BY conversations.updated_at DESC, conversations.id DESC
+            LIMIT 100
+        """, (session["uid"], pattern, pattern)).fetchall()
+    else:
+        rows = c.execute("""
+            SELECT conversations.id, conversations.title,
+                   conversations.updated_at, COUNT(chats.id) AS message_count
+            FROM conversations
+            LEFT JOIN chats ON chats.conversation_id = conversations.id
+            WHERE conversations.user_id = ?
+            GROUP BY conversations.id
+            HAVING COUNT(chats.id) > 0
+            ORDER BY conversations.updated_at DESC, conversations.id DESC
+            LIMIT 100
+        """, (session["uid"],)).fetchall()
     c.close()
     return jsonify(conversations=[dict(row) for row in rows])
+
+
+@app.patch("/api/conversations/<int:conversation_id>")
+@login_required
+def rename_conversation(conversation_id):
+    data = request.get_json(silent=True) or {}
+    title = str(data.get("title", "")).strip()
+    if not title:
+        return jsonify(error="اكتب اسماً للمحادثة."), 400
+    if len(title) > 80:
+        return jsonify(error="اسم المحادثة طويل؛ الحد الأقصى 80 حرفاً."), 400
+
+    c = db()
+    result = c.execute("""
+        UPDATE conversations
+        SET title = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+    """, (title, conversation_id, session["uid"]))
+    c.commit()
+    c.close()
+    if result.rowcount != 1:
+        return jsonify(error="المحادثة غير موجودة."), 404
+    return jsonify(ok=True, title=title)
 
 
 @app.post("/api/conversations")
