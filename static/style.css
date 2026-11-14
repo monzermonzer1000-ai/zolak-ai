@@ -2467,3 +2467,84 @@ html, body { background:#fff !important; }
 .sidebar-pinned .conversation-title { font-weight:600; }
 
 .sidebar-pinned[hidden] { display:none !important; }
+
+
+/* Sudan-flag home screen: keep the image visible on phones */
+@media (max-width: 800px) {
+    .app.chatgpt-layout,
+    .main-chat {
+        background-color: transparent;
+    }
+
+    .main-chat {
+        background: transparent;
+    }
+
+    .chat-navbar {
+        background: rgba(0, 20, 14, .58);
+        border-bottom-color: rgba(255, 255, 255, .08);
+        color: #fff;
+        backdrop-filter: blur(8px);
+    }
+
+    .messages {
+        background: rgba(0, 0, 0, .12);
+        color: #fff;
+    }
+
+    .welcome-screen,
+    .welcome-screen h1,
+    .welcome-screen p,
+    .welcome-eyebrow {
+        color: #fff;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, .72);
+    }
+
+    .welcome-logo {
+        box-shadow: 0 8px 28px rgba(0, 0, 0, .38);
+    }
+
+    .composer-area {
+        background: rgba(0, 18, 13, .48);
+        border-top-color: rgba(255, 255, 255, .12);
+        backdrop-filter: blur(10px);
+    }
+
+    .composer-inner {
+        background: rgba(5, 39, 29, .92);
+        border: 1px solid rgba(170, 235, 211, .28);
+        border-radius: 30px;
+        box-shadow: 0 8px 26px rgba(0, 0, 0, .28);
+    }
+
+    #prompt,
+    textarea#prompt,
+    .composer textarea,
+    .composer-area textarea {
+        color: #fff;
+        caret-color: #fff;
+    }
+
+    #prompt::placeholder,
+    .composer textarea::placeholder {
+        color: rgba(255, 255, 255, .66);
+    }
+
+    .composer-icon-button {
+        color: #fff;
+    }
+
+    .composer-note {
+        color: rgba(255, 255, 255, .72);
+    }
+
+    .composer-flag {
+        color: rgba(255, 255, 255, .88);
+    }
+
+    .home-quick-action {
+        color: #fff;
+        background: rgba(0, 25, 18, .55);
+        border-color: rgba(255, 255, 255, .2);
+    }
+}
