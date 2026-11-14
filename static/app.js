@@ -10,7 +10,6 @@ const messages = document.getElementById("messages");
 const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
 const conversationSearch = document.getElementById("conversationSearch");
-let conversationSearchTimer = null;
 
 let currentConversationId = null;
 let isSending = false;
@@ -410,15 +409,41 @@ async function loadConversations(searchTerm = "") {
             title.className = "conversation-title";
             title.textContent = conversation.title || "محادثة جديدة";
 
+            const actionsButton = document.createElement("button");
+            actionsButton.type = "button";
+            actionsButton.className = "conversation-more";
+            actionsButton.textContent = "⋯";
+            actionsButton.title = "خيارات المحادثة";
+            actionsButton.setAttribute("aria-label", "خيارات المحادثة");
+
+            const actionsMenu = document.createElement("div");
+            actionsMenu.className = "conversation-menu";
+            actionsMenu.hidden = true;
+
             const renameButton = document.createElement("button");
             renameButton.type = "button";
-            renameButton.className = "conversation-rename";
-            renameButton.textContent = "✎";
-            renameButton.title = "إعادة تسمية المحادثة";
-            renameButton.setAttribute("aria-label", "إعادة تسمية المحادثة");
+            renameButton.className = "conversation-menu-action";
+            renameButton.textContent = "إعادة التسمية";
+
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "conversation-menu-action danger";
+            deleteButton.textContent = "حذف المحادثة";
+
+            actionsMenu.appendChild(renameButton);
+            actionsMenu.appendChild(deleteButton);
+
+            actionsButton.addEventListener("click", function (event) {
+                event.stopPropagation();
+                document.querySelectorAll(".conversation-menu").forEach(function (menu) {
+                    if (menu !== actionsMenu) menu.hidden = true;
+                });
+                actionsMenu.hidden = !actionsMenu.hidden;
+            });
 
             renameButton.addEventListener("click", async function (event) {
                 event.stopPropagation();
+                actionsMenu.hidden = true;
                 const nextTitle = prompt("اكتب الاسم الجديد للمحادثة:", conversation.title || "");
                 if (nextTitle === null || !nextTitle.trim()) return;
                 try {
@@ -432,47 +457,28 @@ async function loadConversations(searchTerm = "") {
                         alert(result.error || "ما قدرنا نغيّر اسم المحادثة.");
                         return;
                     }
-                    await loadConversations(conversationSearch ? conversationSearch.value.trim() : "");
+                    await loadConversations();
                 } catch (error) {
                     console.error("خطأ في إعادة تسمية المحادثة:", error);
                     alert("حصل خطأ، حاول تاني.");
                 }
             });
 
-            const deleteButton = document.createElement("button");
-            deleteButton.type = "button";
-            deleteButton.className = "conversation-delete";
-            deleteButton.textContent = "×";
-            deleteButton.title = "حذف المحادثة";
-            deleteButton.setAttribute("aria-label", "حذف المحادثة");
-
-            title.addEventListener("click", function () {
-                openConversation(conversation.id);
-            });
-
             deleteButton.addEventListener("click", async function (event) {
                 event.stopPropagation();
-
+                actionsMenu.hidden = true;
                 if (!confirm("متأكد داير تحذف المحادثة دي؟")) return;
-
                 try {
-                    const deleteResponse = await fetch(
-                        "/api/conversations/" + conversation.id,
-                        { method: "DELETE" }
-                    );
-
+                    const deleteResponse = await fetch("/api/conversations/" + conversation.id, { method: "DELETE" });
                     const result = await deleteResponse.json();
-
                     if (!deleteResponse.ok) {
                         alert(result.error || "ما قدرنا نحذف المحادثة.");
                         return;
                     }
-
                     if (Number(currentConversationId) === Number(conversation.id)) {
                         currentConversationId = null;
                         showWelcome(false);
                     }
-
                     await loadConversations();
                 } catch (error) {
                     console.error("خطأ في حذف المحادثة:", error);
@@ -480,10 +486,14 @@ async function loadConversations(searchTerm = "") {
                 }
             });
 
+            title.addEventListener("click", function () {
+                openConversation(conversation.id);
+            });
+
             item.appendChild(title);
-            item.appendChild(renameButton);
-            item.appendChild(deleteButton);
-            items.appendChild(item);
+            item.appendChild(actionsButton);
+            item.appendChild(actionsMenu);
+
         });
     } catch (error) {
         console.error("خطأ في تحميل المحادثات:", error);
@@ -697,36 +707,4 @@ if (promptBox) {
     });
 }
 
-/* =========================
-   CONVERSATION SEARCH
-========================= */
 
-if (conversationSearch) {
-    conversationSearch.addEventListener("input", function () {
-        window.clearTimeout(conversationSearchTimer);
-        conversationSearchTimer = window.setTimeout(function () {
-            loadConversations(conversationSearch.value.trim());
-        }, 250);
-    });
-}
-
-document.addEventListener("keydown", function (event) {
-    const isSearchShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
-    if (!isSearchShortcut) return;
-    event.preventDefault();
-    if (conversationSearch) {
-        conversationSearch.focus();
-        conversationSearch.select();
-    }
-});
-
-/* =========================
-   INITIALIZE
-========================= */
-
-async function initializeApp() {
-    await refreshAccount();
-    await loadConversations();
-}
-
-initializeApp();
