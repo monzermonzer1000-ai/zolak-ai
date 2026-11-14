@@ -2408,3 +2408,55 @@ html, body { background:#fff !important; }
     .messages { padding:12px 14px !important; }
     .composer.composer-area { padding:8px 14px max(12px,env(safe-area-inset-bottom)) !important; }
 }
+
+
+/* Real attachment picker and preview */
+.attachment-preview {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    width:100%;
+    max-width:900px;
+    margin:0 auto 9px;
+}
+.attachment-preview[hidden] { display:none !important; }
+.attachment-chip {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    max-width:100%;
+    padding:7px 10px;
+    border:1px solid #e5e7eb;
+    border-radius:13px;
+    background:#f8fafc;
+    color:#30343b;
+    font-size:12px;
+}
+.attachment-chip img {
+    width:42px;height:42px;object-fit:cover;border-radius:8px;
+}
+.attachment-chip-name {
+    max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.attachment-remove {
+    border:0;background:transparent;color:#777;font-size:20px;line-height:1;
+    cursor:pointer;padding:2px 5px;
+}
+.composer-add { flex:0 0 42px; }
+.composer-add:hover { background:#f2f4f5; }
+.message-attachments {
+    display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;
+}
+.message-attachments img {
+    display:block;max-width:min(220px,55vw);max-height:220px;
+    border-radius:12px;object-fit:contain;background:#f3f4f6;
+}
+.message-attachment-file {
+    display:inline-flex;align-items:center;gap:6px;padding:6px 9px;
+    border-radius:9px;background:rgba(120,130,140,.10);font-size:12px;
+}
+.composer-add.has-files { color:#087e60;background:#e7f7f1; }
+@media(max-width:600px) {
+    .attachment-preview { padding:0 2px; }
+    .attachment-chip-name { max-width:125px; }
+}

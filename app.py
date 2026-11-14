@@ -929,11 +929,20 @@ def me():
 @login_required
 def chat():
 
+    import base64
+    import binascii
+
+    if request.content_length and request.content_length > 3_800_000:
+        return jsonify(error="حجم المرفقات كبير. الحد الإجمالي 2.5 ميجابايت."), 413
+
     data = request.get_json(silent=True) or {}
     message = str(data.get("message", "")).strip()
+    raw_attachments = data.get("attachments") or []
 
-    if not message:
-        return jsonify(error="اكتب رسالتك أولاً."), 400
+    if not isinstance(raw_attachments, list) or len(raw_attachments) > 4:
+        return jsonify(error="يمكنك إرفاق 4 ملفات كحد أقصى."), 400
+    if not message and not raw_attachments:
+        return jsonify(error="اكتب رسالتك أو أرفق ملفاً أولاً."), 400
 
     try:
         max_message_length = int(setting("max_message_length", "12000"))
@@ -944,6 +953,79 @@ def chat():
 
     if len(message) > max_message_length:
         return jsonify(error=f"الرسالة طويلة شديد. الحد الأقصى {max_message_length} حرف."), 400
+
+    allowed_mimes = {
+        "image/jpeg", "image/png", "image/webp", "image/gif",
+        "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "text/markdown", "text/csv"
+    }
+    attachments = []
+    total_bytes = 0
+    for item in raw_attachments:
+        if not isinstance(item, dict):
+            return jsonify(error="بيانات أحد المرفقات غير صحيحة."), 400
+        name = os.path.basename(str(item.get("name", "ملف")).replace("\\", "/"))[:120]
+        mime_type = str(item.get("mime_type", "")).lower().strip()
+        encoded = str(item.get("data", ""))
+        if mime_type not in allowed_mimes:
+            return jsonify(error="نوع الملف غير مدعوم. استخدم صورة أو PDF أو TXT أو MD أو CSV."), 415
+        if not encoded or len(encoded) > 3_500_000:
+            return jsonify(error="حجم أحد الملفات أكبر من الحد المسموح."), 413
+        try:
+            file_bytes = base64.b64decode(encoded, validate=True)
+        except (binascii.Error, ValueError):
+            return jsonify(error="تعذر قراءة أحد الملفات المرفقة."), 400
+        if not file_bytes:
+            return jsonify(error="أحد الملفات المرفقة فارغ."), 400
+        if len(file_bytes) > 2_500_000:
+            return jsonify(error="حجم الملف الواحد يجب ألا يتجاوز 2.5 ميجابايت."), 413
+        total_bytes += len(file_bytes)
+        if total_bytes > 2_500_000:
+            return jsonify(error="إجمالي حجم المرفقات يجب ألا يتجاوز 2.5 ميجابايت."), 413
+        if mime_type == "application/pdf" and not file_bytes.startswith(b"%PDF-"):
+            return jsonify(error="الملف لا يبدو مستند PDF صالحاً."), 400
+        if mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            if not file_bytes.startswith(b"PK"):
+                return jsonify(error="الملف لا يبدو مستند Word صالحاً."), 400
+        if mime_type.startswith("image/"):
+            signatures = {
+                "image/jpeg": file_bytes.startswith(b"\xff\xd8\xff"),
+                "image/png": file_bytes.startswith(b"\x89PNG\r\n\x1a\n"),
+                "image/gif": file_bytes.startswith((b"GIF87a", b"GIF89a")),
+                "image/webp": len(file_bytes) > 12 and file_bytes[:4] == b"RIFF" and file_bytes[8:12] == b"WEBP"
+            }
+            if not signatures.get(mime_type, False):
+                return jsonify(error="صيغة الصورة لا تطابق نوع الملف."), 400
+        text_content = None
+        if mime_type.startswith("text/"):
+            try:
+                text_content = file_bytes.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                return jsonify(error="الملف النصي يجب أن يكون بترميز UTF-8."), 400
+        elif mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            import zipfile
+            import xml.etree.ElementTree as ET
+            try:
+                with zipfile.ZipFile(io.BytesIO(file_bytes)) as docx:
+                    info = docx.getinfo("word/document.xml")
+                    if info.file_size > 4_000_000:
+                        return jsonify(error="مستند Word يحتوي على نص أكبر من الحد المسموح."), 413
+                    document_xml = docx.read("word/document.xml")
+                root = ET.fromstring(document_xml)
+                text_content = "\n".join(
+                    " ".join(part.strip() for part in paragraph.itertext() if part.strip())
+                    for paragraph in root.iter()
+                    if paragraph.tag.endswith("}p")
+                )
+            except (KeyError, zipfile.BadZipFile, ET.ParseError, OSError):
+                return jsonify(error="تعذر قراءة مستند Word. تأكد أنه ملف DOCX سليم."), 400
+        if text_content is not None and len(text_content) > 100_000:
+            return jsonify(error="الملف النصي طويل جداً. الحد 100 ألف حرف."), 413
+        attachments.append({
+            "name": name,
+            "mime_type": mime_type,
+            "data": file_bytes,
+            "text": text_content
+        })
 
     if setting("maintenance", "false").lower() == "true":
         return jsonify(error="الموقع تحت الصيانة حالياً. جرب بعد شوية."), 503
@@ -960,6 +1042,12 @@ def chat():
     if user["credits"] <= 0:
         c.close()
         return jsonify(error="رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"), 402
+
+    attachment_names = [item["name"] for item in attachments]
+    stored_message = message
+    if attachment_names:
+        marker = "[المرفقات: " + "، ".join(attachment_names) + "]"
+        stored_message = (message + "\n\n" + marker).strip()
 
     conversation_id = data.get("conversation_id")
     if conversation_id is not None:
@@ -978,10 +1066,11 @@ def chat():
             c.close()
             return jsonify(error="المحادثة غير موجودة."), 404
     else:
+        title = message[:55] if message else ("ملف: " + attachment_names[0][:45])
         c.execute("""
             INSERT INTO conversations(user_id, title)
             VALUES (?, ?)
-        """, (user_id, message[:55] or "محادثة جديدة"))
+        """, (user_id, title))
         conversation_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
         c.commit()
 
@@ -990,8 +1079,6 @@ def chat():
         c.close()
         return jsonify(error="مفتاح Gemini غير مضاف. راجع إعدادات الاستضافة."), 503
 
-    # SSE allows the browser to render tokens as soon as Gemini produces them,
-    # rather than waiting for the complete answer before showing anything.
     def generate():
         import json
 
@@ -1005,6 +1092,7 @@ def chat():
                 "أنت زولك AI، مساعد ذكاء اصطناعي سوداني ودود. "
                 "أجب بوضوح ودقة وباختصار مفيد، ولا تطل بلا داعٍ. "
                 "استخدم اللهجة السودانية عندما يكون ذلك مناسباً. "
+                "عند إرفاق صورة أو مستند، افحص محتواه فعلياً وأجب عن المطلوب منه. "
                 "لا تدّعي أنك إنسان. إذا لم تعرف الإجابة فقل ذلك بوضوح. "
                 "لا تخترع معلومات."
             )
@@ -1048,10 +1136,21 @@ def chat():
                     role=role,
                     parts=[types.Part.from_text(text=row["content"])]
                 ))
-            contents.append(types.Content(
-                role="user",
-                parts=[types.Part.from_text(text=message)]
-            ))
+
+            user_parts = []
+            if message:
+                user_parts.append(types.Part.from_text(text=message))
+            for attachment in attachments:
+                if attachment["text"] is not None:
+                    user_parts.append(types.Part.from_text(
+                        text="\n\nمحتوى الملف " + attachment["name"] + ":\n" + attachment["text"]
+                    ))
+                else:
+                    user_parts.append(types.Part.from_bytes(
+                        data=attachment["data"],
+                        mime_type=attachment["mime_type"]
+                    ))
+            contents.append(types.Content(role="user", parts=user_parts))
 
             generation_config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -1063,9 +1162,7 @@ def chat():
 
             try:
                 chunks = client.models.generate_content_stream(
-                    model=model,
-                    contents=contents,
-                    config=generation_config
+                    model=model, contents=contents, config=generation_config
                 )
                 for chunk in chunks:
                     piece = (getattr(chunk, "text", None) or "")
@@ -1083,18 +1180,11 @@ def chat():
                 fallback_model = os.getenv(
                     "GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite"
                 ).strip()
-
                 if stream_started or not temporary or not fallback_model.startswith("gemini-") or fallback_model == model:
                     raise
-
-                app.logger.warning(
-                    "Primary Gemini stream unavailable; trying fallback model %s",
-                    fallback_model
-                )
+                app.logger.warning("Primary Gemini stream unavailable; trying fallback model %s", fallback_model)
                 for chunk in client.models.generate_content_stream(
-                    model=fallback_model,
-                    contents=contents,
-                    config=generation_config
+                    model=fallback_model, contents=contents, config=generation_config
                 ):
                     piece = (getattr(chunk, "text", None) or "")
                     if piece:
@@ -1120,7 +1210,7 @@ def chat():
                 c.execute("""
                     INSERT INTO chats(user_id, role, content, conversation_id)
                     VALUES (?, 'user', ?, ?)
-                """, (user_id, message, conversation_id))
+                """, (user_id, stored_message, conversation_id))
                 c.execute("""
                     INSERT INTO chats(user_id, role, content, conversation_id)
                     VALUES (?, 'assistant', ?, ?)
@@ -1131,7 +1221,7 @@ def chat():
                 SET title = CASE WHEN title = 'محادثة جديدة' THEN ? ELSE title END,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ? AND user_id = ?
-            """, (message[:55], conversation_id, user_id))
+            """, ((message[:55] or ("ملف: " + attachment_names[0][:45])) if attachment_names else message[:55], conversation_id, user_id))
             c.commit()
             yield emit("done", {"conversation_id": conversation_id})
 
@@ -1141,14 +1231,13 @@ def chat():
             except Exception:
                 pass
             error_text = str(error)
-            app.logger.exception("AI streaming response failed: %s", error_text)
+            app.logger.exception("AI attachment/chat request failed: %s", error_text)
             upper = error_text.upper()
-
             if any(marker in upper for marker in ("API_KEY_INVALID", "INVALID API KEY", "UNAUTHENTICATED", "PERMISSION_DENIED", "403", "401")):
                 message_text = "مفتاح Gemini غير صحيح أو ما عنده صلاحية. راجع إعدادات الاستضافة."
             elif any(marker in upper for marker in ("RESOURCE_EXHAUSTED", "QUOTA", "429", "RATE_LIMIT")):
                 message_text = "وصلت خدمة الذكاء الاصطناعي لحد الاستخدام المتاح حالياً."
-            elif "NOT_FOUND" in upper or "MODEL" in upper and "NOT FOUND" in upper or "404" in upper:
+            elif "NOT_FOUND" in upper or ("MODEL" in upper and "NOT FOUND" in upper) or "404" in upper:
                 message_text = "موديل الذكاء الاصطناعي المحدد غير متاح. راجع إعدادات الموديل."
             elif any(marker in upper for marker in ("503", "UNAVAILABLE", "HIGH DEMAND", "INTERNAL")):
                 message_text = "خدمة Gemini مشغولة حالياً. حاول بعد شوية."
@@ -1158,7 +1247,6 @@ def chat():
                 message_text = "إعداد طلب الذكاء الاصطناعي غير مقبول. راجع اسم الموديل وإعداداته."
             else:
                 message_text = "تعذر الحصول على رد من Gemini. حاول مجدداً بعد قليل."
-
             yield emit("error", {"error": message_text})
         finally:
             try:
@@ -1166,10 +1254,7 @@ def chat():
             except Exception:
                 pass
 
-    response = Response(
-        stream_with_context(generate()),
-        mimetype="text/event-stream"
-    )
+    response = Response(stream_with_context(generate()), mimetype="text/event-stream")
     response.headers["Cache-Control"] = "no-cache, no-transform"
     response.headers["X-Accel-Buffering"] = "no"
     response.headers["Connection"] = "keep-alive"

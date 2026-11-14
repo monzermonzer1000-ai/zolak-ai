@@ -159,7 +159,123 @@ document.querySelectorAll(".home-quick-action").forEach(function (button) {
     });
 });
 const composerAdd = document.getElementById("composerAdd");
-if (composerAdd) composerAdd.addEventListener("click", function () { showSidebarNotice("إرفاق الصور والملفات قيد التطوير."); });
+const attachmentInput = document.getElementById("attachmentInput");
+const attachmentPreview = document.getElementById("attachmentPreview");
+let selectedAttachments = [];
+
+function attachmentMime(file) {
+    if (file.type) return file.type;
+    const extension = (file.name.split(".").pop() || "").toLowerCase();
+    const byExtension = {
+        jpg:"image/jpeg", jpeg:"image/jpeg", png:"image/png", webp:"image/webp",
+        gif:"image/gif", pdf:"application/pdf", docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        txt:"text/plain", md:"text/markdown", csv:"text/csv"
+    };
+    return byExtension[extension] || "";
+}
+
+function formatAttachmentSize(bytes) {
+    return bytes < 1024 * 1024
+        ? Math.max(1, Math.round(bytes / 1024)) + " KB"
+        : (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function renderAttachmentPreview() {
+    if (!attachmentPreview) return;
+    attachmentPreview.replaceChildren();
+    attachmentPreview.hidden = selectedAttachments.length === 0;
+    if (composerAdd) composerAdd.classList.toggle("has-files", selectedAttachments.length > 0);
+
+    selectedAttachments.forEach(function (file, index) {
+        const chip = document.createElement("div");
+        chip.className = "attachment-chip";
+        if (attachmentMime(file).startsWith("image/")) {
+            const image = document.createElement("img");
+            image.src = URL.createObjectURL(file);
+            image.alt = file.name;
+            chip.appendChild(image);
+        } else {
+            const icon = document.createElement("span");
+            icon.textContent = file.type === "application/pdf" ? "PDF" : "ملف";
+            chip.appendChild(icon);
+        }
+        const name = document.createElement("span");
+        name.className = "attachment-chip-name";
+        name.textContent = file.name + " · " + formatAttachmentSize(file.size);
+        chip.appendChild(name);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "attachment-remove";
+        remove.setAttribute("aria-label", "إزالة " + file.name);
+        remove.textContent = "×";
+        remove.addEventListener("click", function () {
+            selectedAttachments.splice(index, 1);
+            renderAttachmentPreview();
+        });
+        chip.appendChild(remove);
+        attachmentPreview.appendChild(chip);
+    });
+}
+
+if (composerAdd && attachmentInput) {
+    composerAdd.addEventListener("click", function () {
+        attachmentInput.click();
+    });
+    attachmentInput.addEventListener("change", function () {
+        const accepted = new Set([
+            "image/jpeg", "image/png", "image/webp", "image/gif",
+            "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain", "text/markdown", "text/csv"
+        ]);
+        const incoming = Array.from(attachmentInput.files || []);
+        for (const file of incoming) {
+            const mimeType = attachmentMime(file);
+            if (!accepted.has(mimeType)) {
+                showSidebarNotice("نوع الملف غير مدعوم. أرفق صورة أو PDF أو TXT أو MD أو CSV.");
+                continue;
+            }
+            if (selectedAttachments.length >= 4) {
+                showSidebarNotice("الحد الأقصى 4 ملفات في الرسالة الواحدة.");
+                break;
+            }
+            if (file.size > 2500000) {
+                showSidebarNotice("حجم الملف الواحد أكبر من 2.5 ميجابايت.");
+                continue;
+            }
+            const total = selectedAttachments.reduce(function (sum, item) { return sum + item.size; }, 0);
+            if (total + file.size > 2500000) {
+                showSidebarNotice("إجمالي حجم المرفقات لا يتجاوز 2.5 ميجابايت.");
+                continue;
+            }
+            if (selectedAttachments.some(function (item) { return item.name === file.name && item.size === file.size; })) continue;
+            selectedAttachments.push(file);
+        }
+        attachmentInput.value = "";
+        renderAttachmentPreview();
+    });
+}
+
+function fileToPayload(file) {
+    return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function () {
+            const result = String(reader.result || "");
+            const comma = result.indexOf(",");
+            if (comma < 0) return reject(new Error("تعذر قراءة الملف " + file.name));
+            resolve({
+                name: file.name,
+                mime_type: attachmentMime(file),
+                data: result.slice(comma + 1)
+            });
+        };
+        reader.onerror = function () { reject(new Error("تعذر قراءة الملف " + file.name)); };
+        reader.readAsDataURL(file);
+    });
+}
+
+function clearSelectedAttachments() {
+    selectedAttachments = [];
+    renderAttachmentPreview();
+}
 const composerMic = document.getElementById("composerMic");
 if (composerMic) composerMic.addEventListener("click", function () {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -341,7 +457,7 @@ function renderAssistantMarkdown(container, source) {
     flushList();
 }
 
-function addMessage(text, type) {
+function addMessage(text, type, attachments) {
     if (!messages) return;
 
     const message = document.createElement("div");
@@ -371,6 +487,24 @@ function addMessage(text, type) {
         content.textContent = text;
     }
 
+    if (type === "user" && Array.isArray(attachments) && attachments.length) {
+        const previews = document.createElement("div");
+        previews.className = "message-attachments";
+        attachments.forEach(function (item) {
+            if (item.type && item.type.startsWith("image/") && item.preview) {
+                const image = document.createElement("img");
+                image.src = item.preview;
+                image.alt = item.name;
+                previews.appendChild(image);
+            } else {
+                const fileLabel = document.createElement("span");
+                fileLabel.className = "message-attachment-file";
+                fileLabel.textContent = "📎 " + item.name;
+                previews.appendChild(fileLabel);
+            }
+        });
+        content.appendChild(previews);
+    }
     message.appendChild(content);
     messages.appendChild(message);
     messages.scrollTop = messages.scrollHeight;
@@ -693,14 +827,19 @@ async function sendMessage() {
     if (!promptBox || !sendButton || !messages || isSending) return;
 
     const question = promptBox.value.trim();
-    if (!question) return;
+    if (!question && selectedAttachments.length === 0) return;
 
     isSending = true;
     if (homeQuickActions) homeQuickActions.hidden = true;
-    addMessage(question, "user");
+    const filesForBubble = selectedAttachments.map(function (file) {
+        return {name:file.name,type:attachmentMime(file),preview:attachmentMime(file).startsWith("image/") ? URL.createObjectURL(file) : null};
+    });
+    const attachmentNames = selectedAttachments.map(function (file) { return file.name; });
+    addMessage(question || "راجع المرفقات التالية:", "user", filesForBubble);
     promptBox.value = "";
     updateComposerMode();
     sendButton.disabled = true;
+    if (composerAdd) composerAdd.disabled = true;
     sendButton.innerHTML = '<span class="send-icon">…</span>';
 
     let liveMessage = null;
@@ -710,8 +849,9 @@ async function sendMessage() {
     let completed = false;
 
     try {
-        const body = { message: question };
+        const body = { message: question, attachments: await Promise.all(selectedAttachments.map(fileToPayload)) };
         if (currentConversationId !== null) body.conversation_id = currentConversationId;
+        clearSelectedAttachments();
 
         const response = await fetch("/api/chat", {
             method: "POST",
@@ -731,9 +871,7 @@ async function sendMessage() {
             return;
         }
 
-        if (!response.body || !response.body.getReader) {
-            throw new Error("المتصفح لا يدعم استقبال الرد المباشر.");
-        }
+        if (!response.body || !response.body.getReader) throw new Error("المتصفح لا يدعم استقبال الرد المباشر.");
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
@@ -794,13 +932,11 @@ async function sendMessage() {
     } catch (error) {
         console.error("خطأ في إرسال الرسالة:", error);
         if (liveMessage) liveMessage.remove();
-        addMessage(
-            "ما قدرنا نكمل الاتصال بالخدمة. تأكد من الإنترنت وحاول تاني.",
-            "assistant"
-        );
+        addMessage("ما قدرنا نكمل الاتصال بالخدمة. تأكد من الإنترنت وحاول تاني.", "assistant");
     } finally {
         isSending = false;
         sendButton.disabled = false;
+        if (composerAdd) composerAdd.disabled = false;
         sendButton.innerHTML = '<span class="send-icon">↑</span>';
         if (promptBox) promptBox.focus();
     }
