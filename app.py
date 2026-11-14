@@ -1048,7 +1048,7 @@ def chat():
                 WHERE conversation_id = ?
                   AND user_id = ?
                 ORDER BY id DESC
-                LIMIT 24
+                LIMIT 12
             """, (conversation_id, session["uid"])).fetchall()
 
         from google import genai
@@ -1059,9 +1059,9 @@ def chat():
         client = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
-                timeout=45000,
+                timeout=18000,
                 retry_options=types.HttpRetryOptions(
-                    attempts=2,
+                    attempts=1,
                     initial_delay=0.8,
                     max_delay=2.0,
                     exp_base=2.0,
@@ -1093,7 +1093,7 @@ def chat():
         generation_config = types.GenerateContentConfig(
             system_instruction=system_instruction,
             temperature=0.7,
-            max_output_tokens=2048
+            max_output_tokens=1024
         )
 
         try:
@@ -1108,6 +1108,11 @@ def chat():
                 "503" in primary_error_text
                 or "UNAVAILABLE" in primary_error_text
                 or "HIGH DEMAND" in primary_error_text
+                or "504" in primary_error_text
+                or "DEADLINE_EXCEEDED" in primary_error_text
+                or "TIMEOUT" in primary_error_text
+                or "TIMED OUT" in primary_error_text
+                or "CONNECTION RESET" in primary_error_text
             )
             fallback_model = os.getenv(
                 "GEMINI_FALLBACK_MODEL",
@@ -1273,6 +1278,16 @@ def chat():
             return jsonify(
                 error="خدمة Gemini مشغولة حالياً أو فيها عطل مؤقت. انتظر قليلاً ثم حاول مجدداً."
             ), 503
+
+        if (
+            "504" in upper_error
+            or "DEADLINE_EXCEEDED" in upper_error
+            or "TIMEOUT" in upper_error
+            or "TIMED OUT" in upper_error
+        ):
+            return jsonify(
+                error="Gemini اتأخر في الرد حتى انتهت المهلة. جرّب رسالة أقصر بعد لحظات، ولم يتم خصم رصيدك."
+            ), 504
 
         if "INVALID_ARGUMENT" in upper_error or "400" in upper_error:
             return jsonify(
