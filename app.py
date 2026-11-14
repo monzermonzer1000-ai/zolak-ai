@@ -111,6 +111,11 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
+    conversation_columns = {
+        row["name"] for row in c.execute("PRAGMA table_info(conversations)").fetchall()
+    }
+    if "is_pinned" not in conversation_columns:
+        c.execute("ALTER TABLE conversations ADD COLUMN is_pinned INTEGER NOT NULL DEFAULT 0")
 
     chat_columns = {
         row["name"] for row in c.execute("PRAGMA table_info(chats)").fetchall()
@@ -1327,7 +1332,7 @@ def list_conversations():
     if query:
         pattern = f"%{query}%"
         rows = c.execute("""
-            SELECT conversations.id, conversations.title,
+            SELECT conversations.id, conversations.title, conversations.is_pinned,
                    conversations.updated_at, COUNT(chats.id) AS message_count
             FROM conversations
             LEFT JOIN chats ON chats.conversation_id = conversations.id
@@ -1343,19 +1348,19 @@ def list_conversations():
               )
             GROUP BY conversations.id
             HAVING COUNT(chats.id) > 0
-            ORDER BY conversations.updated_at DESC, conversations.id DESC
+            ORDER BY conversations.is_pinned DESC, conversations.updated_at DESC, conversations.id DESC
             LIMIT 100
         """, (session["uid"], pattern, pattern)).fetchall()
     else:
         rows = c.execute("""
-            SELECT conversations.id, conversations.title,
+            SELECT conversations.id, conversations.title, conversations.is_pinned,
                    conversations.updated_at, COUNT(chats.id) AS message_count
             FROM conversations
             LEFT JOIN chats ON chats.conversation_id = conversations.id
             WHERE conversations.user_id = ?
             GROUP BY conversations.id
             HAVING COUNT(chats.id) > 0
-            ORDER BY conversations.updated_at DESC, conversations.id DESC
+            ORDER BY conversations.is_pinned DESC, conversations.updated_at DESC, conversations.id DESC
             LIMIT 100
         """, (session["uid"],)).fetchall()
     c.close()
@@ -1364,25 +1369,47 @@ def list_conversations():
 
 @app.patch("/api/conversations/<int:conversation_id>")
 @login_required
-def rename_conversation(conversation_id):
+def update_conversation(conversation_id):
     data = request.get_json(silent=True) or {}
-    title = str(data.get("title", "")).strip()
-    if not title:
-        return jsonify(error="اكتب اسماً للمحادثة."), 400
-    if len(title) > 80:
-        return jsonify(error="اسم المحادثة طويل؛ الحد الأقصى 80 حرفاً."), 400
+    title_value = data.get("title")
+    pinned_value = data.get("is_pinned")
+    if title_value is None and pinned_value is None:
+        return jsonify(error="ما في تعديل مطلوب."), 400
+
+    title = None
+    if title_value is not None:
+        title = str(title_value).strip()
+        if not title:
+            return jsonify(error="اكتب اسماً للمحادثة."), 400
+        if len(title) > 80:
+            return jsonify(error="اسم المحادثة طويل؛ الحد الأقصى 80 حرفاً."), 400
+    if pinned_value is not None and not isinstance(pinned_value, bool):
+        return jsonify(error="قيمة التثبيت غير صحيحة."), 400
 
     c = db()
-    result = c.execute("""
-        UPDATE conversations
-        SET title = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND user_id = ?
-    """, (title, conversation_id, session["uid"]))
+    if title is not None and pinned_value is not None:
+        result = c.execute("""
+            UPDATE conversations
+            SET title = ?, is_pinned = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?
+        """, (title, int(pinned_value), conversation_id, session["uid"]))
+    elif title is not None:
+        result = c.execute("""
+            UPDATE conversations
+            SET title = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?
+        """, (title, conversation_id, session["uid"]))
+    else:
+        result = c.execute("""
+            UPDATE conversations
+            SET is_pinned = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?
+        """, (int(pinned_value), conversation_id, session["uid"]))
     c.commit()
     c.close()
     if result.rowcount != 1:
         return jsonify(error="المحادثة غير موجودة."), 404
-    return jsonify(ok=True, title=title)
+    return jsonify(ok=True, title=title, is_pinned=pinned_value)
 
 
 @app.post("/api/conversations")

@@ -16,7 +16,7 @@
 
     <!-- Main Design -->
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}?v=20">
+          href="{{ url_for('static', filename='style.css') }}?v=21">
 
     <style>
         :root {
@@ -87,6 +87,7 @@
 
         <section class="sidebar-pinned">
             <div class="sidebar-section-label">مثبت</div>
+            <div class="conversation-items pinned-items" id="pinnedItems"></div>
         </section>
 
         <section class="conversation-list sidebar-history" id="conversationList">
@@ -198,7 +199,7 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=20"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=21"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
