@@ -1054,7 +1054,12 @@ def chat():
         from google import genai
         from google.genai import types
 
-        client = genai.Client(api_key=api_key)
+        # Bound upstream latency so a stalled provider/network call cannot
+        # occupy a Vercel function until the platform's hard timeout.
+        client = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(timeout=45000)
+        )
         model = setting("ai_model", "gemini-3.8-flash").strip()
         if not model.startswith("gemini-"):
             model = "gemini-3.8-flash"
@@ -1980,7 +1985,12 @@ def admin_ai_test():
         if not model.startswith("gemini-"):
             model = "gemini-3.8-flash"
 
-        client = genai.Client(api_key=api_key)
+        # Bound upstream latency so a stalled provider/network call cannot
+        # occupy a Vercel function until the platform's hard timeout.
+        client = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(timeout=45000)
+        )
         response = client.models.generate_content(
             model=model,
             contents="أجب بكلمة واحدة فقط: جاهز",
