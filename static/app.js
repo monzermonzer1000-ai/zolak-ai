@@ -12,6 +12,7 @@ const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
 const conversationSearch = document.getElementById("conversationSearch");
 const pinnedItems = document.getElementById("pinnedItems");
+const sidebarPinnedSection = document.querySelector(".sidebar-pinned");
 
 document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
     tool.addEventListener("click", function () {
@@ -582,6 +583,7 @@ async function loadConversations(searchTerm = "") {
         const data = await response.json();
         items.innerHTML = "";
         if (pinnedItems) pinnedItems.innerHTML = "";
+        if (sidebarPinnedSection) sidebarPinnedSection.hidden = true;
 
         const conversations = data.conversations || [];
 
@@ -720,6 +722,9 @@ async function loadConversations(searchTerm = "") {
             destination.appendChild(item);
 
         });
+        if (sidebarPinnedSection && pinnedItems) {
+            sidebarPinnedSection.hidden = pinnedItems.children.length === 0;
+        }
     } catch (error) {
         console.error("خطأ في تحميل المحادثات:", error);
     }
