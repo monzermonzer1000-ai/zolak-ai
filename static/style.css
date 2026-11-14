@@ -2460,3 +2460,8 @@ html, body { background:#fff !important; }
     .attachment-preview { padding:0 2px; }
     .attachment-chip-name { max-width:125px; }
 }
+
+.pinned-items:empty { display:none; }
+.sidebar-pinned { margin-bottom:8px; }
+.sidebar-pinned .conversation-item { margin:2px 8px; }
+.sidebar-pinned .conversation-title { font-weight:600; }
