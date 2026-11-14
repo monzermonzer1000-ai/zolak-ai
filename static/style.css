@@ -2360,3 +2360,10 @@ body.theme-light .app.chatgpt-layout > .main .composer-inner {
 .main,.main.main-chat{background:transparent !important}
 @media(max-width:600px){.topbar.chat-navbar{min-height:90px;padding:12px 20px}.home-icon-button{width:54px;height:54px}.plus-subscribe{min-height:48px;padding:0 14px;font-size:14px}.home-quick-actions{padding:0 28px 7px;gap:10px}.home-quick-action{min-height:48px;font-size:15px}.composer.composer-area{padding:8px 16px max(12px,env(safe-area-inset-bottom))}.composer-inner{min-height:68px;gap:3px;padding:6px}.composer-voice{min-width:94px;height:42px;padding:0 10px;font-size:14px}.composer-icon-button{flex-basis:38px;width:38px;height:42px}#prompt{font-size:15px;min-height:44px;padding-inline:5px}}
 @media(min-width:801px){.topbar.chat-navbar{min-height:76px}.home-quick-actions{margin-top:auto}.composer.composer-area{padding-bottom:20px}}
+
+/* Composer switches from voice mode to send action once text is entered */
+#send {display:none !important;}
+.composer-inner.has-text #send {display:inline-flex !important;}
+.composer-inner.has-text .composer-voice {display:none !important;}
+.composer-inner.has-text .composer-mic {display:none !important;}
+.home-quick-actions[hidden] {display:none !important;}
