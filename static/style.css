@@ -2302,3 +2302,33 @@ body.theme-light .app.chatgpt-layout > .main .composer-inner {
     box-shadow: 0 8px 24px rgba(0,0,0,.22);
     font-size: 13px;
 }
+
+/* Bottom row: profile avatar on the left and primary chat action on the right */
+.sidebar-bottom {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0 max(4px, env(safe-area-inset-bottom));
+}
+.sidebar-bottom .account-box {
+    order: 0;
+    flex: 0 0 54px;
+    width: 54px;
+    min-height: 54px;
+    padding: 4px;
+}
+.sidebar-bottom .account-info,
+.sidebar-bottom .account-status { display: none; }
+.sidebar-bottom .account-avatar {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+}
+.sidebar-bottom .new-chat {
+    order: 0;
+    flex: 0 1 60%;
+    width: auto;
+    min-height: 56px;
+}
