@@ -1,12 +1,12 @@
 "use strict";
 
-const CACHE_NAME = "zolak-ai-assets-v17";
+const CACHE_NAME = "zolak-ai-assets-v18";
 const ASSETS = [
   "/manifest.json",
-  "/static/style.css?v=20",
+  "/static/style.css?v=21",
   "/static/mobile-fixes.css?v=1",
   "/static/performance.css?v=1",
-  "/static/app.js?v=20",
+  "/static/app.js?v=21",
   "/static/icon.svg",
   "/static/sudan-flag-background.jpg"
 ];
