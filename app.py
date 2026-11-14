@@ -509,21 +509,25 @@ def admin_required(fn):
 
         c.close()
 
-        if (
-            not user
-            or user["is_banned"]
-            or not user["is_admin"]
-        ):
-
+        if not user or user["is_banned"]:
             session.clear()
 
             if request.path.startswith("/api/"):
+                return jsonify(
+                    error="سجل دخولك من جديد."
+                ), 401
 
+            return redirect("/login")
+
+        # An authenticated ordinary user must keep their session when
+        # requesting an administrator-only page or API by mistake.
+        if not user["is_admin"]:
+            if request.path.startswith("/api/"):
                 return jsonify(
                     error="ما عندك صلاحية للدخول."
                 ), 403
 
-            return redirect("/login")
+            return redirect("/")
 
         return fn(*args, **kwargs)
 
