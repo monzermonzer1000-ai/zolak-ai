@@ -12,17 +12,6 @@ const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
 const conversationSearch = document.getElementById("conversationSearch");
 
-const sidebarSearchButton = document.getElementById("sidebarSearch");
-if (sidebarSearchButton) {
-    sidebarSearchButton.addEventListener("click", function () {
-        const term = window.prompt("ابحث في محادثاتك:");
-        if (term === null || !term.trim()) return;
-        const query = term.trim().toLocaleLowerCase();
-        document.querySelectorAll("#conversationItems .conversation-item").forEach(function (item) {
-            item.hidden = !item.textContent.toLocaleLowerCase().includes(query);
-        });
-    });
-}
 document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
     tool.addEventListener("click", function () {
         const labels = {images:"الصور",library:"المكتبة",projects:"المشروعات",explore:"استكشاف"};
@@ -834,8 +823,7 @@ async function sendMessage() {
     const filesForBubble = selectedAttachments.map(function (file) {
         return {name:file.name,type:attachmentMime(file),preview:attachmentMime(file).startsWith("image/") ? URL.createObjectURL(file) : null};
     });
-    const attachmentNames = selectedAttachments.map(function (file) { return file.name; });
-    addMessage(question || "راجع المرفقات التالية:", "user", filesForBubble);
+        addMessage(question || "راجع المرفقات التالية:", "user", filesForBubble);
     promptBox.value = "";
     updateComposerMode();
     sendButton.disabled = true;
@@ -851,8 +839,6 @@ async function sendMessage() {
     try {
         const body = { message: question, attachments: await Promise.all(selectedAttachments.map(fileToPayload)) };
         if (currentConversationId !== null) body.conversation_id = currentConversationId;
-        clearSelectedAttachments();
-
         const response = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
@@ -873,6 +859,7 @@ async function sendMessage() {
 
         if (!response.body || !response.body.getReader) throw new Error("المتصفح لا يدعم استقبال الرد المباشر.");
 
+        clearSelectedAttachments();
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
         let buffer = "";
