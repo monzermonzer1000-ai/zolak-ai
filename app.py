@@ -14,7 +14,9 @@ from flask import (
     jsonify,
     session,
     redirect,
-    send_file
+    send_file,
+    Response,
+    stream_with_context
 )
 
 from werkzeug.security import (
@@ -927,71 +929,37 @@ def me():
 @login_required
 def chat():
 
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-    message = str(
-        data.get("message", "")
-    ).strip()
+    data = request.get_json(silent=True) or {}
+    message = str(data.get("message", "")).strip()
 
     if not message:
-
-        return jsonify(
-            error="اكتب رسالتك أولاً."
-        ), 400
+        return jsonify(error="اكتب رسالتك أولاً."), 400
 
     try:
-        max_message_length = int(
-            setting("max_message_length", "12000")
-        )
+        max_message_length = int(setting("max_message_length", "12000"))
         if max_message_length < 1:
             max_message_length = 12000
     except (TypeError, ValueError):
         max_message_length = 12000
 
     if len(message) > max_message_length:
-        return jsonify(
-            error=f"الرسالة طويلة شديد. الحد الأقصى {max_message_length} حرف."
-        ), 400
+        return jsonify(error=f"الرسالة طويلة شديد. الحد الأقصى {max_message_length} حرف."), 400
 
-    if setting(
-        "maintenance",
-        "false"
-    ).lower() == "true":
+    if setting("maintenance", "false").lower() == "true":
+        return jsonify(error="الموقع تحت الصيانة حالياً. جرب بعد شوية."), 503
 
-        return jsonify(
-            error="الموقع تحت الصيانة حالياً. جرب بعد شوية."
-        ), 503
-
+    user_id = session["uid"]
     c = db()
-
-    user = c.execute(
-        """
-        SELECT credits
-        FROM users
-        WHERE id = ?
-        """,
-        (session["uid"],)
-    ).fetchone()
+    user = c.execute("SELECT credits FROM users WHERE id = ?", (user_id,)).fetchone()
 
     if not user:
-
         c.close()
-
         session.clear()
-
-        return jsonify(
-            error="سجل دخولك من جديد."
-        ), 401
+        return jsonify(error="سجل دخولك من جديد."), 401
 
     if user["credits"] <= 0:
-
         c.close()
-
-        return jsonify(
-            error="رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"
-        ), 402
+        return jsonify(error="رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"), 402
 
     conversation_id = data.get("conversation_id")
     if conversation_id is not None:
@@ -1002,10 +970,9 @@ def chat():
             return jsonify(error="المحادثة المطلوبة غير صحيحة."), 400
 
         conversation = c.execute("""
-            SELECT id, gemini_interaction_id
-            FROM conversations
+            SELECT id FROM conversations
             WHERE id = ? AND user_id = ?
-        """, (conversation_id, session["uid"])).fetchone()
+        """, (conversation_id, user_id)).fetchone()
 
         if not conversation:
             c.close()
@@ -1014,289 +981,199 @@ def chat():
         c.execute("""
             INSERT INTO conversations(user_id, title)
             VALUES (?, ?)
-        """, (session["uid"], message[:55] or "محادثة جديدة"))
+        """, (user_id, message[:55] or "محادثة جديدة"))
         conversation_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
-        conversation = c.execute("""
-            SELECT id, gemini_interaction_id
-            FROM conversations WHERE id = ?
-        """, (conversation_id,)).fetchone()
+        c.commit()
 
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
-
     if not api_key:
         c.close()
-        return jsonify(
-            error="مفتاح Gemini غير مضاف. أضف GEMINI_API_KEY في إعدادات الاستضافة ثم أعد تشغيل الموقع."
-        ), 503
+        return jsonify(error="مفتاح Gemini غير مضاف. راجع إعدادات الاستضافة."), 503
 
-    try:
-        system_instruction = (
-            "أنت زولك AI، مساعد ذكاء اصطناعي سوداني ودود. "
-            "أجب بوضوح ودقة. "
-            "استخدم اللهجة السودانية عندما يطلبها المستخدم "
-            "أو عندما يكون ذلك مناسباً. "
-            "لا تدّعي أنك إنسان. "
-            "إذا لم تعرف الإجابة فقل ذلك بوضوح. "
-            "لا تخترع معلومات."
-        )
+    # SSE allows the browser to render tokens as soon as Gemini produces them,
+    # rather than waiting for the complete answer before showing anything.
+    def generate():
+        import json
 
-        history_rows = []
-        if history_enabled():
-            history_rows = c.execute("""
-                SELECT role, content
-                FROM chats
-                WHERE conversation_id = ?
-                  AND user_id = ?
-                ORDER BY id DESC
-                LIMIT 12
-            """, (conversation_id, session["uid"])).fetchall()
+        def emit(event, payload):
+            return "event: " + event + "\ndata: " + json.dumps(payload, ensure_ascii=False) + "\n\n"
 
-        from google import genai
-        from google.genai import types
+        answer_parts = []
+        stream_started = False
+        try:
+            system_instruction = (
+                "أنت زولك AI، مساعد ذكاء اصطناعي سوداني ودود. "
+                "أجب بوضوح ودقة وباختصار مفيد، ولا تطل بلا داعٍ. "
+                "استخدم اللهجة السودانية عندما يكون ذلك مناسباً. "
+                "لا تدّعي أنك إنسان. إذا لم تعرف الإجابة فقل ذلك بوضوح. "
+                "لا تخترع معلومات."
+            )
 
-        # Bound upstream latency so a stalled provider/network call cannot
-        # occupy a Vercel function until the platform's hard timeout.
-        client = genai.Client(
-            api_key=api_key,
-            http_options=types.HttpOptions(
-                timeout=10000,
-                retry_options=types.HttpRetryOptions(
-                    attempts=1,
-                    initial_delay=0.8,
-                    max_delay=2.0,
-                    exp_base=2.0,
-                    jitter=0.2,
-                    http_status_codes=[500, 502, 503, 504]
+            history_rows = []
+            if history_enabled():
+                history_rows = c.execute("""
+                    SELECT role, content
+                    FROM chats
+                    WHERE conversation_id = ? AND user_id = ?
+                    ORDER BY id DESC
+                    LIMIT 8
+                """, (conversation_id, user_id)).fetchall()
+
+            from google import genai
+            from google.genai import types
+
+            client = genai.Client(
+                api_key=api_key,
+                http_options=types.HttpOptions(
+                    timeout=10000,
+                    retry_options=types.HttpRetryOptions(
+                        attempts=1,
+                        initial_delay=0.8,
+                        max_delay=2.0,
+                        exp_base=2.0,
+                        jitter=0.2,
+                        http_status_codes=[500, 502, 503, 504]
+                    )
                 )
             )
-        )
-        model = setting("ai_model", "gemini-3.8-flash").strip()
-        if not model.startswith("gemini-"):
-            model = "gemini-3.8-flash"
 
-        contents = []
-        for row in reversed(history_rows):
-            role = "user" if row["role"] == "user" else "model"
-            contents.append(
-                types.Content(
+            model = setting("ai_model", "gemini-3.8-flash").strip()
+            if not model.startswith("gemini-"):
+                model = "gemini-3.8-flash"
+
+            contents = []
+            for row in reversed(history_rows):
+                role = "user" if row["role"] == "user" else "model"
+                contents.append(types.Content(
                     role=role,
                     parts=[types.Part.from_text(text=row["content"])]
-                )
-            )
-        contents.append(
-            types.Content(
+                ))
+            contents.append(types.Content(
                 role="user",
                 parts=[types.Part.from_text(text=message)]
+            ))
+
+            generation_config = types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.65,
+                max_output_tokens=768
             )
-        )
 
-        generation_config = types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            temperature=0.7,
-            max_output_tokens=1024
-        )
+            yield emit("meta", {"conversation_id": conversation_id})
 
-        try:
-            response = client.models.generate_content(
-                model=model,
-                contents=contents,
-                config=generation_config
-            )
-        except Exception as primary_error:
-            primary_error_text = str(primary_error).upper()
-            is_temporary_overload = (
-                "503" in primary_error_text
-                or "UNAVAILABLE" in primary_error_text
-                or "HIGH DEMAND" in primary_error_text
-                or "504" in primary_error_text
-                or "DEADLINE_EXCEEDED" in primary_error_text
-                or "TIMEOUT" in primary_error_text
-                or "TIMED OUT" in primary_error_text
-                or "CONNECTION RESET" in primary_error_text
-            )
-            fallback_model = os.getenv(
-                "GEMINI_FALLBACK_MODEL",
-                "gemini-3.5-flash-lite"
-            ).strip()
-
-            if not is_temporary_overload or not fallback_model.startswith("gemini-") or fallback_model == model:
-                raise
-
-            app.logger.warning(
-                "Primary Gemini model %s is temporarily unavailable; trying fallback model %s",
-                model,
-                fallback_model
-            )
-            response = client.models.generate_content(
-                model=fallback_model,
-                contents=contents,
-                config=generation_config
-            )
-        answer = (response.text or "").strip()
-
-        if not answer:
-            c.close()
-            return jsonify(
-                error="وصلنا رد فارغ من خدمة الذكاء الاصطناعي. جرّب صياغة سؤالك بطريقة مختلفة."
-            ), 502
-
-        # -------------------------------------------------
-        # خصم الرصيد
-        # -------------------------------------------------
-
-        result = c.execute(
-            """
-            UPDATE users
-            SET credits = credits - 1
-            WHERE id = ?
-            AND credits > 0
-            """,
-            (session["uid"],)
-        )
-
-        if result.rowcount != 1:
-
-            c.rollback()
-            c.close()
-
-            return jsonify(
-                error="رصيدك ما كفاية لإرسال رسالة جديدة."
-            ), 402
-
-        # -------------------------------------------------
-        # حفظ الرسائل
-        # -------------------------------------------------
-
-        if history_enabled():
-            c.execute(
-                """
-                INSERT INTO chats
-                (
-                    user_id,
-                    role,
-                    content,
-                    conversation_id
+            try:
+                chunks = client.models.generate_content_stream(
+                    model=model,
+                    contents=contents,
+                    config=generation_config
                 )
-                VALUES (?, ?, ?, ?)
-                """,
-                (
-                    session["uid"],
-                    "user",
-                    message,
-                    conversation_id
+                for chunk in chunks:
+                    piece = (getattr(chunk, "text", None) or "")
+                    if piece:
+                        stream_started = True
+                        answer_parts.append(piece)
+                        yield emit("token", {"text": piece})
+            except Exception as primary_error:
+                error_text = str(primary_error).upper()
+                temporary = any(marker in error_text for marker in (
+                    "503", "UNAVAILABLE", "HIGH DEMAND", "504",
+                    "DEADLINE_EXCEEDED", "TIMEOUT", "TIMED OUT",
+                    "CONNECTION RESET"
+                ))
+                fallback_model = os.getenv(
+                    "GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite"
+                ).strip()
+
+                if stream_started or not temporary or not fallback_model.startswith("gemini-") or fallback_model == model:
+                    raise
+
+                app.logger.warning(
+                    "Primary Gemini stream unavailable; trying fallback model %s",
+                    fallback_model
                 )
-            )
+                for chunk in client.models.generate_content_stream(
+                    model=fallback_model,
+                    contents=contents,
+                    config=generation_config
+                ):
+                    piece = (getattr(chunk, "text", None) or "")
+                    if piece:
+                        stream_started = True
+                        answer_parts.append(piece)
+                        yield emit("token", {"text": piece})
 
-            c.execute(
-                """
-                INSERT INTO chats
-                (
-                    user_id,
-                    role,
-                    content,
-                    conversation_id
-                )
-                VALUES (?, ?, ?, ?)
-                """,
-                (
-                    session["uid"],
-                    "assistant",
-                    answer,
-                    conversation_id
-                )
-            )
+            answer = "".join(answer_parts).strip()
+            if not answer:
+                yield emit("error", {"error": "وصلنا رد فارغ من خدمة الذكاء الاصطناعي. جرّب تاني."})
+                return
 
-        c.execute("""
-            UPDATE conversations
-            SET title = CASE WHEN title = 'محادثة جديدة' THEN ? ELSE title END,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ? AND user_id = ?
-        """, (message[:55], conversation_id, session["uid"]))
+            result = c.execute("""
+                UPDATE users SET credits = credits - 1
+                WHERE id = ? AND credits > 0
+            """, (user_id,))
+            if result.rowcount != 1:
+                c.rollback()
+                yield emit("error", {"error": "رصيدك ما كفاية لإرسال رسالة جديدة."})
+                return
 
-        c.commit()
-        c.close()
-        return jsonify(answer=answer, conversation_id=conversation_id)
+            if history_enabled():
+                c.execute("""
+                    INSERT INTO chats(user_id, role, content, conversation_id)
+                    VALUES (?, 'user', ?, ?)
+                """, (user_id, message, conversation_id))
+                c.execute("""
+                    INSERT INTO chats(user_id, role, content, conversation_id)
+                    VALUES (?, 'assistant', ?, ?)
+                """, (user_id, answer, conversation_id))
 
-    except Exception as error:
+            c.execute("""
+                UPDATE conversations
+                SET title = CASE WHEN title = 'محادثة جديدة' THEN ? ELSE title END,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND user_id = ?
+            """, (message[:55], conversation_id, user_id))
+            c.commit()
+            yield emit("done", {"conversation_id": conversation_id})
 
-        try:
-            c.rollback()
-        except Exception:
-            pass
+        except Exception as error:
+            try:
+                c.rollback()
+            except Exception:
+                pass
+            error_text = str(error)
+            app.logger.exception("AI streaming response failed: %s", error_text)
+            upper = error_text.upper()
 
-        try:
-            c.close()
-        except Exception:
-            pass
+            if any(marker in upper for marker in ("API_KEY_INVALID", "INVALID API KEY", "UNAUTHENTICATED", "PERMISSION_DENIED", "403", "401")):
+                message_text = "مفتاح Gemini غير صحيح أو ما عنده صلاحية. راجع إعدادات الاستضافة."
+            elif any(marker in upper for marker in ("RESOURCE_EXHAUSTED", "QUOTA", "429", "RATE_LIMIT")):
+                message_text = "وصلت خدمة الذكاء الاصطناعي لحد الاستخدام المتاح حالياً."
+            elif "NOT_FOUND" in upper or "MODEL" in upper and "NOT FOUND" in upper or "404" in upper:
+                message_text = "موديل الذكاء الاصطناعي المحدد غير متاح. راجع إعدادات الموديل."
+            elif any(marker in upper for marker in ("503", "UNAVAILABLE", "HIGH DEMAND", "INTERNAL")):
+                message_text = "خدمة Gemini مشغولة حالياً. حاول بعد شوية."
+            elif any(marker in upper for marker in ("504", "DEADLINE_EXCEEDED", "TIMEOUT", "TIMED OUT")):
+                message_text = "Gemini اتأخر في الرد. جرّب رسالة أقصر بعد لحظات، ولم يتم خصم رصيدك."
+            elif "INVALID_ARGUMENT" in upper or "400" in upper:
+                message_text = "إعداد طلب الذكاء الاصطناعي غير مقبول. راجع اسم الموديل وإعداداته."
+            else:
+                message_text = "تعذر الحصول على رد من Gemini. حاول مجدداً بعد قليل."
 
-        error_text = str(error)
+            yield emit("error", {"error": message_text})
+        finally:
+            try:
+                c.close()
+            except Exception:
+                pass
 
-        app.logger.exception(
-            "AI response failed: %s",
-            error_text
-        )
-
-        upper_error = error_text.upper()
-
-        if (
-            "API_KEY_INVALID" in upper_error
-            or "INVALID API KEY" in upper_error
-            or "UNAUTHENTICATED" in upper_error
-            or "PERMISSION_DENIED" in upper_error
-            or "403" in upper_error
-            or "401" in upper_error
-        ):
-            return jsonify(
-                error="مفتاح Gemini غير صحيح أو ما عنده صلاحية. راجع GEMINI_API_KEY في إعدادات الاستضافة."
-            ), 503
-
-        if (
-            "RESOURCE_EXHAUSTED" in upper_error
-            or "QUOTA" in upper_error
-            or "429" in upper_error
-            or "RATE_LIMIT" in upper_error
-        ):
-            return jsonify(
-                error="وصلت خدمة الذكاء الاصطناعي لحد الاستخدام أو الرصيد المتاح للمفتاح. راجع حدود الاستخدام والفوترة لدى مزود الخدمة."
-            ), 503
-
-        if (
-            "NOT_FOUND" in upper_error
-            or "404" in upper_error
-            or "MODEL" in upper_error and "NOT FOUND" in upper_error
-        ):
-            return jsonify(
-                error="موديل الذكاء الاصطناعي المحدد غير متاح لهذا المفتاح. اختَر موديل Gemini متاحاً من لوحة الإدارة."
-            ), 503
-
-        if (
-            "503" in upper_error
-            or "UNAVAILABLE" in upper_error
-            or "HIGH DEMAND" in upper_error
-            or "INTERNAL" in upper_error
-        ):
-            return jsonify(
-                error="خدمة Gemini مشغولة حالياً أو فيها عطل مؤقت. انتظر قليلاً ثم حاول مجدداً."
-            ), 503
-
-        if (
-            "504" in upper_error
-            or "DEADLINE_EXCEEDED" in upper_error
-            or "TIMEOUT" in upper_error
-            or "TIMED OUT" in upper_error
-        ):
-            return jsonify(
-                error="Gemini اتأخر في الرد حتى انتهت المهلة. جرّب رسالة أقصر بعد لحظات، ولم يتم خصم رصيدك."
-            ), 504
-
-        if "INVALID_ARGUMENT" in upper_error or "400" in upper_error:
-            return jsonify(
-                error="إعداد طلب الذكاء الاصطناعي غير مقبول. راجع اسم الموديل وإعداداته من لوحة الإدارة."
-            ), 502
-
-        return jsonify(
-            error="تعذر الحصول على رد من Gemini. راجع سجل الأخطاء في الاستضافة للتفاصيل، ثم حاول مجدداً."
-        ), 502
+    response = Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream"
+    )
+    response.headers["Cache-Control"] = "no-cache, no-transform"
+    response.headers["X-Accel-Buffering"] = "no"
+    response.headers["Connection"] = "keep-alive"
+    return response
 
 
 # =========================================================
