@@ -11,6 +11,7 @@ const messages = document.getElementById("messages");
 const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
 const conversationSearch = document.getElementById("conversationSearch");
+const pinnedItems = document.getElementById("pinnedItems");
 
 document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
     tool.addEventListener("click", function () {
@@ -580,6 +581,7 @@ async function loadConversations(searchTerm = "") {
 
         const data = await response.json();
         items.innerHTML = "";
+        if (pinnedItems) pinnedItems.innerHTML = "";
 
         const conversations = data.conversations || [];
 
@@ -620,11 +622,37 @@ async function loadConversations(searchTerm = "") {
             renameButton.className = "conversation-menu-action";
             renameButton.textContent = "إعادة التسمية";
 
+            const pinButton = document.createElement("button");
+            pinButton.type = "button";
+            pinButton.className = "conversation-menu-action";
+            pinButton.textContent = Number(conversation.is_pinned) === 1 ? "إلغاء التثبيت" : "تثبيت";
+            pinButton.addEventListener("click", async function (event) {
+                event.stopPropagation();
+                actionsMenu.hidden = true;
+                try {
+                    const pinResponse = await fetch("/api/conversations/" + conversation.id, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ is_pinned: Number(conversation.is_pinned) !== 1 })
+                    });
+                    const result = await pinResponse.json();
+                    if (!pinResponse.ok) {
+                        alert(result.error || "ما قدرنا نغيّر حالة التثبيت.");
+                        return;
+                    }
+                    await loadConversations();
+                } catch (error) {
+                    console.error("خطأ في تثبيت المحادثة:", error);
+                    alert("حصل خطأ، حاول تاني.");
+                }
+            });
+
             const deleteButton = document.createElement("button");
             deleteButton.type = "button";
             deleteButton.className = "conversation-menu-action danger";
             deleteButton.textContent = "حذف المحادثة";
 
+            actionsMenu.appendChild(pinButton);
             actionsMenu.appendChild(renameButton);
             actionsMenu.appendChild(deleteButton);
 
@@ -688,6 +716,8 @@ async function loadConversations(searchTerm = "") {
             item.appendChild(title);
             item.appendChild(actionsButton);
             item.appendChild(actionsMenu);
+            const destination = Number(conversation.is_pinned) === 1 && pinnedItems ? pinnedItems : items;
+            destination.appendChild(item);
 
         });
     } catch (error) {
