@@ -2367,3 +2367,9 @@ body.theme-light .app.chatgpt-layout > .main .composer-inner {
 .composer-inner.has-text .composer-voice {display:none !important;}
 .composer-inner.has-text .composer-mic {display:none !important;}
 .home-quick-actions[hidden] {display:none !important;}
+
+#send {display:none !important;}
+.composer-inner.has-text #send {display:inline-flex !important;}
+.composer-inner.has-text .composer-voice,
+.composer-inner.has-text .composer-mic {display:none !important;}
+.home-quick-actions[hidden] {display:none !important;}
