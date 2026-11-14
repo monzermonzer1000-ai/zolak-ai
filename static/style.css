@@ -2465,3 +2465,5 @@ html, body { background:#fff !important; }
 .sidebar-pinned { margin-bottom:8px; }
 .sidebar-pinned .conversation-item { margin:2px 8px; }
 .sidebar-pinned .conversation-title { font-weight:600; }
+
+.sidebar-pinned[hidden] { display:none !important; }
