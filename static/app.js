@@ -11,6 +11,35 @@ const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
 const conversationSearch = document.getElementById("conversationSearch");
 
+const sidebarSearchButton = document.getElementById("sidebarSearch");
+if (sidebarSearchButton) {
+    sidebarSearchButton.addEventListener("click", function () {
+        const term = window.prompt("ابحث في محادثاتك:");
+        if (term === null || !term.trim()) return;
+        const query = term.trim().toLocaleLowerCase();
+        document.querySelectorAll("#conversationItems .conversation-item").forEach(function (item) {
+            item.hidden = !item.textContent.toLocaleLowerCase().includes(query);
+        });
+    });
+}
+document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
+    tool.addEventListener("click", function () {
+        const labels = {images:"الصور",library:"المكتبة",customize:"تخصيص",projects:"المشروعات",remote:"التحكم عن بعد",explore:"استكشاف"};
+        const label = labels[tool.dataset.tool];
+        if (!label) return;
+        let notice = document.querySelector(".sidebar-feature-notice");
+        if (!notice) {
+            notice = document.createElement("div");
+            notice.className = "sidebar-feature-notice";
+            document.body.appendChild(notice);
+        }
+        notice.textContent = "ميزة " + label + " قيد التجهيز.";
+        notice.hidden = false;
+        window.setTimeout(function () { notice.hidden = true; }, 2200);
+    });
+});
+
+
 let currentConversationId = null;
 let isSending = false;
 
