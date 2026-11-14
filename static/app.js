@@ -25,7 +25,7 @@ if (sidebarSearchButton) {
 }
 document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
     tool.addEventListener("click", function () {
-        const labels = {images:"الصور",library:"المكتبة",customize:"تخصيص",projects:"المشروعات",remote:"التحكم عن بعد",explore:"استكشاف"};
+        const labels = {images:"الصور",library:"المكتبة",projects:"المشروعات",explore:"استكشاف"};
         const label = labels[tool.dataset.tool];
         if (!label) return;
         let notice = document.querySelector(".sidebar-feature-notice");
