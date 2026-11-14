@@ -2332,3 +2332,31 @@ body.theme-light .app.chatgpt-layout > .main .composer-inner {
     width: auto;
     min-height: 56px;
 }
+
+
+/* ChatGPT-like clean mobile home screen */
+.home-header-side{display:flex;align-items:center;flex:0 0 54px}
+.home-header-left{justify-content:flex-start}.home-header-right{justify-content:flex-end}
+.home-icon-button{display:grid;place-items:center;width:54px;height:54px;padding:0;border:0;border-radius:50%;color:#171717;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.035)}
+.home-icon-button svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.plus-subscribe{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 18px;border:0;border-radius:999px;color:#3979d8;background:#e8f3ff;font-size:15px;font-weight:600}
+.plus-subscribe b{font-weight:750}.plus-sparkle{font-size:22px;line-height:1}
+.topbar.chat-navbar{min-height:88px;padding:12px 22px;border:0;background:transparent}
+.home-quick-actions{display:flex;flex:0 0 auto;flex-direction:column;gap:14px;width:100%;max-width:900px;margin:0 auto;padding:0 28px 10px}
+.home-quick-action{display:flex;align-items:center;justify-content:flex-start;gap:18px;width:100%;min-height:48px;padding:5px 8px;border:0;border-radius:12px;color:#5b5b5b;background:transparent;text-align:right;font-size:16px}
+.home-quick-action svg{width:25px;height:25px;flex:0 0 25px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.home-quick-action:active{background:rgba(0,0,0,.045)}
+.composer.composer-area{padding:10px 18px max(12px,env(safe-area-inset-bottom));border:0;background:transparent}
+.composer-inner{display:flex;align-items:center;gap:7px;max-width:900px;min-height:70px;padding:7px 9px;border:1px solid rgba(0,0,0,.04);border-radius:999px;background:#fff;box-shadow:0 5px 30px rgba(0,0,0,.06)}
+#prompt,.composer textarea,.composer-area textarea{min-height:48px;max-height:120px;padding:11px 8px;resize:none;color:#252525;font-size:16px;text-align:right}
+#prompt::placeholder{color:#8c8c8c}
+.composer-icon-button{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;padding:0;border:0;border-radius:50%;color:#111;background:transparent}
+.composer-icon-button svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.composer-add{order:4}.composer-mic{order:2}#prompt{order:3}#send{order:5;display:none !important}
+.composer-voice{order:1;display:flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;min-width:108px;height:44px;padding:0 13px;border:0;border-radius:999px;color:#fff;background:#3565e9;font-size:15px}
+.composer-voice svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.composer-mic.is-listening{color:#e23b3b;background:#fff0f0}
+.composer-note{display:none !important}.messages{background:transparent !important;padding:18px}.welcome-screen{display:none !important}
+.main,.main.main-chat{background:transparent !important}
+@media(max-width:600px){.topbar.chat-navbar{min-height:90px;padding:12px 20px}.home-icon-button{width:54px;height:54px}.plus-subscribe{min-height:48px;padding:0 14px;font-size:14px}.home-quick-actions{padding:0 28px 7px;gap:10px}.home-quick-action{min-height:48px;font-size:15px}.composer.composer-area{padding:8px 16px max(12px,env(safe-area-inset-bottom))}.composer-inner{min-height:68px;gap:3px;padding:6px}.composer-voice{min-width:94px;height:42px;padding:0 10px;font-size:14px}.composer-icon-button{flex-basis:38px;width:38px;height:42px}#prompt{font-size:15px;min-height:44px;padding-inline:5px}}
+@media(min-width:801px){.topbar.chat-navbar{min-height:76px}.home-quick-actions{margin-top:auto}.composer.composer-area{padding-bottom:20px}}
