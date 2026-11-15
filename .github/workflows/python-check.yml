@@ -128,6 +128,7 @@ jobs:
 
           class FakeModels:
               fail_primary = False
+              calls = []
               primary_error = "503 UNAVAILABLE: temporary high demand"
 
               def generate_content(self, **kwargs):
@@ -136,6 +137,7 @@ jobs:
                   return SimpleNamespace(text="رد تجريبي من زولك AI")
 
               def generate_content_stream(self, **kwargs):
+                  self.calls.append(kwargs.get("model"))
                   if self.fail_primary and kwargs.get("model") == "gemini-3.5-flash-lite":
                       raise RuntimeError(self.primary_error)
                   yield SimpleNamespace(text="رد تجريبي من زولك AI")
@@ -177,7 +179,7 @@ jobs:
                       events.append((event_name, json.loads(data_line)))
               return events
 
-          ai_ok = client.post("/api/chat", json={"message": "اختبار الرد"})
+          ai_ok = client.post("/api/chat", json={"message": "اختبار الرد"}, buffered=True)
           assert ai_ok.status_code == 200
           ok_events = parse_sse(ai_ok)
           assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in ok_events)
@@ -201,22 +203,26 @@ jobs:
           assert unpinned.status_code == 200, unpinned.get_json()
 
           # A temporary 503 from the primary model must use the lighter fallback.
+          FakeModels.calls = []
           FakeModels.fail_primary = True
-          ai_fallback = client.post("/api/chat", json={"message": "اختبار الموديل الاحتياطي"})
+          ai_fallback = client.post("/api/chat", json={"message": "اختبار الموديل الاحتياطي"}, buffered=True)
           FakeModels.fail_primary = False
           assert ai_fallback.status_code == 200
           assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in parse_sse(ai_fallback))
+          assert FakeModels.calls == ["gemini-3.5-flash-lite", "gemini-3.8-flash"], FakeModels.calls
 
           # A deadline timeout must fail within the bounded wait; do not start
           # a second slow model request after the primary deadline.
+          FakeModels.calls = []
           FakeModels.primary_error = "504 DEADLINE_EXCEEDED: upstream deadline"
           FakeModels.fail_primary = True
-          ai_timeout = client.post("/api/chat", json={"message": "اختبار مهلة الموديل"})
+          ai_timeout = client.post("/api/chat", json={"message": "اختبار مهلة الموديل"}, buffered=True)
           FakeModels.fail_primary = False
           assert ai_timeout.status_code == 200
           timeout_events = parse_sse(ai_timeout)
           assert any(name == "error" for name, payload in timeout_events)
           assert not any(name == "token" for name, payload in timeout_events)
+          assert FakeModels.calls == ["gemini-3.5-flash-lite"], FakeModels.calls
 
           history = client.get(f"/api/conversations/{conversation_id}")
           assert history.status_code == 200, history.get_json()
