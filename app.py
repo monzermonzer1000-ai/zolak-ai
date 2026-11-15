@@ -530,7 +530,7 @@ def admin_required(fn):
                     error="سجل دخولك أولاً."
                 ), 401
 
-            return redirect("/login")
+            return redirect("/login?next=/admin")
 
         c = db()
 
@@ -629,7 +629,8 @@ def home():
 def login():
 
     return render_template(
-        "login.html"
+        "login.html",
+        admin_email=os.getenv("ADMIN_EMAIL", "admin@zolak.ai").strip().lower()
     )
 
 
