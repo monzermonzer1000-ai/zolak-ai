@@ -65,10 +65,10 @@
 
         <nav class="sidebar-tools" aria-label="أدوات زولك">
             <button class="sidebar-tool" type="button" data-tool="images">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="14" height="14" rx="3"></rect><path d="m7 16 3-3 2 2 2-2 3 3M8 4h10a3 3 0 0 1 3 3v10"></path><circle cx="12" cy="11" r="1"></circle></svg><span>الصور</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="14" height="14" rx="3"></rect><path d="m7 16 3-3 2 2 2-2 3 3M8 4h10a3 3 0 0 1 3 3v10"></path><circle cx="12" cy="11" r="1"></circle></svg><span>إرفاق صورة</span>
             </button>
             <button class="sidebar-tool" type="button" data-tool="library">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5 9 3l2 17-4 1.5zM12 3h4l2 18h-4zM19 3h2v18h-2z"></path></svg><span>المكتبة</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5 9 3l2 17-4 1.5zM12 3h4l2 18h-4zM19 3h2v18h-2z"></path></svg><span>إرفاق ملف</span>
             </button>
             <button class="sidebar-tool" type="button" data-tool="projects">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M3 10h18"></path></svg><span>المشروعات</span>
@@ -139,7 +139,7 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 0 1 13.6-5.7L20 7.5M20 3.5v4h-4M20 13a8 8 0 0 1-13.6 5.7L4 16.5M4 20.5v-4h4"></path></svg>
                 </button>
             </div>
-            <button class="plus-subscribe" id="plusSubscribe" type="button"><span class="plus-sparkle">✦</span><span>اشترك في <b>زولاك بلس</b></span></button>
+            <div class="mobile-brand"><span class="mobile-brand-logo">ز</span><strong>زولك AI</strong></div>
             <div class="home-header-side home-header-right">
                 <button class="home-icon-button" id="mobileMenu" type="button" aria-label="فتح القائمة" aria-expanded="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"></path></svg>
@@ -185,14 +185,7 @@
 
         </section>
 
-        <div class="home-quick-actions" id="homeQuickActions">
-            <button class="home-quick-action" type="button" data-prompt="ساعدني في إنشاء صورة أو ملصق عن: ">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg><span>إنشاء صورة أو ملصق</span>
-            </button>
-            <button class="home-quick-action" type="button" data-prompt="ساعدني في كتابة أو تحرير النص التالي: ">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5 5 5M4 20l4.2-.8L20 7.4a2.1 2.1 0 0 0-3-3L5.2 16.2 4 20z"></path></svg><span>الكتابة أو التحرير</span>
-            </button>
-        </div>
+        
         <div class="composer composer-area">
             <input id="attachmentInput" type="file" hidden multiple accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,text/csv,.pdf,.docx,.txt,.md,.csv">
             <div id="attachmentPreview" class="attachment-preview" hidden></div>
@@ -200,7 +193,7 @@
                 <button class="composer-icon-button composer-add" id="composerAdd" type="button" aria-label="إضافة"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
                 <textarea id="prompt" placeholder="اسأل زولك AI" rows="1" aria-label="اكتب رسالتك"></textarea>
                 <button class="composer-icon-button composer-mic" id="composerMic" type="button" aria-label="الإملاء الصوتي"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v4M9 22h6"></path></svg></button>
-                <button class="composer-voice" id="composerVoice" type="button" aria-label="الصوت"><span>الصوت</span><svg viewBox="0 0 24 24"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 6v12M22 10v4"></path></svg></button>
+                <button class="composer-voice" id="composerVoice" type="button" aria-label="الصوت"><span>قراءة الرد</span><svg viewBox="0 0 24 24"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 6v12M22 10v4"></path></svg></button>
                 <button id="send" type="button" aria-label="إرسال الرسالة" title="إرسال"><span class="send-icon">↑</span></button>
             </div>
             <div class="composer-note"><span>زولك AI قد يخطئ، راجع المعلومات المهمة.</span><span class="composer-flag">صُنع في السودان 🇸🇩</span></div>
