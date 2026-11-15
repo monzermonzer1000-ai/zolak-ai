@@ -1,14 +1,13 @@
 "use strict";
 
-const CACHE_NAME = "zolak-ai-assets-v22";
+const CACHE_NAME = "zolak-ai-assets-v23";
 const ASSETS = [
   "/manifest.json",
-  "/static/style.css?v=25",
+  "/static/style.css?v=26",
   "/static/mobile-fixes.css?v=1",
   "/static/performance.css?v=1",
   "/static/app.js?v=24",
   "/static/icon.svg",
-  "/static/sudan-flag-background.jpg"
 ];
 
 self.addEventListener("install", event => {
