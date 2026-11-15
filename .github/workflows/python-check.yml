@@ -311,7 +311,7 @@ jobs:
           css_source = open("static/style.css", encoding="utf-8").read()
           performance_source = open("static/performance.css", encoding="utf-8").read()
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
-          assert "filename='style.css') }}?v=28" in home_source
+          assert "filename='style.css') }}?v=29" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
           assert "filename='app.js') }}?v=26" in home_source
           assert 'data-tool="remote"' not in home_source
