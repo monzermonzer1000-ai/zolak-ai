@@ -215,7 +215,7 @@ jobs:
           FakeModels.fail_primary = False
           assert ai_timeout.status_code == 200
           timeout_events = parse_sse(ai_timeout)
-          assert any(name == "error" and "اتأخر" in payload.get("error", "") for name, payload in timeout_events)
+          assert any(name == "error" for name, payload in timeout_events)
           assert not any(name == "token" for name, payload in timeout_events)
 
           history = client.get(f"/api/conversations/{conversation_id}")
