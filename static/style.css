@@ -3105,3 +3105,65 @@ body.theme-light .app.chatgpt-layout > .main .message.assistant .message-content
         font-size: 15px !important;
     }
 }
+
+
+/* Sidebar refinement: clear hierarchy, searchable history and consistent spacing */
+.sidebar-top {
+    padding: 22px 18px 6px;
+}
+.sidebar-brand-name {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -.35px;
+}
+.sidebar-brand-caption {
+    margin-top: 4px;
+    color: var(--muted, #82918b);
+    font-size: 11px;
+}
+.sidebar-new-chat {
+    width: calc(100% - 28px);
+    margin: 12px 14px 10px;
+    min-height: 43px;
+    justify-content: center;
+}
+.sidebar-search-wrap {
+    padding: 0 14px 12px;
+}
+.sidebar-search {
+    width: 100%;
+    min-height: 39px;
+    padding: 9px 12px;
+    border: 1px solid var(--border, #dfe7e2);
+    border-radius: 11px;
+    background: var(--surface, #fff);
+    color: var(--text, #17231f);
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+}
+.sidebar-search:focus {
+    border-color: var(--zolak-primary, #08b991);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--zolak-primary, #08b991) 13%, transparent);
+}
+.sidebar-search::placeholder {
+    color: var(--muted, #82918b);
+}
+.sidebar-tools {
+    padding-top: 2px;
+}
+.sidebar-account-links {
+    padding-top: 9px;
+    border-top: 1px solid var(--border, #e6ece8);
+}
+.sidebar-account-links .sidebar-link {
+    min-height: 39px;
+}
+@media (max-width: 800px) {
+    .sidebar-top { padding-top: max(18px, env(safe-area-inset-top)); }
+    .sidebar-new-chat { min-height: 45px; }
+    .sidebar-search { min-height: 42px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-search { transition: none; }
+}
