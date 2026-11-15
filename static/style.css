@@ -917,7 +917,7 @@ button#send:hover {
     background-color: #071d18;
     background-image:
         linear-gradient(135deg, rgba(4, 27, 21, .10), rgba(4, 27, 21, .18)),
-        url("/static/sudan-flag-background.jpg");
+        none;
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -1258,7 +1258,7 @@ body.theme-dark {
     background-color: #071d18;
     background-image:
         linear-gradient(125deg, rgba(1,20,15,.08), rgba(1,15,24,.14)),
-        url("/static/sudan-flag-background.jpg");
+        none;
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -1272,7 +1272,7 @@ body.theme-dark {
     pointer-events: none;
     background-image:
         linear-gradient(120deg, rgba(2,18,15,.10), rgba(3,17,26,.10)),
-        url("/static/sudan-flag-background.jpg");
+        none;
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -1704,7 +1704,7 @@ body.theme-light textarea#prompt::placeholder {
     background-position: center center;
 }
 .app.chatgpt-layout::before {
-    background-image: url("/static/sudan-flag-background.jpg");
+    background-image: none;
     background-position: center center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -1733,12 +1733,12 @@ body.theme-light textarea#prompt::placeholder {
 /* FINAL FLAG CLARITY — remove the washed-out / transparent look */
 .app.chatgpt-layout {
     background-color: #063d2c !important;
-    background-image: url("/static/sudan-flag-background.jpg") !important;
+    background-image: none !important;
     background-size: cover !important;
     background-position: center center !important;
 }
 .app.chatgpt-layout::before {
-    background-image: url("/static/sudan-flag-background.jpg") !important;
+    background-image: none !important;
     background-size: cover !important;
     background-position: center center !important;
     background-repeat: no-repeat !important;
@@ -1758,7 +1758,7 @@ body.theme-light textarea#prompt::placeholder {
 
 /* PREMIUM FLAG BACKGROUND — stronger visibility without washing out the artwork */
 .app.chatgpt-layout {
-    background: #063d2c url("/static/sudan-flag-background.jpg") center / cover no-repeat !important;
+    background: #063d2c none center / cover no-repeat !important;
 }
 .app.chatgpt-layout::before {
     content: "" !important;
@@ -1766,7 +1766,7 @@ body.theme-light textarea#prompt::placeholder {
     inset: 0 !important;
     z-index: 0 !important;
     pointer-events: none !important;
-    background: url("/static/sudan-flag-background.jpg") center / cover no-repeat !important;
+    background: none center / cover no-repeat !important;
     opacity: 1 !important;
     filter: saturate(2.35) contrast(1.28) brightness(1.08) !important;
 }
@@ -1809,12 +1809,12 @@ body.theme-light textarea#prompt::placeholder {
 /* LIGHT THEME FLAG VISIBILITY FIX */
 body.theme-light .app.chatgpt-layout {
     background-color: #063d2c !important;
-    background-image: url("/static/sudan-flag-background.jpg") !important;
+    background-image: none !important;
     background-position: center center !important;
     background-size: cover !important;
 }
 body.theme-light .app.chatgpt-layout::before {
-    background-image: linear-gradient(120deg, rgba(255,255,255,.10), rgba(255,255,255,.04)), url("/static/sudan-flag-background.jpg") !important;
+    background-image: linear-gradient(120deg, rgba(255,255,255,.10), rgba(255,255,255,.04)), none !important;
     background-position: center center !important;
     background-size: cover !important;
     filter: saturate(2.35) contrast(1.28) brightness(1.08) !important;
@@ -2684,3 +2684,19 @@ html, body { background:#fff !important; }
 }
 .explore-prompt:active,
 .explore-prompt:hover { background:rgba(8,185,145,.12); }
+
+
+/* FINAL BACKGROUND OVERRIDE — no flag artwork */
+.app.chatgpt-layout {
+    background: #071d18 !important;
+    background-image: none !important;
+}
+.app.chatgpt-layout::before {
+    content: none !important;
+    display: none !important;
+    background-image: none !important;
+}
+body.theme-light .app.chatgpt-layout {
+    background: #f5f8f7 !important;
+    background-image: none !important;
+}
