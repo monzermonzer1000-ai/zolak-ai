@@ -83,6 +83,7 @@ def init_db():
             credits INTEGER NOT NULL DEFAULT 10,
             is_admin INTEGER NOT NULL DEFAULT 0,
             is_banned INTEGER NOT NULL DEFAULT 0,
+            session_version INTEGER NOT NULL DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             gemini_interaction_id TEXT
         )
@@ -178,6 +179,9 @@ def init_db():
             ADD COLUMN is_banned INTEGER NOT NULL DEFAULT 0
         """)
 
+    if "session_version" not in user_columns:
+        c.execute("ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0")
+
     if "created_at" not in user_columns:
 
         c.execute("""
@@ -206,6 +210,12 @@ def init_db():
               WHERE chats.conversation_id = conversations.id
           )
     """)
+
+    c.execute("CREATE INDEX IF NOT EXISTS idx_chats_user_id_id ON chats(user_id, id DESC)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_chats_conversation_id ON chats(conversation_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_chats_user_conversation_id ON chats(user_id, conversation_id, id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_conversations_user_updated ON conversations(user_id, updated_at DESC, id DESC)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_projects_user_created ON projects(user_id, created_at DESC)")
 
     defaults = [
         (
