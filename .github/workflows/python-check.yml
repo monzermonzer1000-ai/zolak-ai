@@ -56,10 +56,10 @@ jobs:
           assert client.get("/health").status_code == 200
           assert client.get("/manifest.json").status_code == 200
           assert client.get("/sw.js").status_code == 200
-          assert "zolak-ai-assets-v22" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v26" in client.get("/sw.js").get_data(as_text=True)
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
-          assert "/static/performance.css?v=1" in home_html
+          assert "/static/performance.css?v=2" in home_html
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -131,12 +131,12 @@ jobs:
               primary_error = "503 UNAVAILABLE: temporary high demand"
 
               def generate_content(self, **kwargs):
-                  if self.fail_primary and kwargs.get("model") == "gemini-3.8-flash":
+                  if self.fail_primary and kwargs.get("model") == "gemini-3.5-flash-lite":
                       raise RuntimeError(self.primary_error)
                   return SimpleNamespace(text="رد تجريبي من زولك AI")
 
               def generate_content_stream(self, **kwargs):
-                  if self.fail_primary and kwargs.get("model") == "gemini-3.8-flash":
+                  if self.fail_primary and kwargs.get("model") == "gemini-3.5-flash-lite":
                       raise RuntimeError(self.primary_error)
                   yield SimpleNamespace(text="رد تجريبي من زولك AI")
 
@@ -152,6 +152,7 @@ jobs:
           genai_types.Part = FakePart
           genai_types.Content = FakeContent
           genai_types.GenerateContentConfig = FakeConfig
+          genai_types.ThinkingConfig = FakeConfig
           genai_types.HttpOptions = FakeConfig
           genai_types.HttpRetryOptions = FakeConfig
           google_module.genai = genai_module
@@ -206,13 +207,16 @@ jobs:
           assert ai_fallback.status_code == 200
           assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in parse_sse(ai_fallback))
 
-          # A deadline timeout from the primary model must also use fallback.
+          # A deadline timeout must fail within the bounded wait; do not start
+          # a second slow model request after the primary deadline.
           FakeModels.primary_error = "504 DEADLINE_EXCEEDED: upstream deadline"
           FakeModels.fail_primary = True
-          ai_timeout_fallback = client.post("/api/chat", json={"message": "اختبار مهلة الموديل"})
+          ai_timeout = client.post("/api/chat", json={"message": "اختبار مهلة الموديل"})
           FakeModels.fail_primary = False
-          assert ai_timeout_fallback.status_code == 200
-          assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in parse_sse(ai_timeout_fallback))
+          assert ai_timeout.status_code == 200
+          timeout_events = parse_sse(ai_timeout)
+          assert any(name == "error" and "اتأخر" in payload.get("error", "") for name, payload in timeout_events)
+          assert not any(name == "token" for name, payload in timeout_events)
 
           history = client.get(f"/api/conversations/{conversation_id}")
           assert history.status_code == 200, history.get_json()
@@ -268,8 +272,11 @@ jobs:
           import json
           backup_data = json.loads(backup.data.decode("utf-8"))
           assert "conversations" in backup_data
+          assert "projects" in backup_data
           assert len(backup_data["conversations"]) >= 1
           assert len(backup_data["chats"]) >= 2
+          assert all("conversation_id" in row for row in backup_data["chats"])
+          assert all("project_id" in row and "is_pinned" in row for row in backup_data["conversations"])
 
           # Exercise credit, ban, unban, and delete operations.
           credit = client.post(f"/api/admin/user/{user_id}/credits", json={"amount": 5})
@@ -291,6 +298,16 @@ jobs:
           assert '"/api/admin/backup/download"' in admin_source
           assert 'id="projectsPanel"' in home_source
           assert 'id="explorePanel"' in home_source
+          assert 'class="home-icon-button mobile-menu"' in home_source
+          assert "plusSubscribe" not in home_source
+          assert "homeQuickActions" not in home_source
+          login_source = open("templates/login.html", encoding="utf-8").read()
+          css_source = open("static/style.css", encoding="utf-8").read()
+          performance_source = open("static/performance.css", encoding="utf-8").read()
+          assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
+          assert "/static/style.css?v=27" in home_source
+          assert "/static/performance.css?v=2" in home_source
+          assert "/static/app.js?v=25" in home_source
           assert 'data-tool="remote"' not in home_source
           assert 'data-tool="customize"' not in home_source
 
