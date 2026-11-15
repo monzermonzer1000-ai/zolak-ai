@@ -53,13 +53,21 @@ jobs:
           client = app.app.test_client()
 
           assert client.get("/").status_code == 200
+          admin_entry = client.get("/admin", follow_redirects=False)
+          assert admin_entry.status_code == 302
+          assert admin_entry.headers.get("Location", "").endswith("/login?next=/admin")
+          login_page = client.get("/login?next=/admin").get_data(as_text=True)
+          assert "دخول لوحة المدير" in login_page
+          assert "admin@zolak.ai" in login_page
           assert client.get("/health").status_code == 200
           assert client.get("/manifest.json").status_code == 200
           assert client.get("/sw.js").status_code == 200
-          assert "zolak-ai-assets-v31" in client.get("/sw.js").get_data(as_text=True)
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
+          assert 'id="conversationSearch"' in home_html
+          assert 'id="adminLink"' in home_html
+          assert "zolak-ai-assets-v32" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -312,9 +320,9 @@ jobs:
           css_source = open("static/style.css", encoding="utf-8").read()
           performance_source = open("static/performance.css", encoding="utf-8").read()
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
-          assert "filename='style.css') }}?v=30" in home_source
+          assert "filename='style.css') }}?v=31" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=27" in home_source
+          assert "filename='app.js') }}?v=28" in home_source
           assert 'data-tool="remote"' not in home_source
           assert 'data-tool="customize"' not in home_source
 
