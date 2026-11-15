@@ -56,7 +56,7 @@ jobs:
           assert client.get("/health").status_code == 200
           assert client.get("/manifest.json").status_code == 200
           assert client.get("/sw.js").status_code == 200
-          assert "zolak-ai-assets-v29" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v30" in client.get("/sw.js").get_data(as_text=True)
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
@@ -313,7 +313,7 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=29" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=26" in home_source
+          assert "filename='app.js') }}?v=27" in home_source
           assert 'data-tool="remote"' not in home_source
           assert 'data-tool="customize"' not in home_source
 
