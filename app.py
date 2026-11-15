@@ -5,6 +5,7 @@ import io
 import time
 import secrets
 import hashlib
+from urllib.parse import urlsplit
 from functools import wraps
 from datetime import datetime, timezone
 
@@ -39,6 +40,36 @@ app.config.update(
     ).lower() == "true",
     MAX_CONTENT_LENGTH=15 * 1024 * 1024
 )
+
+
+@app.before_request
+def protect_state_changing_requests():
+    """Reject cross-origin browser mutations while allowing non-browser API clients."""
+    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+        return None
+
+    if request.headers.get("Sec-Fetch-Site", "").lower() == "cross-site":
+        return jsonify(error="تم رفض الطلب لأسباب أمنية."), 403
+
+    source = request.headers.get("Origin", "").strip() or request.headers.get("Referer", "").strip()
+    if source:
+        try:
+            parsed = urlsplit(source)
+            if parsed.scheme not in {"http", "https"} or parsed.netloc.lower() != request.host.lower():
+                return jsonify(error="مصدر الطلب غير موثوق."), 403
+        except ValueError:
+            return jsonify(error="مصدر الطلب غير صالح."), 403
+
+    return None
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(self), geolocation=()")
+    return response
 
 DB = os.getenv(
     "DATABASE_PATH",
