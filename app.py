@@ -337,7 +337,8 @@ def init_db():
             c.execute(
                 """
                 UPDATE users
-                SET name = ?, password = ?, is_admin = 1
+                SET name = ?, password = ?, is_admin = 1,
+                    session_version = session_version + 1
                 WHERE email = ?
                 """,
                 (
@@ -522,7 +523,7 @@ def login_required(fn):
 
         user = c.execute(
             """
-            SELECT id, is_banned
+            SELECT id, is_banned, session_version
             FROM users
             WHERE id = ?
             """,
@@ -539,7 +540,7 @@ def login_required(fn):
                 error="سجل دخولك من جديد."
             ), 401
 
-        if user["is_banned"]:
+        if user["is_banned"] or int(user["session_version"] or 0) != int(session.get("session_version", 0)):
 
             session.clear()
 
@@ -571,7 +572,7 @@ def admin_required(fn):
 
         user = c.execute(
             """
-            SELECT id, is_admin, is_banned
+            SELECT id, is_admin, is_banned, session_version
             FROM users
             WHERE id = ?
             """,
@@ -580,7 +581,11 @@ def admin_required(fn):
 
         c.close()
 
-        if not user or user["is_banned"]:
+        if (
+            not user
+            or user["is_banned"]
+            or int(user["session_version"] or 0) != int(session.get("session_version", 0))
+        ):
             session.clear()
 
             if request.path.startswith("/api/"):
@@ -823,7 +828,7 @@ def register():
 
         user = c.execute(
             """
-            SELECT id, name, is_admin
+            SELECT id, name, is_admin, session_version
             FROM users
             WHERE email = ?
             """,
@@ -847,7 +852,8 @@ def register():
         name=user["name"],
         admin=bool(
             user["is_admin"]
-        )
+        ),
+        session_version=int(user["session_version"] or 0)
     )
 
     return jsonify(ok=True)
@@ -939,7 +945,8 @@ def api_login():
         name=user["name"],
         admin=bool(
             user["is_admin"]
-        )
+        ),
+        session_version=int(user["session_version"] or 0)
     )
 
     return jsonify(ok=True)
@@ -968,7 +975,8 @@ def me():
             email,
             credits,
             is_admin,
-            is_banned
+            is_banned,
+            session_version
         FROM users
         WHERE id = ?
         """,
@@ -977,7 +985,11 @@ def me():
 
     c.close()
 
-    if not user or user["is_banned"]:
+    if (
+        not user
+        or user["is_banned"]
+        or int(user["session_version"] or 0) != int(session.get("session_version", 0))
+    ):
 
         session.clear()
 
@@ -2428,11 +2440,13 @@ def admin_change_password():
         c.close()
         return jsonify(error="كلمة المرور الحالية غير صحيحة."), 403
     c.execute(
-        "UPDATE users SET password = ? WHERE id = ?",
+        "UPDATE users SET password = ?, session_version = session_version + 1 WHERE id = ?",
         (generate_password_hash(new_password), session["uid"])
     )
     c.commit()
+    updated = c.execute("SELECT session_version FROM users WHERE id = ?", (session["uid"],)).fetchone()
     c.close()
+    session["session_version"] = int(updated["session_version"] or 0)
     return jsonify(ok=True)
 
 
