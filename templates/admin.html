@@ -596,6 +596,50 @@ table{min-width:920px}th{color:#75857c;font-size:12px;text-transform:uppercase;l
 @media(max-width:800px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.tabs{top:60px}.title{padding:20px;border-radius:16px}.title h1{font-size:24px}.panel{padding:17px}.section-heading{align-items:flex-start;flex-direction:column}}
 @media(max-width:500px){.container{width:94%}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stat{padding:14px}.stat strong{font-size:25px}.tabs{gap:5px;padding:7px}.tab{padding:10px 12px;font-size:13px}.header-inner{flex-direction:row;align-items:center}.header-actions{gap:5px}.btn{padding:9px 11px;font-size:13px}}
 
+/* Admin dashboard usability and responsive navigation */
+.tabs {
+    position: sticky;
+    top: 76px;
+    z-index: 15;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg);
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    scrollbar-width: thin;
+}
+.tab {
+    min-height: 42px;
+    border-radius: 11px;
+    font-weight: 700;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.tab:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 3px solid rgba(0,200,150,.28);
+    outline-offset: 2px;
+}
+.tab:not(.active):hover {
+    border-color: var(--green);
+    transform: translateY(-1px);
+}
+.panel {
+    box-shadow: 0 12px 32px rgba(0,0,0,.055);
+}
+.table-wrap {
+    -webkit-overflow-scrolling: touch;
+}
+@media(max-width:800px) {
+    .tabs { top: 68px; margin-inline: -2px; }
+}
+@media(max-width:500px) {
+    .tabs { top: 64px; padding: 7px; }
+    .tab { min-height: 40px; }
+    .header-actions .btn { min-height: 38px; }
+}
 </style>
 </head>
 
