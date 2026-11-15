@@ -1113,6 +1113,18 @@ def chat():
         c.close()
         return jsonify(error="مفتاح Gemini غير مضاف. راجع إعدادات الاستضافة."), 503
 
+    save_history = history_enabled()
+    history_rows = []
+    if save_history:
+        history_rows = c.execute("""
+            SELECT role, content
+            FROM chats
+            WHERE conversation_id = ? AND user_id = ?
+            ORDER BY id DESC
+            LIMIT 8
+        """, (conversation_id, user_id)).fetchall()
+    c.close()
+
     def generate():
         import json
 
@@ -1121,6 +1133,7 @@ def chat():
 
         answer_parts = []
         stream_started = False
+        save_conn = None
         try:
             system_instruction = (
                 "أنت زولك AI، مساعد ذكاء اصطناعي سوداني ودود. "
@@ -1130,16 +1143,6 @@ def chat():
                 "لا تدّعي أنك إنسان. إذا لم تعرف الإجابة فقل ذلك بوضوح. "
                 "لا تخترع معلومات."
             )
-
-            history_rows = []
-            if history_enabled():
-                history_rows = c.execute("""
-                    SELECT role, content
-                    FROM chats
-                    WHERE conversation_id = ? AND user_id = ?
-                    ORDER BY id DESC
-                    LIMIT 8
-                """, (conversation_id, user_id)).fetchall()
 
             from google import genai
             from google.genai import types
@@ -1230,37 +1233,39 @@ def chat():
                 yield emit("error", {"error": "وصلنا رد فارغ من خدمة الذكاء الاصطناعي. جرّب تاني."})
                 return
 
-            result = c.execute("""
+            save_conn = db()
+            result = save_conn.execute("""
                 UPDATE users SET credits = credits - 1
                 WHERE id = ? AND credits > 0
             """, (user_id,))
             if result.rowcount != 1:
-                c.rollback()
+                save_conn.rollback()
                 yield emit("error", {"error": "رصيدك ما كفاية لإرسال رسالة جديدة."})
                 return
 
-            if history_enabled():
-                c.execute("""
+            if save_history:
+                save_conn.execute("""
                     INSERT INTO chats(user_id, role, content, conversation_id)
                     VALUES (?, 'user', ?, ?)
                 """, (user_id, stored_message, conversation_id))
-                c.execute("""
+                save_conn.execute("""
                     INSERT INTO chats(user_id, role, content, conversation_id)
                     VALUES (?, 'assistant', ?, ?)
                 """, (user_id, answer, conversation_id))
 
-            c.execute("""
+            save_conn.execute("""
                 UPDATE conversations
                 SET title = CASE WHEN title = 'محادثة جديدة' THEN ? ELSE title END,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ? AND user_id = ?
             """, ((message[:55] or ("ملف: " + attachment_names[0][:45])) if attachment_names else message[:55], conversation_id, user_id))
-            c.commit()
+            save_conn.commit()
             yield emit("done", {"conversation_id": conversation_id})
 
         except Exception as error:
             try:
-                c.rollback()
+                if save_conn is not None:
+                    save_conn.rollback()
             except Exception:
                 pass
             error_text = str(error)
@@ -1282,10 +1287,11 @@ def chat():
                 message_text = "تعذر الحصول على رد من Gemini. حاول مجدداً بعد قليل."
             yield emit("error", {"error": message_text})
         finally:
-            try:
-                c.close()
-            except Exception:
-                pass
+            if save_conn is not None:
+                try:
+                    save_conn.close()
+                except Exception:
+                    pass
 
     response = Response(stream_with_context(generate()), mimetype="text/event-stream")
     response.headers["Cache-Control"] = "no-cache, no-transform"
