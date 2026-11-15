@@ -229,7 +229,7 @@ def init_db():
         ),
         (
             "ai_model",
-            "gemini-3.8-flash"
+            "gemini-3.5-flash-lite"
         ),
     ]
 
@@ -329,11 +329,25 @@ def init_db():
     c.execute(
         """
         UPDATE settings
-        SET value = 'gemini-3.8-flash'
+        SET value = 'gemini-3.5-flash-lite'
         WHERE key = 'ai_model'
         AND value = 'gemini-2.5-flash'
         """
     )
+
+    # One-time migration: move the old primary to the faster Flash-Lite model.
+    model_migration = c.execute(
+        "SELECT value FROM settings WHERE key = 'ai_model_fast_migration_v1'"
+    ).fetchone()
+    if not model_migration:
+        c.execute("""
+            UPDATE settings SET value = 'gemini-3.5-flash-lite'
+            WHERE key = 'ai_model' AND value = 'gemini-3.8-flash'
+        """)
+        c.execute("""
+            INSERT OR IGNORE INTO settings(key, value)
+            VALUES ('ai_model_fast_migration_v1', 'done')
+        """)
 
     c.commit()
     c.close()
@@ -1145,9 +1159,9 @@ def chat():
                 )
             )
 
-            model = setting("ai_model", "gemini-3.8-flash").strip()
+            model = setting("ai_model", "gemini-3.5-flash-lite").strip()
             if not model.startswith("gemini-"):
-                model = "gemini-3.8-flash"
+                model = "gemini-3.5-flash-lite"
 
             contents = []
             for row in reversed(history_rows):
@@ -1197,7 +1211,7 @@ def chat():
                     "429", "RESOURCE_EXHAUSTED"
                 ))
                 fallback_model = os.getenv(
-                    "GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite"
+                    "GEMINI_FALLBACK_MODEL", "gemini-3.8-flash"
                 ).strip()
                 if stream_started or not temporary or not fallback_model.startswith("gemini-") or fallback_model == model:
                     raise
@@ -1716,7 +1730,7 @@ def update_admin_settings():
                 == "gemini-2.5-flash"
             ):
 
-                value = "gemini-3.8-flash"
+                value = "gemini-3.5-flash-lite"
 
         save_setting(
             c,
@@ -2179,7 +2193,7 @@ def admin_health():
     model = (
         configured_model
         if configured_model.startswith("gemini-")
-        else "gemini-3.8-flash"
+        else "gemini-3.5-flash-lite"
     )
 
     checks["ai_model"] = model
@@ -2219,9 +2233,9 @@ def admin_ai_test():
         from google import genai
         from google.genai import types
 
-        model = setting("ai_model", "gemini-3.8-flash").strip()
+        model = setting("ai_model", "gemini-3.5-flash-lite").strip()
         if not model.startswith("gemini-"):
-            model = "gemini-3.8-flash"
+            model = "gemini-3.5-flash-lite"
 
         # Bound upstream latency so a stalled provider/network call cannot
         # occupy a Vercel function until the platform's hard timeout.
