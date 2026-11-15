@@ -111,6 +111,21 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS projects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conversation_columns = {
+        row["name"] for row in c.execute("PRAGMA table_info(conversations)").fetchall()
+    }
+    if "project_id" not in conversation_columns:
+        c.execute("ALTER TABLE conversations ADD COLUMN project_id INTEGER")
+
     conversation_columns = {
         row["name"] for row in c.execute("PRAGMA table_info(conversations)").fetchall()
     }
@@ -1328,41 +1343,45 @@ def list_conversations():
         return jsonify(conversations=[])
 
     query = str(request.args.get("q", "")).strip()[:120]
-    c = db()
+    project_value = request.args.get("project_id")
+    project_id = None
+    if project_value:
+        try:
+            project_id = int(project_value)
+        except (TypeError, ValueError):
+            return jsonify(error="المشروع المحدد غير صحيح."), 400
+
+    conditions = ["conversations.user_id = ?"]
+    params = [session["uid"]]
+    if project_id is not None:
+        conditions.append("conversations.project_id = ?")
+        params.append(project_id)
     if query:
         pattern = f"%{query}%"
-        rows = c.execute("""
-            SELECT conversations.id, conversations.title, conversations.is_pinned,
-                   conversations.updated_at, COUNT(chats.id) AS message_count
-            FROM conversations
-            LEFT JOIN chats ON chats.conversation_id = conversations.id
-            WHERE conversations.user_id = ?
-              AND (
-                conversations.title LIKE ?
-                OR EXISTS (
-                    SELECT 1 FROM chats AS matching_chat
-                    WHERE matching_chat.conversation_id = conversations.id
-                      AND matching_chat.user_id = conversations.user_id
-                      AND matching_chat.content LIKE ?
-                )
-              )
-            GROUP BY conversations.id
-            HAVING COUNT(chats.id) > 0
-            ORDER BY conversations.is_pinned DESC, conversations.updated_at DESC, conversations.id DESC
-            LIMIT 100
-        """, (session["uid"], pattern, pattern)).fetchall()
-    else:
-        rows = c.execute("""
-            SELECT conversations.id, conversations.title, conversations.is_pinned,
-                   conversations.updated_at, COUNT(chats.id) AS message_count
-            FROM conversations
-            LEFT JOIN chats ON chats.conversation_id = conversations.id
-            WHERE conversations.user_id = ?
-            GROUP BY conversations.id
-            HAVING COUNT(chats.id) > 0
-            ORDER BY conversations.is_pinned DESC, conversations.updated_at DESC, conversations.id DESC
-            LIMIT 100
-        """, (session["uid"],)).fetchall()
+        conditions.append("""(
+            conversations.title LIKE ?
+            OR EXISTS (
+                SELECT 1 FROM chats AS matching_chat
+                WHERE matching_chat.conversation_id = conversations.id
+                  AND matching_chat.user_id = conversations.user_id
+                  AND matching_chat.content LIKE ?
+            )
+        )""")
+        params.extend([pattern, pattern])
+
+    c = db()
+    rows = c.execute("""
+        SELECT conversations.id, conversations.title, conversations.is_pinned,
+               conversations.project_id, conversations.updated_at,
+               COUNT(chats.id) AS message_count
+        FROM conversations
+        LEFT JOIN chats ON chats.conversation_id = conversations.id
+        WHERE """ + " AND ".join(conditions) + """
+        GROUP BY conversations.id
+        HAVING COUNT(chats.id) > 0
+        ORDER BY conversations.is_pinned DESC, conversations.updated_at DESC, conversations.id DESC
+        LIMIT 100
+    """, tuple(params)).fetchall()
     c.close()
     return jsonify(conversations=[dict(row) for row in rows])
 
@@ -1373,7 +1392,10 @@ def update_conversation(conversation_id):
     data = request.get_json(silent=True) or {}
     title_value = data.get("title")
     pinned_value = data.get("is_pinned")
-    if title_value is None and pinned_value is None:
+    project_requested = "project_id" in data
+    project_value = data.get("project_id")
+
+    if title_value is None and pinned_value is None and not project_requested:
         return jsonify(error="ما في تعديل مطلوب."), 400
 
     title = None
@@ -1383,33 +1405,137 @@ def update_conversation(conversation_id):
             return jsonify(error="اكتب اسماً للمحادثة."), 400
         if len(title) > 80:
             return jsonify(error="اسم المحادثة طويل؛ الحد الأقصى 80 حرفاً."), 400
+
     if pinned_value is not None and not isinstance(pinned_value, bool):
         return jsonify(error="قيمة التثبيت غير صحيحة."), 400
 
+    project_id = None
+    if project_requested and project_value is not None:
+        try:
+            project_id = int(project_value)
+        except (TypeError, ValueError):
+            return jsonify(error="المشروع المحدد غير صحيح."), 400
+        c = db()
+        project = c.execute(
+            "SELECT id FROM projects WHERE id = ? AND user_id = ?",
+            (project_id, session["uid"])
+        ).fetchone()
+        c.close()
+        if not project:
+            return jsonify(error="المشروع غير موجود."), 404
+
+    updates = []
+    params = []
+    if title is not None:
+        updates.append("title = ?")
+        params.append(title)
+    if pinned_value is not None:
+        updates.append("is_pinned = ?")
+        params.append(int(pinned_value))
+    if project_requested:
+        updates.append("project_id = ?")
+        params.append(project_id)
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+    params.extend([conversation_id, session["uid"]])
+
     c = db()
-    if title is not None and pinned_value is not None:
-        result = c.execute("""
-            UPDATE conversations
-            SET title = ?, is_pinned = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ? AND user_id = ?
-        """, (title, int(pinned_value), conversation_id, session["uid"]))
-    elif title is not None:
-        result = c.execute("""
-            UPDATE conversations
-            SET title = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ? AND user_id = ?
-        """, (title, conversation_id, session["uid"]))
-    else:
-        result = c.execute("""
-            UPDATE conversations
-            SET is_pinned = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ? AND user_id = ?
-        """, (int(pinned_value), conversation_id, session["uid"]))
+    result = c.execute(
+        "UPDATE conversations SET " + ", ".join(updates) +
+        " WHERE id = ? AND user_id = ?",
+        tuple(params)
+    )
     c.commit()
     c.close()
     if result.rowcount != 1:
         return jsonify(error="المحادثة غير موجودة."), 404
-    return jsonify(ok=True, title=title, is_pinned=pinned_value)
+    return jsonify(ok=True, title=title, is_pinned=pinned_value, project_id=project_id if project_requested else None)
+
+
+@app.get("/api/projects")
+@login_required
+def list_projects():
+    c = db()
+    rows = c.execute("""
+        SELECT projects.id, projects.name, projects.created_at,
+               COUNT(conversations.id) AS conversation_count
+        FROM projects
+        LEFT JOIN conversations
+          ON conversations.project_id = projects.id
+         AND conversations.user_id = projects.user_id
+        WHERE projects.user_id = ?
+        GROUP BY projects.id
+        ORDER BY projects.created_at DESC, projects.id DESC
+        LIMIT 50
+    """, (session["uid"],)).fetchall()
+    c.close()
+    return jsonify(projects=[dict(row) for row in rows])
+
+
+@app.post("/api/projects")
+@login_required
+def create_project():
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name", "")).strip()
+    if not name:
+        return jsonify(error="اكتب اسم المشروع."), 400
+    if len(name) > 60:
+        return jsonify(error="اسم المشروع طويل؛ الحد الأقصى 60 حرفاً."), 400
+
+    c = db()
+    count = c.execute(
+        "SELECT COUNT(*) AS total FROM projects WHERE user_id = ?",
+        (session["uid"],)
+    ).fetchone()["total"]
+    if count >= 50:
+        c.close()
+        return jsonify(error="وصلت للحد الأقصى وهو 50 مشروعاً."), 400
+    c.execute("INSERT INTO projects(user_id, name) VALUES (?, ?)", (session["uid"], name))
+    project_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
+    c.commit()
+    c.close()
+    return jsonify(ok=True, project_id=project_id, name=name), 201
+
+
+@app.patch("/api/projects/<int:project_id>")
+@login_required
+def rename_project(project_id):
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name", "")).strip()
+    if not name:
+        return jsonify(error="اكتب اسم المشروع."), 400
+    if len(name) > 60:
+        return jsonify(error="اسم المشروع طويل؛ الحد الأقصى 60 حرفاً."), 400
+    c = db()
+    result = c.execute(
+        "UPDATE projects SET name = ? WHERE id = ? AND user_id = ?",
+        (name, project_id, session["uid"])
+    )
+    c.commit()
+    c.close()
+    if result.rowcount != 1:
+        return jsonify(error="المشروع غير موجود."), 404
+    return jsonify(ok=True, name=name)
+
+
+@app.delete("/api/projects/<int:project_id>")
+@login_required
+def delete_project(project_id):
+    c = db()
+    project = c.execute(
+        "SELECT id FROM projects WHERE id = ? AND user_id = ?",
+        (project_id, session["uid"])
+    ).fetchone()
+    if not project:
+        c.close()
+        return jsonify(error="المشروع غير موجود."), 404
+    c.execute(
+        "UPDATE conversations SET project_id = NULL WHERE project_id = ? AND user_id = ?",
+        (project_id, session["uid"])
+    )
+    c.execute("DELETE FROM projects WHERE id = ? AND user_id = ?", (project_id, session["uid"]))
+    c.commit()
+    c.close()
+    return jsonify(ok=True)
 
 
 @app.post("/api/conversations")

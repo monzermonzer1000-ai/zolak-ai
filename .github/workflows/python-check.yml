@@ -56,7 +56,7 @@ jobs:
           assert client.get("/health").status_code == 200
           assert client.get("/manifest.json").status_code == 200
           assert client.get("/sw.js").status_code == 200
-          assert "zolak-ai-assets-v20" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v21" in client.get("/sw.js").get_data(as_text=True)
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=1" in home_html
@@ -85,6 +85,14 @@ jobs:
           created = client.post("/api/conversations", json={})
           assert created.status_code == 200, created.get_json()
           conversation_id = created.get_json()["conversation_id"]
+
+          project_created = client.post("/api/projects", json={"name": "مشروع CI"})
+          assert project_created.status_code == 201, project_created.get_json()
+          project_id = project_created.get_json()["project_id"]
+          project_list = client.get("/api/projects").get_json()["projects"]
+          assert any(project["id"] == project_id for project in project_list)
+          project_renamed = client.patch(f"/api/projects/{project_id}", json={"name": "مشروع اختبار"})
+          assert project_renamed.status_code == 200, project_renamed.get_json()
 
           opened = client.get(f"/api/conversations/{conversation_id}")
           assert opened.status_code == 200, opened.get_json()
@@ -173,6 +181,15 @@ jobs:
           ok_events = parse_sse(ai_ok)
           assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in ok_events)
           conversation_id = next(payload["conversation_id"] for name, payload in ok_events if name == "meta")
+
+          assigned = client.patch(f"/api/conversations/{conversation_id}", json={"project_id": project_id})
+          assert assigned.status_code == 200, assigned.get_json()
+          project_conversations = client.get(f"/api/conversations?project_id={project_id}").get_json()["conversations"]
+          assert any(row["id"] == conversation_id and row["project_id"] == project_id for row in project_conversations)
+          unassigned = client.patch(f"/api/conversations/{conversation_id}", json={"project_id": None})
+          assert unassigned.status_code == 200, unassigned.get_json()
+          project_deleted = client.delete(f"/api/projects/{project_id}")
+          assert project_deleted.status_code == 200, project_deleted.get_json()
 
           # Pin/unpin must persist and appear in the dedicated list data.
           pinned = client.patch(f"/api/conversations/{conversation_id}", json={"is_pinned": True})

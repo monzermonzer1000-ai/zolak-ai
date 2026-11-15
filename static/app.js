@@ -13,10 +13,24 @@ const mobileMenu = document.querySelector(".mobile-menu");
 const conversationSearch = document.getElementById("conversationSearch");
 const pinnedItems = document.getElementById("pinnedItems");
 const sidebarPinnedSection = document.querySelector(".sidebar-pinned");
+const projectsPanel = document.getElementById("projectsPanel");
+const projectItems = document.getElementById("projectItems");
+const createProjectButton = document.getElementById("createProjectButton");
+const allConversationsButton = document.getElementById("allConversationsButton");
+const projectPickerModal = document.getElementById("projectPickerModal");
+const projectPickerSelect = document.getElementById("projectPickerSelect");
+let currentProjectId = null;
+let projectPickerConversationId = null;
 
 document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
     tool.addEventListener("click", function () {
-        const labels = {images:"الصور",library:"المكتبة",projects:"المشروعات",explore:"استكشاف"};
+        if (tool.dataset.tool === "projects") {
+            if (!projectsPanel) return;
+            projectsPanel.hidden = !projectsPanel.hidden;
+            if (!projectsPanel.hidden) loadProjects();
+            return;
+        }
+        const labels = {images:"الصور",library:"المكتبة",explore:"استكشاف"};
         const label = labels[tool.dataset.tool];
         if (!label) return;
         let notice = document.querySelector(".sidebar-feature-notice");
@@ -30,6 +44,71 @@ document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
         window.setTimeout(function () { notice.hidden = true; }, 2200);
     });
 });
+
+if (createProjectButton) {
+    createProjectButton.addEventListener("click", async function () {
+        const name = window.prompt("اكتب اسم المشروع الجديد:");
+        if (name === null || !name.trim()) return;
+        try {
+            const response = await fetch("/api/projects", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: name.trim() })
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                showSidebarNotice(result.error || "ما قدرنا ننشئ المشروع.");
+                return;
+            }
+            currentProjectId = result.project_id;
+            await loadProjects();
+            await loadConversations();
+        } catch (error) {
+            console.error("خطأ في إنشاء المشروع:", error);
+            showSidebarNotice("حصل خطأ أثناء إنشاء المشروع.");
+        }
+    });
+}
+
+if (allConversationsButton) {
+    allConversationsButton.addEventListener("click", function () {
+        currentProjectId = null;
+        updateProjectFilterState();
+        loadConversations();
+    });
+}
+
+if (projectPickerModal) {
+    const cancelPicker = document.getElementById("projectPickerCancel");
+    const savePicker = document.getElementById("projectPickerSave");
+    if (cancelPicker) cancelPicker.addEventListener("click", function () {
+        projectPickerModal.hidden = true;
+        projectPickerConversationId = null;
+    });
+    if (savePicker) savePicker.addEventListener("click", async function () {
+        if (!projectPickerConversationId) return;
+        const value = projectPickerSelect ? projectPickerSelect.value : "";
+        try {
+            const response = await fetch("/api/conversations/" + projectPickerConversationId, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ project_id: value ? Number(value) : null })
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                showSidebarNotice(result.error || "ما قدرنا ننقل المحادثة.");
+                return;
+            }
+            projectPickerModal.hidden = true;
+            projectPickerConversationId = null;
+            await loadConversations();
+            await loadProjects();
+        } catch (error) {
+            console.error("خطأ في نقل المحادثة:", error);
+            showSidebarNotice("حصل خطأ أثناء نقل المحادثة.");
+        }
+    });
+}
 
 
 let currentConversationId = null;
@@ -576,7 +655,11 @@ async function loadConversations(searchTerm = "") {
     if (!items) return;
 
     try {
-        const response = await fetch("/api/conversations" + (searchTerm ? "?q=" + encodeURIComponent(searchTerm) : ""));
+        const params = new URLSearchParams();
+        if (searchTerm) params.set("q", searchTerm);
+        if (currentProjectId !== null) params.set("project_id", String(currentProjectId));
+        const queryString = params.toString();
+        const response = await fetch("/api/conversations" + (queryString ? "?" + queryString : ""));
 
         if (response.status === 401) return;
 
@@ -589,7 +672,7 @@ async function loadConversations(searchTerm = "") {
 
         if (conversations.length === 0) {
             const empty = document.createElement("div");
-            empty.textContent = searchTerm ? "ما لقينا محادثات مطابقة للبحث" : "ما عندك محادثات محفوظة";
+            empty.textContent = searchTerm ? "ما لقينا محادثات مطابقة للبحث" : (currentProjectId !== null ? "المشروع دا ما فيهو محادثات لسه" : "ما عندك محادثات محفوظة");
             empty.className = "conversation-empty";
             items.appendChild(empty);
             return;
@@ -649,12 +732,48 @@ async function loadConversations(searchTerm = "") {
                 }
             });
 
+            const projectButton = document.createElement("button");
+            projectButton.type = "button";
+            projectButton.className = "conversation-menu-action";
+            projectButton.textContent = "نقل إلى مشروع";
+            projectButton.addEventListener("click", async function (event) {
+                event.stopPropagation();
+                actionsMenu.hidden = true;
+                try {
+                    const response = await fetch("/api/projects");
+                    const result = await response.json();
+                    if (!response.ok) {
+                        showSidebarNotice(result.error || "ما قدرنا نحمّل المشروعات.");
+                        return;
+                    }
+                    if (!projectPickerModal || !projectPickerSelect) return;
+                    projectPickerSelect.replaceChildren();
+                    const noProject = document.createElement("option");
+                    noProject.value = "";
+                    noProject.textContent = "بدون مشروع";
+                    projectPickerSelect.appendChild(noProject);
+                    (result.projects || []).forEach(function (project) {
+                        const option = document.createElement("option");
+                        option.value = String(project.id);
+                        option.textContent = project.name;
+                        projectPickerSelect.appendChild(option);
+                    });
+                    projectPickerSelect.value = conversation.project_id ? String(conversation.project_id) : "";
+                    projectPickerConversationId = Number(conversation.id);
+                    projectPickerModal.hidden = false;
+                } catch (error) {
+                    console.error("خطأ في تحميل المشروعات:", error);
+                    showSidebarNotice("حصل خطأ أثناء تحميل المشروعات.");
+                }
+            });
+
             const deleteButton = document.createElement("button");
             deleteButton.type = "button";
             deleteButton.className = "conversation-menu-action danger";
             deleteButton.textContent = "حذف المحادثة";
 
             actionsMenu.appendChild(pinButton);
+            actionsMenu.appendChild(projectButton);
             actionsMenu.appendChild(renameButton);
             actionsMenu.appendChild(deleteButton);
 
@@ -727,6 +846,88 @@ async function loadConversations(searchTerm = "") {
         }
     } catch (error) {
         console.error("خطأ في تحميل المحادثات:", error);
+    }
+}
+
+async function loadProjects() {
+    if (!projectItems) return;
+    try {
+        const response = await fetch("/api/projects");
+        if (response.status === 401) return;
+        const data = await response.json();
+        projectItems.replaceChildren();
+        (data.projects || []).forEach(function (project) {
+            const row = document.createElement("div");
+            row.className = "project-item";
+            const openButton = document.createElement("button");
+            openButton.type = "button";
+            openButton.className = "project-open";
+            openButton.textContent = project.name + " · " + project.conversation_count;
+            openButton.dataset.projectId = String(project.id);
+            openButton.classList.toggle("active", Number(currentProjectId) === Number(project.id));
+            openButton.addEventListener("click", function () {
+                currentProjectId = Number(project.id);
+                updateProjectFilterState();
+                loadConversations();
+            });
+            const renameButton = document.createElement("button");
+            renameButton.type = "button";
+            renameButton.className = "project-small-action";
+            renameButton.textContent = "✎";
+            renameButton.setAttribute("aria-label", "إعادة تسمية المشروع");
+            renameButton.addEventListener("click", async function () {
+                const name = window.prompt("اكتب الاسم الجديد للمشروع:", project.name);
+                if (name === null || !name.trim()) return;
+                const update = await fetch("/api/projects/" + project.id, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: name.trim() })
+                });
+                const result = await update.json();
+                if (!update.ok) {
+                    showSidebarNotice(result.error || "ما قدرنا نعيد تسمية المشروع.");
+                    return;
+                }
+                await loadProjects();
+            });
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "project-small-action danger";
+            deleteButton.textContent = "×";
+            deleteButton.setAttribute("aria-label", "حذف المشروع");
+            deleteButton.addEventListener("click", async function () {
+                if (!window.confirm("حذف المشروع؟ المحادثات ستبقى محفوظة خارج المشروع.")) return;
+                const remove = await fetch("/api/projects/" + project.id, { method: "DELETE" });
+                const result = await remove.json();
+                if (!remove.ok) {
+                    showSidebarNotice(result.error || "ما قدرنا نحذف المشروع.");
+                    return;
+                }
+                if (Number(currentProjectId) === Number(project.id)) currentProjectId = null;
+                updateProjectFilterState();
+                await loadProjects();
+                await loadConversations();
+            });
+            row.appendChild(openButton);
+            row.appendChild(renameButton);
+            row.appendChild(deleteButton);
+            projectItems.appendChild(row);
+        });
+        updateProjectFilterState();
+    } catch (error) {
+        console.error("خطأ في تحميل المشروعات:", error);
+        showSidebarNotice("ما قدرنا نحمّل المشروعات.");
+    }
+}
+
+function updateProjectFilterState() {
+    if (allConversationsButton) {
+        allConversationsButton.classList.toggle("active", currentProjectId === null);
+    }
+    if (projectItems) {
+        projectItems.querySelectorAll(".project-open").forEach(function (button) {
+            button.classList.toggle("active", Number(button.dataset.projectId) === Number(currentProjectId));
+        });
     }
 }
 
