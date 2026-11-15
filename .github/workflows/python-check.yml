@@ -132,6 +132,7 @@ jobs:
               primary_error = "503 UNAVAILABLE: temporary high demand"
 
               def generate_content(self, **kwargs):
+                  self.calls.append(kwargs.get("model"))
                   if self.fail_primary and kwargs.get("model") == "gemini-3.5-flash-lite":
                       raise RuntimeError(self.primary_error)
                   return SimpleNamespace(text="رد تجريبي من زولك AI")
