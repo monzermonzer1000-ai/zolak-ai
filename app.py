@@ -1121,7 +1121,7 @@ def chat():
             FROM chats
             WHERE conversation_id = ? AND user_id = ?
             ORDER BY id DESC
-            LIMIT 8
+            LIMIT 6
         """, (conversation_id, user_id)).fetchall()
     c.close()
 
@@ -1192,21 +1192,24 @@ def chat():
             generation_config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 thinking_config=types.ThinkingConfig(thinking_level="LOW"),
-                max_output_tokens=2048
+                max_output_tokens=1536
             )
 
             yield emit("meta", {"conversation_id": conversation_id})
 
             try:
-                chunks = client.models.generate_content_stream(
+                # Use a bounded single response rather than a long-lived
+                # streaming iterator. Some upstream SSE streams return HTTP 200
+                # and then stall without closing, leaving the Vercel function
+                # alive until its 300-second platform timeout.
+                response = client.models.generate_content(
                     model=model, contents=contents, config=generation_config
                 )
-                for chunk in chunks:
-                    piece = (getattr(chunk, "text", None) or "")
-                    if piece:
-                        stream_started = True
-                        answer_parts.append(piece)
-                        yield emit("token", {"text": piece})
+                piece = (getattr(response, "text", None) or "")
+                if piece:
+                    stream_started = True
+                    answer_parts.append(piece)
+                    yield emit("token", {"text": piece})
             except Exception as primary_error:
                 error_text = str(primary_error).upper()
                 temporary = any(marker in error_text for marker in (
@@ -1219,14 +1222,14 @@ def chat():
                 if stream_started or not temporary or not fallback_model.startswith("gemini-") or fallback_model == model:
                     raise
                 app.logger.warning("Primary Gemini stream unavailable; trying fallback model %s", fallback_model)
-                for chunk in client.models.generate_content_stream(
+                response = client.models.generate_content(
                     model=fallback_model, contents=contents, config=generation_config
-                ):
-                    piece = (getattr(chunk, "text", None) or "")
-                    if piece:
-                        stream_started = True
-                        answer_parts.append(piece)
-                        yield emit("token", {"text": piece})
+                )
+                piece = (getattr(response, "text", None) or "")
+                if piece:
+                    stream_started = True
+                    answer_parts.append(piece)
+                    yield emit("token", {"text": piece})
 
             answer = "".join(answer_parts).strip()
             if not answer:
