@@ -556,6 +556,46 @@ th{
         flex-direction:column;
     }
 }
+/* =====================================================
+   PREMIUM ADMIN CONTROL CENTER
+===================================================== */
+:root{--bg:#f3f6f8;--panel:#fff;--panel2:#f6f9f8;--border:#e4ebe7;--text:#17251f;--muted:#687a71;--green:#078765;--input:#fff;--shadow:0 12px 35px rgba(22,48,36,.06)}
+body{background:radial-gradient(circle at 85% -10%,#e2f4ec 0,transparent 34%),var(--bg);color:var(--text);font-family:Inter,"Segoe UI",Tahoma,Arial,sans-serif}
+header{background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);box-shadow:0 4px 20px rgba(25,50,35,.035)}
+.container{width:min(1440px,95%)}
+.logo{font-size:22px;letter-spacing:-.5px}
+.title{padding:22px 24px;background:linear-gradient(120deg,#073d30,#08795d);border-radius:20px;color:#fff;box-shadow:0 14px 34px rgba(7,85,63,.16)}
+.title h1{font-size:30px;letter-spacing:-.7px}.title p{color:#d1eee2}
+.stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.stat,.panel{background:var(--panel);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+.stat{padding:22px;position:relative;overflow:hidden}
+.stat:after{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:var(--green)}
+.stat strong{font-size:32px;color:#08785f}
+.tabs{position:sticky;top:76px;z-index:15;padding:10px;margin:0 0 18px;background:rgba(243,246,248,.94);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:16px;scrollbar-width:thin}
+.tab{border:1px solid transparent;background:transparent;color:#52645a;border-radius:11px;padding:12px 16px;font-weight:700;transition:.18s}
+.tab:hover{background:#eaf5ef;color:#08785f}.tab.active{background:#08785f;color:#fff;box-shadow:0 5px 14px rgba(8,120,95,.18)}
+.panel{padding:24px;margin-bottom:18px}.panel h2{font-size:20px;color:#19372a}
+.field{gap:9px}.field label{font-weight:700;color:#4d6156}
+input,textarea,select{border-color:#dfe8e2;border-radius:11px;padding:13px;color:#1b2d23;background:#fff}
+input:focus,textarea:focus,select:focus{border-color:#0b9b78;box-shadow:0 0 0 4px rgba(11,155,120,.09)}
+.btn{border:1px solid #e2eae5;border-radius:11px;padding:11px 16px;font-weight:700;background:#f7faf8;color:#30443a;transition:.18s}
+.btn:hover{transform:translateY(-1px);filter:brightness(.98);opacity:1}
+.btn.green{background:linear-gradient(135deg,#0b9b78,#08785f);color:#fff;border-color:#08785f}
+.btn.red{background:#fff1f0;color:#b42318;border:1px solid #ffd5d1}
+.btn.blue{background:#edf4ff;color:#2457a6;border:1px solid #d6e4ff}
+.btn.yellow{background:#fff8e6;color:#8b5b00;border:1px solid #f8e4a8}
+table{min-width:920px}th{color:#75857c;font-size:12px;text-transform:uppercase;letter-spacing:.03em}td{color:#263a30}tbody tr:hover{background:#f8fbf9}
+.badge.green{background:#e5f7ef;color:#08785f}.badge.red{background:#fff0ef;color:#b42318}.badge.yellow{background:#fff7df;color:#8b5b00}
+.message.success{background:#e7f7ef;color:#08734f;border:1px solid #ccebd9}.message.error{background:#fff0ef;color:#b42318;border:1px solid #ffd5d1}
+.info{background:#f1f8f4;border-color:#dceee4;color:#4b6255;border-radius:12px}
+.health-card{background:#f8fbf9;border-color:#e4ece7;border-radius:14px}
+.modal{background:rgba(13,30,22,.48);backdrop-filter:blur(5px)}.modal-box{background:#fff;border:1px solid #e2eae5;border-radius:20px;box-shadow:0 25px 80px rgba(10,30,20,.2)}
+.section-heading{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}.section-heading p,.field small{color:var(--muted);font-size:13px;line-height:1.7}
+.account-summary{display:flex;flex-direction:column;gap:6px;padding:16px 18px;margin:0 0 22px;border:1px solid #dceee4;border-radius:14px;background:#f1f8f4;color:#1d4937}.account-summary span{color:#60766a;direction:ltr;text-align:right}
+.password-form{max-width:620px;display:grid;gap:15px}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.tabs{top:60px}.title{padding:20px;border-radius:16px}.title h1{font-size:24px}.panel{padding:17px}.section-heading{align-items:flex-start;flex-direction:column}}
+@media(max-width:500px){.container{width:94%}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stat{padding:14px}.stat strong{font-size:25px}.tabs{gap:5px;padding:7px}.tab{padding:10px 12px;font-size:13px}.header-inner{flex-direction:row;align-items:center}.header-actions{gap:5px}.btn{padding:9px 11px;font-size:13px}}
+
 </style>
 </head>
 
@@ -649,6 +689,16 @@ th{
 🛠️ الفحص
 </button>
 
+<button type="button" class="tab" onclick="showSection('conversations',this)">
+💬 المحادثات
+</button>
+
+<button type="button" class="tab" onclick="showSection('account',this)">
+👤 حساب المدير
+</button>
+
+
+
 </div>
 
 
@@ -710,6 +760,36 @@ autocomplete="off"
 
 </section>
 
+
+<!-- إدارة المحادثات -->
+<section id="conversations" class="section">
+  <div class="panel">
+    <div class="section-heading">
+      <div><h2>💬 إدارة المحادثات</h2><p>استعراض آخر 100 محادثة وحذف المحادثات المخالفة عند الحاجة</p></div>
+      <button type="button" class="btn green" onclick="loadConversations()">تحديث القائمة</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>عنوان المحادثة</th><th>المستخدم</th><th>عدد الرسائل</th><th>آخر تحديث</th><th>الإجراء</th></tr></thead>
+        <tbody id="conversationsTable"><tr><td colspan="5" class="empty">اضغط تحديث القائمة لتحميل المحادثات.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- حساب المدير -->
+<section id="account" class="section">
+  <div class="panel">
+    <h2>👤 حساب المدير</h2>
+    <div class="account-summary" id="adminAccountSummary">جاري تحميل بيانات الحساب...</div>
+    <form id="adminPasswordForm" class="password-form">
+      <div class="field"><label for="currentAdminPassword">كلمة المرور الحالية</label><input id="currentAdminPassword" type="password" autocomplete="current-password" required></div>
+      <div class="field"><label for="newAdminPassword">كلمة المرور الجديدة</label><input id="newAdminPassword" type="password" minlength="12" autocomplete="new-password" required><small>12 حرفاً على الأقل، ويفضل أن تجمع أحرفاً وأرقاماً ورموزاً.</small></div>
+      <div class="field"><label for="confirmAdminPassword">تأكيد كلمة المرور الجديدة</label><input id="confirmAdminPassword" type="password" minlength="12" autocomplete="new-password" required></div>
+      <div class="actions"><button class="btn green" type="submit">تحديث كلمة المرور</button></div>
+    </form>
+  </div>
+</section>
 
 <!-- الصفحة الرئيسية -->
 
@@ -1306,9 +1386,13 @@ function showSection(id,button){
     }
 
     if(id === "maintenance"){
-
         runHealthCheck();
-
+    }
+    if(id === "conversations"){
+        loadConversations();
+    }
+    if(id === "account"){
+        loadAdminAccount();
     }
 
 }
@@ -1981,12 +2065,10 @@ async function setBan(
         await api(
             "/api/admin/user/" +
             id +
-            "/ban",
+            (banned ? "/ban" : "/unban"),
             {
                 method:"POST",
-                body:JSON.stringify({
-                    banned:Boolean(banned)
-                })
+                body:JSON.stringify({})
             }
         );
 
@@ -2803,6 +2885,74 @@ document.getElementById(
     }
 );
 
+
+/* =========================
+   إدارة المحادثات
+========================= */
+async function loadConversations(){
+    const body = document.getElementById("conversationsTable");
+    if(!body) return;
+    body.innerHTML = '<tr><td colspan="5" class="empty">جاري تحميل المحادثات...</td></tr>';
+    try{
+        const data = await api("/api/admin/conversations");
+        const rows = data.conversations || [];
+        if(!rows.length){
+            body.innerHTML = '<tr><td colspan="5" class="empty">لا توجد محادثات حالياً.</td></tr>';
+            return;
+        }
+        body.innerHTML = rows.map(item => {
+            const id = Number(item.id);
+            const title = escapeHtml(item.title || "محادثة بدون عنوان");
+            const name = escapeHtml(item.user_name || "مستخدم");
+            const email = escapeHtml(item.user_email || "");
+            const count = Number(item.message_count || 0);
+            const date = escapeHtml(item.updated_at || item.created_at || "—");
+            return '<tr><td><strong>'+title+'</strong></td><td>'+name+'<br><small>'+email+'</small></td><td>'+count+'</td><td>'+date+'</td><td><button type="button" class="small-btn red" onclick="deleteConversation('+id+')">حذف المحادثة</button></td></tr>';
+        }).join("");
+    }catch(error){
+        body.innerHTML = '<tr><td colspan="5" class="empty">'+escapeHtml(error.message)+'</td></tr>';
+        showMessage(error.message,"error");
+    }
+}
+
+async function deleteConversation(id){
+    if(!confirm("سيتم حذف المحادثة ورسائلها نهائياً. هل تريد المتابعة؟")) return;
+    try{
+        await api("/api/admin/conversation/"+Number(id),{method:"DELETE"});
+        showMessage("تم حذف المحادثة ورسائلها.");
+        await loadConversations();
+        await loadStats();
+    }catch(error){ showMessage(error.message,"error"); }
+}
+
+/* =========================
+   حساب المدير
+========================= */
+async function loadAdminAccount(){
+    try{
+        const data = await api("/api/admin/account");
+        const account = data.account || {};
+        const box = document.getElementById("adminAccountSummary");
+        if(box) box.innerHTML = '<strong>'+escapeHtml(account.name)+'</strong><span>'+escapeHtml(account.email)+'</span>';
+    }catch(error){ showMessage(error.message,"error"); }
+}
+
+document.getElementById("adminPasswordForm").addEventListener("submit", async function(event){
+    event.preventDefault();
+    const current = document.getElementById("currentAdminPassword").value;
+    const next = document.getElementById("newAdminPassword").value;
+    const confirmNext = document.getElementById("confirmAdminPassword").value;
+    if(next !== confirmNext){ showMessage("تأكيد كلمة المرور غير مطابق.","error"); return; }
+    if(next.length < 12){ showMessage("استخدم كلمة مرور من 12 حرفاً على الأقل.","error"); return; }
+    const button = this.querySelector('button[type="submit"]');
+    button.disabled = true;
+    try{
+        await api("/api/admin/change-password",{method:"POST",body:JSON.stringify({current_password:current,new_password:next})});
+        this.reset();
+        showMessage("تم تحديث كلمة مرور المدير بنجاح.");
+    }catch(error){ showMessage(error.message,"error"); }
+    finally{ button.disabled = false; }
+});
 
 /* =========================
    التشغيل الأول
