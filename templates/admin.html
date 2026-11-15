@@ -640,6 +640,32 @@ select:focus-visible {
     .tab { min-height: 40px; }
     .header-actions .btn { min-height: 38px; }
 }
+
+
+/* Final interaction polish: clear hierarchy, responsive touch controls */
+body { font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif; }
+.btn, .small-btn, .tab, .original-actions button, .modal-header button {
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, filter .18s ease;
+}
+.btn:hover:not(:disabled), .small-btn:hover:not(:disabled), .tab:hover:not(.active) {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 18px rgba(8, 65, 43, .10);
+}
+.btn:active:not(:disabled), .small-btn:active:not(:disabled), .tab:active { transform: scale(.98); }
+.btn.green:hover:not(:disabled) { filter: brightness(1.06); box-shadow: 0 9px 22px rgba(8,120,95,.22); }
+.btn:focus-visible, .small-btn:focus-visible, .tab:focus-visible,
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 3px solid rgba(8,185,145,.25);
+    outline-offset: 2px;
+}
+.stat, .panel, .health-card, .modal-box { transition: box-shadow .2s ease, border-color .2s ease; }
+.stat:hover, .panel:hover { border-color: rgba(8,155,118,.24); }
+.tabs { overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+tbody tr { transition: background .15s ease; }
+input, textarea, select { transition: border-color .18s ease, box-shadow .18s ease; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
 </style>
 </head>
 
