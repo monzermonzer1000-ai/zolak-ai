@@ -1,5 +1,39 @@
 "use strict";
 
+/* Persistent light/dark appearance */
+(function initZolakTheme() {
+    const root = document.body;
+    const toggle = document.getElementById("themeToggle");
+    const label = document.getElementById("themeToggleLabel");
+    if (!root) return;
+
+    let theme = root.classList.contains("theme-light") ? "light" : "dark";
+    try {
+        const saved = localStorage.getItem("zolak-theme");
+        if (saved === "light" || saved === "dark") theme = saved;
+    } catch (_) {}
+
+    function applyTheme(nextTheme) {
+        theme = nextTheme === "light" ? "light" : "dark";
+        root.classList.remove("theme-light", "theme-dark");
+        root.classList.add("theme-" + theme);
+        const isDark = theme === "dark";
+        if (toggle) {
+            toggle.setAttribute("aria-pressed", String(isDark));
+            toggle.setAttribute("title", isDark ? "التبديل إلى الوضع النهاري" : "التبديل إلى الوضع الليلي");
+        }
+        if (label) label.textContent = isDark ? "الوضع النهاري" : "الوضع الليلي";
+        const themeMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeMeta) themeMeta.setAttribute("content", isDark ? "#071d18" : "#f7faf8");
+        try { localStorage.setItem("zolak-theme", theme); } catch (_) {}
+    }
+
+    applyTheme(theme);
+    if (toggle) toggle.addEventListener("click", function () {
+        applyTheme(theme === "dark" ? "light" : "dark");
+    });
+})();
+
 /* =========================
    ZOLAK AI — APP
 ========================= */
