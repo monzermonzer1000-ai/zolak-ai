@@ -60,6 +60,8 @@ jobs:
           assert "دخول لوحة المدير" in login_page
           assert "admin@zolak.ai" in login_page
           assert client.get("/health").status_code == 200
+          assert client.get("/").headers.get("X-Content-Type-Options") == "nosniff"
+          assert client.get("/").headers.get("X-Frame-Options") == "DENY"
           assert client.get("/manifest.json").status_code == 200
           assert client.get("/sw.js").status_code == 200
           home_html = client.get("/").get_data(as_text=True)
@@ -74,6 +76,11 @@ jobs:
           assert "display: none" in performance_css
           assert client.get("/static/style.css").status_code == 200
           assert client.get("/static/app.js").status_code == 200
+
+          csrf_blocked = client.post("/api/register", json={"name": "Bad", "email": "bad@example.test", "password": "test-password"}, headers={"Origin": "https://attacker.example"})
+          assert csrf_blocked.status_code == 403, csrf_blocked.get_json()
+          fetch_metadata_blocked = client.post("/api/register", json={"name": "Bad", "email": "bad2@example.test", "password": "test-password"}, headers={"Sec-Fetch-Site": "cross-site"})
+          assert fetch_metadata_blocked.status_code == 403, fetch_metadata_blocked.get_json()
 
           registered = client.post("/api/register", json={
               "name": "CI User",
@@ -246,6 +253,13 @@ jobs:
           })
           assert admin_login.status_code == 200, admin_login.get_json()
 
+          stale_client = app.app.test_client()
+          stale_login = stale_client.post("/api/login", json={
+              "email": "admin@example.test",
+              "password": "ci-test-password"
+          })
+          assert stale_login.status_code == 200, stale_login.get_json()
+
           # The environment bootstrap password must not overwrite a password
           # changed later in the admin account settings on cold start.
           password_changed = client.post("/api/admin/change-password", json={
@@ -253,6 +267,7 @@ jobs:
               "new_password": "ci-admin-password-updated"
           })
           assert password_changed.status_code == 200, password_changed.get_json()
+          assert stale_client.get("/api/admin/stats").status_code == 401
           app.init_db()
           client.get("/logout")
           old_admin_login = client.post("/api/login", json={
@@ -265,6 +280,20 @@ jobs:
               "password": "ci-admin-password-updated"
           })
           assert new_admin_login.status_code == 200, new_admin_login.get_json()
+
+          # An unchanged ADMIN_PASSWORD must not undo admin bans or credits on cold start.
+          admin_id = client.get("/api/me").get_json()["id"]
+          conn = app.db()
+          conn.execute("UPDATE users SET credits = 321, is_banned = 1 WHERE id = ?", (admin_id,))
+          conn.commit()
+          conn.close()
+          app.init_db()
+          conn = app.db()
+          bootstrap_state = conn.execute("SELECT credits, is_banned FROM users WHERE id = ?", (admin_id,)).fetchone()
+          assert bootstrap_state["credits"] == 321 and bootstrap_state["is_banned"] in (1, True)
+          conn.execute("UPDATE users SET is_banned = 0 WHERE id = ?", (admin_id,))
+          conn.commit()
+          conn.close()
 
           health = client.get("/api/admin/health")
           assert health.status_code == 200, health.get_json()
