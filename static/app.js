@@ -14,6 +14,7 @@ const conversationSearch = document.getElementById("conversationSearch");
 const pinnedItems = document.getElementById("pinnedItems");
 const sidebarPinnedSection = document.querySelector(".sidebar-pinned");
 const projectsPanel = document.getElementById("projectsPanel");
+const explorePanel = document.getElementById("explorePanel");
 const projectItems = document.getElementById("projectItems");
 const createProjectButton = document.getElementById("createProjectButton");
 const allConversationsButton = document.getElementById("allConversationsButton");
@@ -27,21 +28,38 @@ document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
         if (tool.dataset.tool === "projects") {
             if (!projectsPanel) return;
             projectsPanel.hidden = !projectsPanel.hidden;
+            if (explorePanel) explorePanel.hidden = true;
             if (!projectsPanel.hidden) loadProjects();
             return;
         }
-        const labels = {images:"الصور",library:"المكتبة",explore:"استكشاف"};
-        const label = labels[tool.dataset.tool];
-        if (!label) return;
-        let notice = document.querySelector(".sidebar-feature-notice");
-        if (!notice) {
-            notice = document.createElement("div");
-            notice.className = "sidebar-feature-notice";
-            document.body.appendChild(notice);
+        if (tool.dataset.tool === "explore") {
+            if (!explorePanel) return;
+            explorePanel.hidden = !explorePanel.hidden;
+            if (projectsPanel) projectsPanel.hidden = true;
+            return;
         }
-        notice.textContent = "ميزة " + label + " قيد التجهيز.";
-        notice.hidden = false;
-        window.setTimeout(function () { notice.hidden = true; }, 2200);
+        if (tool.dataset.tool === "images" || tool.dataset.tool === "library") {
+            const picker = document.getElementById("attachmentInput");
+            if (picker) {
+                const previousAccept = picker.accept;
+                if (tool.dataset.tool === "images") picker.accept = "image/*";
+                window.addEventListener("focus", function restorePicker() {
+                    picker.accept = previousAccept;
+                }, { once: true });
+                picker.click();
+            }
+            return;
+        }
+    });
+});
+
+document.querySelectorAll(".explore-prompt").forEach(function (button) {
+    button.addEventListener("click", function () {
+        if (!promptBox) return;
+        promptBox.value = button.dataset.explorePrompt || "";
+        promptBox.focus();
+        promptBox.setSelectionRange(promptBox.value.length, promptBox.value.length);
+        if (explorePanel) explorePanel.hidden = true;
     });
 });
 
