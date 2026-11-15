@@ -4,6 +4,7 @@ import psycopg
 import io
 import time
 import secrets
+import hashlib
 from functools import wraps
 from datetime import datetime, timezone
 
@@ -263,6 +264,25 @@ def init_db():
         "مدير زولك"
     )
 
+    # Apply ADMIN_PASSWORD only when its value changes. This makes the
+    # environment variable a one-time bootstrap/reset mechanism, so a
+    # password changed later from the admin dashboard is not overwritten
+    # on every serverless cold start.
+    password_fingerprint = (
+        hashlib.sha256(admin_password.encode("utf-8")).hexdigest()
+        if admin_password else None
+    )
+    applied_password = c.execute(
+        "SELECT value FROM settings WHERE key = 'admin_password_env_fingerprint'"
+    ).fetchone()
+    apply_admin_password = bool(
+        admin_password
+        and (
+            not applied_password
+            or applied_password["value"] != password_fingerprint
+        )
+    )
+
     existing_admin = c.execute(
         """
         SELECT id
@@ -293,9 +313,17 @@ def init_db():
                 999999
             )
         )
+        c.execute(
+            """
+            INSERT INTO settings(key, value)
+            VALUES ('admin_password_env_fingerprint', ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """,
+            (password_fingerprint,)
+        )
 
     elif existing_admin:
-        if admin_password:
+        if apply_admin_password:
             c.execute(
                 """
                 UPDATE users
@@ -309,9 +337,15 @@ def init_db():
                     admin_email
                 )
             )
+            c.execute(
+                """
+                INSERT INTO settings(key, value)
+                VALUES ('admin_password_env_fingerprint', ?)
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """,
+                (password_fingerprint,)
+            )
         else:
-            # Preserve the existing administrator password unless an
-            # explicit ADMIN_PASSWORD environment variable is supplied.
             c.execute(
                 """
                 UPDATE users
