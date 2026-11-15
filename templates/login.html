@@ -258,6 +258,19 @@
         .ghost:hover { color:#08785f !important; }
         #err { color:#c0392b !important; }
 
+
+
+/* Premium authentication polish */
+body { background: radial-gradient(circle at 85% 8%, rgba(8,185,145,.08), transparent 30%), #f7faf8 !important; }
+.auth-card { border-radius: 22px !important; box-shadow: 0 22px 70px rgba(14,48,34,.10) !important; }
+.auth-input { min-height: 50px; transition: border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+.auth-input:focus { border-color: #0b9b78 !important; box-shadow: 0 0 0 4px rgba(11,155,120,.10) !important; }
+.login-button { min-height: 50px; transition: transform .18s ease, box-shadow .18s ease, filter .18s ease; }
+.login-button:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(8,120,95,.22) !important; }
+.login-button:active { transform: scale(.985); }
+.ghost { padding: 10px; border-radius: 10px; transition: color .18s ease, background .18s ease; }
+.ghost:hover { background: rgba(8,185,145,.07); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
 </style>
 </head>
 
