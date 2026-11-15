@@ -190,6 +190,8 @@ jobs:
 
           ai_ok = client.post("/api/chat", json={"message": "اختبار الرد"}, buffered=True)
           assert ai_ok.status_code == 200
+          assert not ai_ok.is_streamed, "Vercel chat response must be fully buffered"
+          assert ai_ok.mimetype == "text/event-stream"
           ok_events = parse_sse(ai_ok)
           assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in ok_events)
           conversation_id = next(payload["conversation_id"] for name, payload in ok_events if name == "meta")
