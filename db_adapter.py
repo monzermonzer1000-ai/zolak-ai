@@ -104,6 +104,9 @@ def connect_database(database_url):
         row_factory=dict_row,
         connect_timeout=10,
         sslmode="require",
+        # Bound database waits so a stalled query/lock cannot hold a Vercel
+        # function open until the platform's 300-second hard timeout.
+        options="-c statement_timeout=20000 -c lock_timeout=5000",
         # Supabase transaction pooler compatibility.
         prepare_threshold=None,
     )
