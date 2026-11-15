@@ -799,6 +799,9 @@ def register():
         not name
         or not email
         or len(password) < 8
+        or len(password) > 256
+        or len(email) > 254
+        or not re.fullmatch(r"[^@\\s]+@[^@\\s]+\\.[^@\\s]+", email)
     ):
 
         return jsonify(
@@ -908,6 +911,9 @@ def api_login():
     password = str(
         data.get("password", "")
     )
+
+    if len(email) > 254 or len(password) > 256:
+        return jsonify(error="بيانات تسجيل الدخول غير صحيحة."), 400
 
     c = db()
 
@@ -1938,10 +1944,10 @@ def add_credits(uid):
 
         amount = 0
 
-    if amount == 0:
+    if amount == 0 or abs(amount) > 1_000_000_000:
 
         return jsonify(
-            error="أدخل عدد صحيح."
+            error="أدخل عدداً صحيحاً بين -1,000,000,000 و1,000,000,000."
         ), 400
 
     c = db()
