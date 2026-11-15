@@ -1133,7 +1133,7 @@ def chat():
             client = genai.Client(
                 api_key=api_key,
                 http_options=types.HttpOptions(
-                    timeout=30000,
+                    timeout=15000,
                     retry_options=types.HttpRetryOptions(
                         attempts=1,
                         initial_delay=0.8,
@@ -1174,8 +1174,8 @@ def chat():
 
             generation_config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
-                temperature=0.65,
-                max_output_tokens=768
+                thinking_config=types.ThinkingConfig(thinking_level="LOW"),
+                max_output_tokens=2048
             )
 
             yield emit("meta", {"conversation_id": conversation_id})
@@ -1193,9 +1193,8 @@ def chat():
             except Exception as primary_error:
                 error_text = str(primary_error).upper()
                 temporary = any(marker in error_text for marker in (
-                    "503", "UNAVAILABLE", "HIGH DEMAND", "504",
-                    "DEADLINE_EXCEEDED", "TIMEOUT", "TIMED OUT",
-                    "CONNECTION RESET"
+                    "503", "UNAVAILABLE", "HIGH DEMAND", "MODEL_OVERLOADED",
+                    "429", "RESOURCE_EXHAUSTED"
                 ))
                 fallback_model = os.getenv(
                     "GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite"
@@ -2228,14 +2227,14 @@ def admin_ai_test():
         # occupy a Vercel function until the platform's hard timeout.
         client = genai.Client(
             api_key=api_key,
-            http_options=types.HttpOptions(timeout=30000)
+            http_options=types.HttpOptions(timeout=15000)
         )
         response = client.models.generate_content(
             model=model,
             contents="أجب بكلمة واحدة فقط: جاهز",
             config=types.GenerateContentConfig(
-                temperature=0,
-                max_output_tokens=20
+                thinking_config=types.ThinkingConfig(thinking_level="LOW"),
+                max_output_tokens=32
             )
         )
         answer = (response.text or "").strip()
