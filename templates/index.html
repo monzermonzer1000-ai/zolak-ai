@@ -86,6 +86,15 @@
             <div class="conversation-items pinned-items" id="pinnedItems"></div>
         </section>
 
+        <section class="sidebar-projects" id="projectsPanel" hidden>
+            <div class="sidebar-projects-heading">
+                <span>المشروعات</span>
+                <button type="button" id="createProjectButton" aria-label="إنشاء مشروع جديد" title="مشروع جديد">+</button>
+            </div>
+            <button type="button" class="project-filter active" id="allConversationsButton">كل الدردشات</button>
+            <div class="project-items" id="projectItems"></div>
+        </section>
+
         <section class="conversation-list sidebar-history" id="conversationList">
             <div class="conversation-list-title">الدردشات</div>
             <div class="conversation-items" id="conversationItems"></div>
@@ -192,6 +201,21 @@
 
     </main>
 
+</div>
+
+
+<div class="project-picker-overlay" id="projectPickerModal" hidden>
+    <div class="project-picker-card" role="dialog" aria-modal="true" aria-labelledby="projectPickerTitle">
+        <h2 id="projectPickerTitle">نقل المحادثة إلى مشروع</h2>
+        <p>اختار المشروع الذي تريد حفظ المحادثة داخله.</p>
+        <select id="projectPickerSelect" aria-label="اختيار المشروع">
+            <option value="">بدون مشروع</option>
+        </select>
+        <div class="project-picker-actions">
+            <button type="button" id="projectPickerCancel">إلغاء</button>
+            <button type="button" id="projectPickerSave">حفظ</button>
+        </div>
+    </div>
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
