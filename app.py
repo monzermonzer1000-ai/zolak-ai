@@ -1150,7 +1150,7 @@ def chat():
             client = genai.Client(
                 api_key=api_key,
                 http_options=types.HttpOptions(
-                    timeout=15000,
+                    timeout=12000,
                     retry_options=types.HttpRetryOptions(
                         attempts=1,
                         initial_delay=0.8,
