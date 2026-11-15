@@ -1108,6 +1108,8 @@ async function sendMessage() {
         const decoder = new TextDecoder("utf-8");
         let buffer = "";
 
+        let streamFinished = false;
+
         function handleEvent(rawEvent) {
             const lines = rawEvent.split(/\r?\n/);
             let eventName = "message";
@@ -1136,22 +1138,32 @@ async function sendMessage() {
                 messages.scrollTop = messages.scrollHeight;
             } else if (eventName === "error") {
                 streamError = payload.error || "حصل خطأ أثناء توليد الرد.";
+                streamFinished = true;
             } else if (eventName === "done") {
                 completed = true;
+                streamFinished = true;
                 if (payload.conversation_id) currentConversationId = Number(payload.conversation_id);
             }
         }
 
-        while (true) {
+        while (!streamFinished) {
             const result = await reader.read();
             if (result.done) break;
             buffer += decoder.decode(result.value, { stream: true });
             const events = buffer.split(/\r?\n\r?\n/);
             buffer = events.pop() || "";
-            events.forEach(handleEvent);
+            for (const eventText of events) {
+                handleEvent(eventText);
+                if (streamFinished) break;
+            }
         }
-        buffer += decoder.decode();
-        if (buffer.trim()) handleEvent(buffer);
+
+        if (streamFinished) {
+            try { await reader.cancel(); } catch (_) {}
+        } else {
+            buffer += decoder.decode();
+            if (buffer.trim()) handleEvent(buffer);
+        }
 
         if (liveMessage) liveMessage.remove();
         if (streamedText) addMessage(streamedText, "assistant");
