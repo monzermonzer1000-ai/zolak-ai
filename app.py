@@ -327,8 +327,7 @@ def init_db():
             c.execute(
                 """
                 UPDATE users
-                SET name = ?, password = ?, credits = 999999,
-                    is_admin = 1, is_banned = 0
+                SET name = ?, password = ?, is_admin = 1
                 WHERE email = ?
                 """,
                 (
@@ -345,16 +344,8 @@ def init_db():
                 """,
                 (password_fingerprint,)
             )
-        else:
-            c.execute(
-                """
-                UPDATE users
-                SET name = ?, credits = 999999,
-                    is_admin = 1, is_banned = 0
-                WHERE email = ?
-                """,
-                (admin_name, admin_email)
-            )
+        # When the environment password is unchanged, preserve the admin's
+        # current role, ban state, and credits. Cold starts must not reset them.
 
     # -----------------------------------------------------
     # إصلاح أي إعداد قديم
