@@ -3001,3 +3001,107 @@ button, .sidebar-link, .conversation-item { -webkit-tap-highlight-color:transpar
   .composer-inner { min-height:62px !important; border-radius:18px !important; }
   .composer-note { display:none !important; }
 }
+
+/* =========================================================
+   ZOLAK AI — FINAL READABLE ASSISTANT OUTPUT / v30
+   Fix conflicting legacy dark rules and improve rich answers.
+   ========================================================= */
+.app.chatgpt-layout > .main .message.assistant .message-content,
+body.theme-light .app.chatgpt-layout > .main .message.assistant .message-content {
+    color: #17231f !important;
+    background: #ffffff !important;
+    border: 1px solid #e8eeea !important;
+    box-shadow: 0 8px 28px rgba(20, 42, 32, .055) !important;
+    line-height: 1.95 !important;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content p,
+.app.chatgpt-layout > .main .message.assistant .message-content li,
+.app.chatgpt-layout > .main .message.assistant .message-content span {
+    color: #26352e !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content h2,
+.app.chatgpt-layout > .main .message.assistant .message-content h3 {
+    color: #102b20 !important;
+    font-weight: 800 !important;
+    line-height: 1.55 !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content h2 {
+    margin: 20px 0 9px !important;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #e8efeb;
+    font-size: 1.18rem !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content h3 {
+    margin: 16px 0 7px !important;
+    font-size: 1.06rem !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content strong {
+    color: #102b20 !important;
+    font-weight: 800 !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content a {
+    color: #08785f !important;
+    font-weight: 650;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content blockquote {
+    color: #40564b !important;
+    background: #f2f8f5 !important;
+    border-right: 3px solid #0b9b78 !important;
+    border-radius: 8px 0 0 8px;
+    padding: 10px 13px !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content p code,
+.app.chatgpt-layout > .main .message.assistant .message-content li code {
+    color: #8b2850 !important;
+    background: #f5eef2 !important;
+    border: 1px solid #f0e3e9;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content ul,
+.app.chatgpt-layout > .main .message.assistant .message-content ol {
+    padding-inline-start: 27px;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content li {
+    padding-inline-start: 3px;
+    margin: 6px 0;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content .code-block {
+    color: #e8eef5 !important;
+    background: #111c2a !important;
+    border: 1px solid #26384b !important;
+    border-radius: 13px !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content .code-block pre,
+.app.chatgpt-layout > .main .message.assistant .message-content .code-block code {
+    color: #e8eef5 !important;
+    background: transparent !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content .code-toolbar {
+    color: #cbd5e1 !important;
+    background: #1c2b3b !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content .message-copy {
+    color: #52635a !important;
+    background: #f5f8f6 !important;
+    border: 1px solid #e5ece8 !important;
+}
+.app.chatgpt-layout > .main .message.assistant .message-content .message-copy:hover {
+    color: #08785f !important;
+    background: #eaf7f2 !important;
+}
+.app.chatgpt-layout > .main .message.user .message-content {
+    color: #173d30 !important;
+    background: #edf8f3 !important;
+    border: 1px solid #dcefe5 !important;
+}
+@media (max-width: 800px) {
+    .app.chatgpt-layout > .main .message.assistant .message-content {
+        max-width: 100% !important;
+        padding: 14px 15px !important;
+        border-radius: 16px !important;
+        font-size: 15px !important;
+    }
+}
