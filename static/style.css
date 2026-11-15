@@ -82,11 +82,8 @@ img {
     min-height: 0;
     overflow: hidden;
 
-    background-color: #10251e;
-    background-image: url("/static/sudan-flag-background.jpg");
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
+    background-color: var(--canvas, #f5f8f7);
+    background-image: none;
 }
 
 /* CONVERSATION SEARCH + ACTIONS */
