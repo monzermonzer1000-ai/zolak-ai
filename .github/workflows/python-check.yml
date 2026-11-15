@@ -244,6 +244,26 @@ jobs:
           })
           assert admin_login.status_code == 200, admin_login.get_json()
 
+          # The environment bootstrap password must not overwrite a password
+          # changed later in the admin account settings on cold start.
+          password_changed = client.post("/api/admin/change-password", json={
+              "current_password": "ci-test-password",
+              "new_password": "ci-admin-password-updated"
+          })
+          assert password_changed.status_code == 200, password_changed.get_json()
+          app.init_db()
+          client.get("/logout")
+          old_admin_login = client.post("/api/login", json={
+              "email": "admin@example.test",
+              "password": "ci-test-password"
+          })
+          assert old_admin_login.status_code == 401, old_admin_login.get_json()
+          new_admin_login = client.post("/api/login", json={
+              "email": "admin@example.test",
+              "password": "ci-admin-password-updated"
+          })
+          assert new_admin_login.status_code == 200, new_admin_login.get_json()
+
           health = client.get("/api/admin/health")
           assert health.status_code == 200, health.get_json()
           assert health.get_json()["checks"]["gemini"]["status"] == "ok"
