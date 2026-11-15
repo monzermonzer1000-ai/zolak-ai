@@ -68,7 +68,7 @@ jobs:
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
           assert "/static/premium-ui.css?v=1" in home_html
-          assert 'class="theme-{{ theme if theme in [\'light\', \'dark\'] else \'dark\'} }"' not in home_html
+          assert "theme if theme in ['light', 'dark'] else 'dark'" in home_source
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
@@ -373,6 +373,10 @@ jobs:
           login_source = open("templates/login.html", encoding="utf-8").read()
           css_source = open("static/style.css", encoding="utf-8").read()
           performance_source = open("static/performance.css", encoding="utf-8").read()
+          premium_source = open("static/premium-ui.css", encoding="utf-8").read()
+          assert "display: flex !important" in premium_source
+          assert "theme-dark" in premium_source and "theme-light" in premium_source
+          assert "zolak-theme" in app_source
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=31" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
