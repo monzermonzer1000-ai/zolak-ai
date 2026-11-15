@@ -2300,6 +2300,99 @@ def admin_ai_test():
 
 
 # =========================================================
+# إدارة المحادثات وحساب المدير
+# =========================================================
+
+@app.get("/api/admin/conversations")
+@admin_required
+def admin_conversations():
+    c = db()
+    rows = c.execute("""
+        SELECT
+            conversations.id,
+            conversations.user_id,
+            conversations.title,
+            conversations.created_at,
+            conversations.updated_at,
+            users.name AS user_name,
+            users.email AS user_email,
+            COUNT(chats.id) AS message_count
+        FROM conversations
+        JOIN users ON users.id = conversations.user_id
+        LEFT JOIN chats ON chats.conversation_id = conversations.id
+        GROUP BY conversations.id, users.name, users.email
+        ORDER BY conversations.updated_at DESC, conversations.id DESC
+        LIMIT 100
+    """).fetchall()
+    c.close()
+    return jsonify(conversations=[dict(row) for row in rows])
+
+
+@app.delete("/api/admin/conversation/<int:conversation_id>")
+@admin_required
+def admin_delete_conversation(conversation_id):
+    c = db()
+    exists = c.execute(
+        "SELECT id FROM conversations WHERE id = ?",
+        (conversation_id,)
+    ).fetchone()
+    if not exists:
+        c.close()
+        return jsonify(error="المحادثة غير موجودة."), 404
+    c.execute("DELETE FROM chats WHERE conversation_id = ?", (conversation_id,))
+    c.execute("DELETE FROM conversations WHERE id = ?", (conversation_id,))
+    c.commit()
+    c.close()
+    return jsonify(ok=True)
+
+
+@app.get("/api/admin/account")
+@admin_required
+def admin_account():
+    c = db()
+    user = c.execute(
+        "SELECT id, name, email, created_at FROM users WHERE id = ?",
+        (session["uid"],)
+    ).fetchone()
+    c.close()
+    if not user:
+        return jsonify(error="حساب المدير غير موجود."), 404
+    return jsonify(account=dict(user))
+
+
+@app.post("/api/admin/change-password")
+@admin_required
+def admin_change_password():
+    data = request.get_json(silent=True) or {}
+    current_password = str(data.get("current_password", ""))
+    new_password = str(data.get("new_password", ""))
+    if len(new_password) < 12:
+        return jsonify(error="كلمة المرور الجديدة يجب أن تكون 12 حرفاً على الأقل."), 400
+    if len(new_password) > 256:
+        return jsonify(error="كلمة المرور طويلة جداً."), 400
+    c = db()
+    user = c.execute(
+        "SELECT password FROM users WHERE id = ?",
+        (session["uid"],)
+    ).fetchone()
+    if not user:
+        c.close()
+        session.clear()
+        return jsonify(error="سجل الدخول من جديد."), 401
+    valid, _legacy = verify_password(user["password"], current_password)
+    if not valid:
+        c.close()
+        return jsonify(error="كلمة المرور الحالية غير صحيحة."), 403
+    c.execute(
+        "UPDATE users SET password = ? WHERE id = ?",
+        (generate_password_hash(new_password), session["uid"])
+    )
+    c.commit()
+    c.close()
+    return jsonify(ok=True)
+
+
+# =========================================================
 # النسخ الاحتياطي
 # =========================================================
 
