@@ -8,7 +8,7 @@
     <title>تسجيل الدخول — زولك AI</title>
     <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
 
-    <link rel="stylesheet" href="/static/style.css?v=28">
+    <link rel="stylesheet" href="/static/style.css?v=31">
 
     <style>
         .auth {
@@ -263,7 +263,7 @@
 
 <body>
 
-<main class="auth">
+<main class="auth" data-admin-email="{{ admin_email or 'admin@zolak.ai' }}">
 
     <div class="auth-box">
 
@@ -293,6 +293,8 @@
                 id="email"
                 type="email"
                 placeholder="الإيميل"
+                autocomplete="username"
+                required
             >
 
             <input
@@ -300,6 +302,8 @@
                 id="password"
                 type="password"
                 placeholder="كلمة المرور"
+                autocomplete="current-password"
+                required
             >
 
             <button class="login-button" id="go" type="button">
@@ -310,7 +314,7 @@
                 ما عندك حساب؟ اعمل واحد
             </button>
 
-            <p id="err"></p>
+            <p id="err" role="alert" aria-live="polite"></p>
 
         </div>
 
@@ -324,6 +328,17 @@
 let reg = false;
 
 const $ = id => document.getElementById(id);
+const requestedNext = new URLSearchParams(window.location.search).get("next");
+const nextAfterLogin = requestedNext === "/admin" ? "/admin" : "/";
+const authRoot = document.querySelector(".auth");
+
+if (nextAfterLogin === "/admin") {
+    $("title").textContent = "دخول لوحة المدير";
+    document.querySelector(".auth-subtitle").textContent = "سجّل دخولك بحساب المدير للوصول إلى لوحة التحكم.";
+    $("email").value = authRoot?.dataset.adminEmail || "admin@zolak.ai";
+    $("toggle").hidden = true;
+    $("name").hidden = true;
+}
 
 
 $("toggle").onclick = () => {
@@ -377,7 +392,7 @@ $("go").onclick = async () => {
 
         if (data.ok) {
 
-            location.href = "/";
+            location.href = nextAfterLogin;
 
         } else {
 
