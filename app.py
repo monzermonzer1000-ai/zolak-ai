@@ -1209,7 +1209,6 @@ def chat():
                 if piece:
                     stream_started = True
                     answer_parts.append(piece)
-                    yield emit("token", {"text": piece})
             except Exception as primary_error:
                 error_text = str(primary_error).upper()
                 temporary = any(marker in error_text for marker in (
@@ -1221,7 +1220,7 @@ def chat():
                 ).strip()
                 if stream_started or not temporary or not fallback_model.startswith("gemini-") or fallback_model == model:
                     raise
-                app.logger.warning("Primary Gemini stream unavailable; trying fallback model %s", fallback_model)
+                app.logger.warning("Primary Gemini model unavailable; trying fallback model %s", fallback_model)
                 response = client.models.generate_content(
                     model=fallback_model, contents=contents, config=generation_config
                 )
@@ -1263,6 +1262,10 @@ def chat():
                 WHERE id = ? AND user_id = ?
             """, ((message[:55] or ("ملف: " + attachment_names[0][:45])) if attachment_names else message[:55], conversation_id, user_id))
             save_conn.commit()
+            # Deliver the completed answer only after the credit deduction and
+            # conversation writes have committed successfully. This prevents a
+            # user from seeing a reply that the server later reports as failed.
+            yield emit("token", {"text": answer})
             yield emit("done", {"conversation_id": conversation_id})
 
         except Exception as error:
@@ -2250,7 +2253,10 @@ def admin_ai_test():
         # occupy a Vercel function until the platform's hard timeout.
         client = genai.Client(
             api_key=api_key,
-            http_options=types.HttpOptions(timeout=15000)
+            http_options=types.HttpOptions(
+                timeout=12000,
+                retry_options=types.HttpRetryOptions(attempts=1)
+            )
         )
         response = client.models.generate_content(
             model=model,
