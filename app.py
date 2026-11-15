@@ -801,7 +801,7 @@ def register():
         or len(password) < 8
         or len(password) > 256
         or len(email) > 254
-        or not re.fullmatch(r"[^@\\s]+@[^@\\s]+\\.[^@\\s]+", email)
+        or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email)
     ):
 
         return jsonify(
