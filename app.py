@@ -1228,7 +1228,6 @@ def chat():
                 if piece:
                     stream_started = True
                     answer_parts.append(piece)
-                    yield emit("token", {"text": piece})
 
             answer = "".join(answer_parts).strip()
             if not answer:
