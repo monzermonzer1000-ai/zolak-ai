@@ -236,16 +236,6 @@ function showSidebarNotice(message) {
     window.clearTimeout(notice._hideTimer);
     notice._hideTimer = window.setTimeout(function () { notice.hidden = true; }, 2400);
 }
-const plusSubscribe = document.getElementById("plusSubscribe");
-if (plusSubscribe) plusSubscribe.addEventListener("click", function () { showSidebarNotice("اشتراك زولاك بلس قيد التجهيز."); });
-document.querySelectorAll(".home-quick-action").forEach(function (button) {
-    button.addEventListener("click", function () {
-        if (!promptBox) return;
-        promptBox.value = button.dataset.prompt || "";
-        promptBox.focus();
-        promptBox.setSelectionRange(promptBox.value.length, promptBox.value.length);
-    });
-});
 const composerAdd = document.getElementById("composerAdd");
 const attachmentInput = document.getElementById("attachmentInput");
 const attachmentPreview = document.getElementById("attachmentPreview");
