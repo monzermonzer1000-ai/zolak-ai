@@ -22,6 +22,17 @@ const projectPickerModal = document.getElementById("projectPickerModal");
 const projectPickerSelect = document.getElementById("projectPickerSelect");
 let currentProjectId = null;
 let projectPickerConversationId = null;
+let conversationSearchTimer = null;
+let conversationSearchSequence = 0;
+
+if (conversationSearch) {
+    conversationSearch.addEventListener("input", function () {
+        window.clearTimeout(conversationSearchTimer);
+        conversationSearchTimer = window.setTimeout(function () {
+            loadConversations(conversationSearch.value.trim());
+        }, 280);
+    });
+}
 
 document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
     tool.addEventListener("click", function () {
@@ -660,9 +671,14 @@ async function loadConversations(searchTerm = "") {
     const items = getConversationItems();
     if (!items) return;
 
+    const requestSequence = ++conversationSearchSequence;
+    const activeSearchTerm = String(
+        searchTerm || (conversationSearch ? conversationSearch.value : "")
+    ).trim();
+
     try {
         const params = new URLSearchParams();
-        if (searchTerm) params.set("q", searchTerm);
+        if (activeSearchTerm) params.set("q", activeSearchTerm);
         if (currentProjectId !== null) params.set("project_id", String(currentProjectId));
         const queryString = params.toString();
         const response = await fetch("/api/conversations" + (queryString ? "?" + queryString : ""));
@@ -670,6 +686,7 @@ async function loadConversations(searchTerm = "") {
         if (response.status === 401) return;
 
         const data = await response.json();
+        if (requestSequence !== conversationSearchSequence) return;
         items.innerHTML = "";
         if (pinnedItems) pinnedItems.innerHTML = "";
         if (sidebarPinnedSection) sidebarPinnedSection.hidden = true;
