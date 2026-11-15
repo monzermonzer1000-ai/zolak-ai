@@ -2248,7 +2248,7 @@ def admin_ai_test():
             contents="أجب بكلمة واحدة فقط: جاهز",
             config=types.GenerateContentConfig(
                 thinking_config=types.ThinkingConfig(thinking_level="LOW"),
-                max_output_tokens=32
+                max_output_tokens=128
             )
         )
         answer = (response.text or "").strip()
@@ -2319,6 +2319,7 @@ def backup():
             SELECT
                 id,
                 user_id,
+                conversation_id,
                 role,
                 content,
                 created_at
@@ -2337,11 +2338,21 @@ def backup():
         ).fetchall()
     ]
 
+    projects_data = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT id, user_id, name, created_at
+            FROM projects
+            """
+        ).fetchall()
+    ]
+
     conversations_data = [
         dict(row)
         for row in c.execute(
             """
-            SELECT id, user_id, title, created_at, updated_at
+            SELECT id, user_id, title, project_id, is_pinned, created_at, updated_at
             FROM conversations
             """
         ).fetchall()
@@ -2353,6 +2364,7 @@ def backup():
         users=users,
         chats=chats_data,
         conversations=conversations_data,
+        projects=projects_data,
         settings=settings_data
     )
 
@@ -2387,6 +2399,7 @@ def backup_download():
             SELECT
                 id,
                 user_id,
+                conversation_id,
                 role,
                 content,
                 created_at
@@ -2405,11 +2418,21 @@ def backup_download():
         ).fetchall()
     ]
 
+    projects_data = [
+        dict(row)
+        for row in c.execute(
+            """
+            SELECT id, user_id, name, created_at
+            FROM projects
+            """
+        ).fetchall()
+    ]
+
     conversations_data = [
         dict(row)
         for row in c.execute(
             """
-            SELECT id, user_id, title, created_at, updated_at
+            SELECT id, user_id, title, project_id, is_pinned, created_at, updated_at
             FROM conversations
             """
         ).fetchall()
@@ -2426,6 +2449,7 @@ def backup_download():
         "users": users,
         "chats": chats_data,
         "conversations": conversations_data,
+        "projects": projects_data,
         "settings": settings_data
     }
 
