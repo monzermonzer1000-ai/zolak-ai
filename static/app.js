@@ -227,8 +227,6 @@ if (sidebar) {
 
 
 /* HOME HEADER + COMPOSER CONTROLS */
-const historyButton = document.getElementById("historyButton");
-if (historyButton) historyButton.addEventListener("click", openSidebar);
 function showSidebarNotice(message) {
     let notice = document.querySelector(".sidebar-feature-notice");
     if (!notice) { notice = document.createElement("div"); notice.className = "sidebar-feature-notice"; document.body.appendChild(notice); }
