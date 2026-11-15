@@ -1,0 +1,436 @@
+/* Zolak AI — unified premium interface layer.
+   Loaded after legacy CSS to resolve conflicting historical overrides. */
+
+:root {
+  color-scheme: light;
+  --ui-bg: #f5f8f7;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #f0f5f2;
+  --ui-text: #152b23;
+  --ui-muted: #63766d;
+  --ui-border: rgba(21,65,48,.12);
+  --ui-accent: #079b76;
+  --ui-accent-2: #08765e;
+  --ui-accent-soft: rgba(8,185,145,.10);
+  --ui-shadow: 0 14px 38px rgba(16,48,35,.09);
+  --ui-focus: 0 0 0 4px rgba(8,185,145,.16);
+  --ui-motion: 180ms cubic-bezier(.2,.75,.25,1);
+}
+body.theme-dark {
+  color-scheme: dark;
+  --ui-bg: #071a15;
+  --ui-surface: #0c211a;
+  --ui-surface-2: #102a21;
+  --ui-text: #edf8f2;
+  --ui-muted: #a5bdb1;
+  --ui-border: rgba(220,255,240,.12);
+  --ui-accent: #18c99a;
+  --ui-accent-2: #0b9b75;
+  --ui-accent-soft: rgba(24,201,154,.13);
+  --ui-shadow: 0 18px 48px rgba(0,0,0,.24);
+  --ui-focus: 0 0 0 4px rgba(24,201,154,.18);
+}
+html, body {
+  font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+  scrollbar-color: rgba(100,130,115,.45) transparent;
+}
+body {
+  color: var(--ui-text) !important;
+  background: var(--ui-bg) !important;
+  transition: background-color var(--ui-motion), color var(--ui-motion);
+}
+button, input, textarea, select { font-family: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible,
+textarea:focus-visible, select:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus);
+}
+
+/* Soft branded canvas */
+.app.chatgpt-layout {
+  background:
+    radial-gradient(ellipse at 75% 0%, rgba(8,185,145,.09), transparent 36%),
+    radial-gradient(ellipse at 0% 100%, rgba(17,117,88,.06), transparent 32%),
+    var(--ui-bg) !important;
+  background-image:
+    radial-gradient(ellipse at 75% 0%, rgba(8,185,145,.09), transparent 36%),
+    radial-gradient(ellipse at 0% 100%, rgba(17,117,88,.06), transparent 32%) !important;
+}
+body.theme-dark .app.chatgpt-layout {
+  background:
+    radial-gradient(ellipse at 75% 0%, rgba(10,150,111,.16), transparent 38%),
+    radial-gradient(ellipse at 0% 100%, rgba(4,89,68,.13), transparent 34%),
+    var(--ui-bg) !important;
+  background-image:
+    radial-gradient(ellipse at 75% 0%, rgba(10,150,111,.16), transparent 38%),
+    radial-gradient(ellipse at 0% 100%, rgba(4,89,68,.13), transparent 34%) !important;
+}
+.app.chatgpt-layout::before { display: none !important; content: none !important; }
+
+/* Sidebar */
+.app.chatgpt-layout > .sidebar {
+  z-index: 60;
+  display: flex;
+  flex: 0 0 304px;
+  width: 304px;
+  max-width: 88vw;
+  gap: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 22px 17px 14px;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border-left: 1px solid var(--ui-border) !important;
+  box-shadow: 10px 0 36px rgba(11,42,29,.055) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: transform 240ms cubic-bezier(.2,.75,.25,1), background-color var(--ui-motion);
+}
+.sidebar-top {
+  min-height: 66px;
+  margin: 0 0 14px !important;
+  padding: 0 5px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+}
+.sidebar-brand-name {
+  color: var(--ui-text) !important;
+  font-size: 23px !important;
+  font-weight: 850 !important;
+  letter-spacing: -.6px;
+  line-height: 1.3;
+}
+.sidebar-brand-name::after { content: " AI"; color: var(--ui-accent); }
+.sidebar-brand-caption { color: var(--ui-muted); font-size: 11px; font-weight: 500; }
+
+.sidebar-new-chat, #newChat {
+  position: relative;
+  min-height: 48px !important;
+  justify-content: space-between !important;
+  padding: 0 15px !important;
+  border: 1px solid rgba(8,185,145,.23) !important;
+  border-radius: 15px !important;
+  color: #fff !important;
+  background: linear-gradient(135deg,#10b98c,#08775e) !important;
+  box-shadow: 0 8px 20px rgba(8,142,105,.18) !important;
+  font-weight: 750 !important;
+  transition: transform var(--ui-motion), box-shadow var(--ui-motion), filter var(--ui-motion);
+}
+.sidebar-new-chat svg {
+  width: 19px; height: 19px; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+.sidebar-new-chat:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 12px 26px rgba(8,142,105,.24) !important;
+}
+.sidebar-new-chat:active { transform: translateY(0) scale(.985); }
+
+.sidebar-search-wrap { margin: 13px 0 10px; padding: 0 !important; }
+.sidebar-search {
+  width: 100%; min-height: 43px; padding: 0 14px;
+  border: 1px solid var(--ui-border); border-radius: 13px;
+  color: var(--ui-text); background: var(--ui-surface-2);
+  font-size: 13px;
+  transition: border-color var(--ui-motion), box-shadow var(--ui-motion), background var(--ui-motion);
+}
+.sidebar-search::placeholder { color: var(--ui-muted); opacity: .85; }
+.sidebar-search:focus {
+  border-color: rgba(8,185,145,.55); outline: 0;
+  box-shadow: var(--ui-focus); background: var(--ui-surface);
+}
+
+.sidebar-tools {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  padding: 3px 0 12px; flex: 0 0 auto;
+}
+.sidebar-tool {
+  min-height: 43px; justify-content: flex-start; gap: 9px;
+  padding: 8px 10px; border: 1px solid transparent; border-radius: 12px;
+  color: var(--ui-text); background: transparent;
+  font-size: 12px; font-weight: 650;
+  transition: transform var(--ui-motion), color var(--ui-motion), background var(--ui-motion), border-color var(--ui-motion);
+}
+.sidebar-tool svg { flex-basis: 20px; width: 20px; height: 20px; opacity: .82; }
+.sidebar-tool:hover {
+  color: var(--ui-accent-2); background: var(--ui-accent-soft);
+  border-color: rgba(8,185,145,.10); transform: translateY(-1px);
+}
+.sidebar-tool:active { transform: scale(.98); }
+.theme-toggle {
+  width: 100%; min-height: 42px; margin: 0 0 8px;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-surface-2); color: var(--ui-text);
+}
+.theme-toggle .theme-icon { flex: 0 0 20px; width: 20px; height: 20px; }
+
+.sidebar-pinned, .sidebar-projects, .sidebar-explore {
+  flex: 0 0 auto; padding: 10px 2px; border-top: 1px solid var(--ui-border);
+}
+.sidebar-section-label, .sidebar-projects-heading, .conversation-list-title {
+  color: var(--ui-muted) !important; font-size: 11px !important;
+  font-weight: 800 !important; letter-spacing: .2px;
+}
+.sidebar-projects-heading {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 8px 9px;
+}
+.sidebar-projects-heading button {
+  width: 28px; height: 28px; border: 1px solid var(--ui-border);
+  border-radius: 9px; color: var(--ui-accent-2); background: var(--ui-surface-2);
+}
+.project-filter, .project-open, .explore-prompt {
+  width: 100%; min-height: 38px; padding: 8px 10px;
+  border: 1px solid transparent; border-radius: 10px;
+  color: var(--ui-text); background: transparent;
+  text-align: right; font-size: 12px;
+  transition: background var(--ui-motion), color var(--ui-motion);
+}
+.project-filter:hover, .project-filter.active, .project-open:hover,
+.project-open.active, .explore-prompt:hover {
+  color: var(--ui-accent-2); background: var(--ui-accent-soft);
+}
+
+.sidebar-history {
+  flex: 1 1 auto; min-height: 100px; max-height: none;
+  margin: 0 -17px; padding: 5px 17px 12px;
+  overflow-y: auto; border-top: 1px solid var(--ui-border);
+}
+.sidebar-history .conversation-list-title {
+  position: sticky; top: 0; z-index: 2;
+  margin: 0 -17px 6px; padding: 12px 25px 8px;
+  background: var(--ui-surface);
+}
+.sidebar-history .conversation-items { gap: 3px; }
+.sidebar-history .conversation-item {
+  min-height: 42px; padding: 3px 5px; border-radius: 11px;
+  transition: background var(--ui-motion), transform var(--ui-motion);
+}
+.sidebar-history .conversation-item:hover {
+  background: var(--ui-surface-2); transform: translateX(-1px);
+}
+.sidebar-history .conversation-item.active { background: var(--ui-accent-soft); }
+.sidebar-history .conversation-title {
+  min-height: 35px; color: var(--ui-text) !important;
+  font-size: 12px; font-weight: 550;
+}
+.sidebar-history .conversation-more { color: var(--ui-muted); }
+.sidebar-history .conversation-menu {
+  border: 1px solid var(--ui-border); border-radius: 12px;
+  background: var(--ui-surface); box-shadow: var(--ui-shadow);
+}
+.sidebar-history .conversation-menu-action { color: var(--ui-text); }
+.sidebar-history .conversation-menu-action:hover { background: var(--ui-surface-2); }
+
+.sidebar-bottom {
+  display: flex; flex: 0 0 auto; flex-direction: column !important;
+  align-items: stretch; gap: 8px;
+  padding: 11px 0 max(5px,env(safe-area-inset-bottom));
+  border-top: 1px solid var(--ui-border); background: var(--ui-surface) !important;
+}
+.sidebar-bottom .account-box {
+  display: flex; order: 0; flex: 0 0 auto; width: 100%; min-height: 58px;
+  padding: 7px 9px; border: 1px solid var(--ui-border);
+  border-radius: 14px; background: var(--ui-surface-2) !important; box-shadow: none;
+}
+.sidebar-bottom .account-info, .sidebar-bottom .account-status { display: block; }
+.sidebar-bottom .account-avatar {
+  width: 40px; height: 40px; flex-basis: 40px;
+  color: #fff; background: linear-gradient(145deg,#10b98c,#08775e);
+}
+.sidebar-bottom .account-name { color: var(--ui-text) !important; font-size: 12px; }
+.sidebar-bottom .account-credits { color: var(--ui-muted) !important; font-size: 10px; }
+.sidebar-account-links {
+  display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px;
+}
+.sidebar-account-links .sidebar-link {
+  min-height: 38px; gap: 7px; padding: 7px 9px;
+  border-radius: 10px; color: var(--ui-text) !important; font-size: 11px;
+}
+.sidebar-account-links .sidebar-link:hover,
+.sidebar-account-links .sidebar-link.active {
+  color: var(--ui-accent-2) !important; background: var(--ui-accent-soft) !important;
+}
+.sidebar-account-links .nav-icon { width: 18px; font-size: 16px; }
+
+/* Main canvas and welcome card. Restore welcome panel hidden by a legacy rule. */
+.app.chatgpt-layout > .main {
+  z-index: 1; color: var(--ui-text) !important; background: transparent !important;
+}
+.app.chatgpt-layout > .main .topbar,
+.app.chatgpt-layout > .main .chat-navbar {
+  min-height: 66px; padding: 10px 22px;
+  color: var(--ui-text) !important; background: var(--ui-surface) !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+  box-shadow: 0 4px 20px rgba(10,40,28,.035) !important; direction: rtl;
+}
+.mobile-brand { color: var(--ui-text) !important; }
+.mobile-menu {
+  width: 42px; height: 42px; border: 1px solid var(--ui-border) !important;
+  border-radius: 13px; color: var(--ui-text) !important;
+  background: var(--ui-surface-2) !important;
+  transition: transform var(--ui-motion), background var(--ui-motion);
+}
+.mobile-menu:hover { transform: translateY(-1px); background: var(--ui-accent-soft) !important; }
+.app.chatgpt-layout > .main .messages {
+  flex: 1 1 auto; min-height: 0; padding: clamp(18px,4vw,44px);
+  color: var(--ui-text) !important; background: transparent !important;
+}
+.app.chatgpt-layout > .main .welcome-screen {
+  display: flex !important; width: min(100%,820px); min-height: 340px;
+  align-items: center; justify-content: center;
+  padding: clamp(26px,5vw,54px); margin: auto;
+  border: 1px solid var(--ui-border); border-radius: 28px;
+  color: var(--ui-text) !important; background: var(--ui-surface) !important;
+  box-shadow: var(--ui-shadow) !important; text-align: center;
+  animation: zolakFadeUp .38s ease both;
+}
+.app.chatgpt-layout > .main .welcome-screen h1 {
+  color: var(--ui-text) !important; font-size: clamp(25px,3.6vw,38px);
+  font-weight: 850; letter-spacing: -.5px;
+}
+.app.chatgpt-layout > .main .welcome-screen p {
+  color: var(--ui-muted) !important; max-width: 560px; font-size: 15px;
+}
+.app.chatgpt-layout > .main .welcome-eyebrow {
+  color: var(--ui-accent-2) !important; background: var(--ui-accent-soft) !important;
+  border-color: rgba(8,185,145,.17) !important;
+}
+.app.chatgpt-layout > .main .messages:has(.message) .welcome-screen { display: none !important; }
+
+.message-content {
+  border-radius: 18px !important; line-height: 1.9;
+  box-shadow: 0 7px 22px rgba(10,40,28,.055) !important;
+}
+.message.user .message-content {
+  color: #064a37 !important; background: linear-gradient(145deg,#e1fff2,#f0fcf7) !important;
+  border: 1px solid rgba(8,185,145,.19) !important;
+}
+.message.assistant .message-content {
+  color: var(--ui-text) !important; background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+}
+
+/* Composer and send/voice controls */
+.app.chatgpt-layout > .main .composer,
+.app.chatgpt-layout > .main .composer-area {
+  padding: 12px clamp(12px,4vw,36px) max(12px,env(safe-area-inset-bottom));
+  color: var(--ui-text) !important; background: var(--ui-surface) !important;
+  border-top: 1px solid var(--ui-border) !important;
+  box-shadow: 0 -5px 22px rgba(10,40,28,.025);
+}
+.composer-inner {
+  min-height: 62px; border: 1px solid var(--ui-border) !important;
+  border-radius: 20px !important; background: var(--ui-surface) !important;
+  box-shadow: 0 7px 24px rgba(10,40,28,.06) !important;
+  transition: border-color var(--ui-motion), box-shadow var(--ui-motion), transform var(--ui-motion);
+}
+.composer-inner:focus-within {
+  border-color: rgba(8,185,145,.55) !important;
+  box-shadow: var(--ui-focus), 0 8px 25px rgba(10,40,28,.07) !important;
+  transform: translateY(-1px);
+}
+#prompt, .composer textarea, .composer-area textarea {
+  color: var(--ui-text) !important; caret-color: var(--ui-accent); line-height: 1.7;
+}
+#prompt::placeholder, .composer textarea::placeholder { color: var(--ui-muted) !important; }
+.composer-icon-button {
+  border-radius: 12px; color: var(--ui-muted) !important;
+  transition: color var(--ui-motion), background var(--ui-motion), transform var(--ui-motion);
+}
+.composer-icon-button:hover {
+  color: var(--ui-accent-2) !important; background: var(--ui-accent-soft) !important;
+}
+.composer-icon-button:active { transform: scale(.94); }
+#send, button#send {
+  border: 0 !important; border-radius: 14px !important; color: #fff !important;
+  background: linear-gradient(145deg,#10bd90,#08775e) !important;
+  box-shadow: 0 7px 18px rgba(8,142,105,.22) !important;
+  transition: transform var(--ui-motion), box-shadow var(--ui-motion), filter var(--ui-motion);
+}
+.composer-inner.has-text #send { display: inline-flex !important; }
+#send:hover, button#send:hover {
+  transform: translateY(-2px); filter: brightness(1.06);
+  box-shadow: 0 10px 23px rgba(8,142,105,.28) !important;
+}
+#send:active, button#send:active { transform: translateY(0) scale(.96); }
+#send:disabled { opacity: .58; cursor: wait; }
+.composer-voice {
+  border-radius: 13px !important; color: #fff !important;
+  background: linear-gradient(145deg,#4777ed,#3158c9) !important;
+  box-shadow: 0 6px 15px rgba(49,88,201,.15);
+  transition: transform var(--ui-motion), filter var(--ui-motion);
+}
+.composer-voice:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.composer-note { color: var(--ui-muted) !important; }
+
+/* Dark theme surfaces */
+body.theme-dark .sidebar,
+body.theme-dark .sidebar-history .conversation-list-title,
+body.theme-dark .sidebar-bottom,
+body.theme-dark .sidebar-bottom .account-box { color: var(--ui-text) !important; background: var(--ui-surface) !important; }
+body.theme-dark .sidebar-history .conversation-item:hover { background: rgba(255,255,255,.055); }
+body.theme-dark .sidebar-history .conversation-item.active { background: var(--ui-accent-soft); }
+body.theme-dark .message.user .message-content {
+  color: #eafff7 !important; background: linear-gradient(145deg,#0b7358,#07523f) !important;
+}
+body.theme-dark .message.assistant .message-content { color: var(--ui-text) !important; background: #0c241c !important; }
+body.theme-dark .composer-inner { background: #0c241c !important; }
+body.theme-dark .app.chatgpt-layout > .main .topbar,
+body.theme-dark .app.chatgpt-layout > .main .chat-navbar,
+body.theme-dark .app.chatgpt-layout > .main .composer,
+body.theme-dark .app.chatgpt-layout > .main .composer-area { background: rgba(9,30,23,.97) !important; }
+body.theme-dark .sidebar-history .conversation-menu { background: #102a21; border-color: var(--ui-border); }
+body.theme-dark .sidebar-history .conversation-menu-action { color: var(--ui-text); }
+body.theme-dark .sidebar-history .conversation-menu-action:hover { background: rgba(255,255,255,.07); }
+body.theme-dark .sidebar-tool, body.theme-dark .project-filter,
+body.theme-dark .project-open, body.theme-dark .explore-prompt { color: var(--ui-text); }
+body.theme-dark .sidebar-tool:hover { color: #8ce9cb; }
+body.theme-dark .sidebar-search { color: var(--ui-text); background: var(--ui-surface-2); }
+body.theme-dark .sidebar-account-links .sidebar-link { color: var(--ui-text) !important; }
+
+/* Mobile drawer and touch targets */
+@media (max-width: 800px) {
+  .app.chatgpt-layout > .sidebar {
+    position: fixed !important; top: 0 !important; right: 0 !important;
+    bottom: 0 !important; left: auto !important; width: min(340px,88vw) !important;
+    max-width: 88vw !important; height: 100dvh !important;
+    transform: translateX(105%) !important;
+  }
+  .app.chatgpt-layout > .sidebar.open { transform: translateX(0) !important; }
+  .app.chatgpt-layout > .main { width: 100%; min-width: 0; }
+  .app.chatgpt-layout > .main .messages { padding: 16px 13px; }
+  .app.chatgpt-layout > .main .welcome-screen {
+    min-height: 300px; padding: 25px 17px; border-radius: 22px;
+  }
+  .app.chatgpt-layout > .main .composer,
+  .app.chatgpt-layout > .main .composer-area { padding-inline: 10px; }
+  .composer-inner { min-height: 56px; gap: 4px; padding: 5px; }
+  #prompt, .composer textarea, .composer-area textarea {
+    min-height: 44px; max-height: 130px; padding: 8px 7px; font-size: 16px;
+  }
+  #send, button#send { width: 43px; min-width: 43px; height: 43px; min-height: 43px; flex-basis: 43px; }
+  .sidebar-bottom { padding-bottom: max(9px,env(safe-area-inset-bottom)); }
+}
+@media (max-width: 380px) {
+  .sidebar-tools { gap: 4px; }
+  .sidebar-tool { gap: 7px; padding-inline: 7px; font-size: 11px; }
+  .sidebar-account-links .sidebar-link { font-size: 10px; }
+  .app.chatgpt-layout > .main .welcome-screen h1 { font-size: 25px; }
+}
+@keyframes zolakFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important; animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important; transition-duration: .01ms !important;
+  }
+}
