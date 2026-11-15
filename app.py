@@ -1233,13 +1233,13 @@ def chat():
             yield emit("meta", {"conversation_id": conversation_id})
 
             try:
-                # Use a bounded single response rather than a long-lived
-                # streaming iterator. Some upstream SSE streams return HTTP 200
-                # and then stall without closing, leaving the Vercel function
-                # alive until its 300-second platform timeout.
+                # Keep the upstream request bounded and log each stage so a
+                # production stall can be isolated without exposing user data.
+                app.logger.info("AI generation started (model=%s)", model)
                 response = client.models.generate_content(
                     model=model, contents=contents, config=generation_config
                 )
+                app.logger.info("AI generation response received (model=%s)", model)
                 piece = (getattr(response, "text", None) or "")
                 if piece:
                     stream_started = True
@@ -1259,6 +1259,7 @@ def chat():
                 response = client.models.generate_content(
                     model=fallback_model, contents=contents, config=generation_config
                 )
+                app.logger.info("AI fallback response received (model=%s)", fallback_model)
                 piece = (getattr(response, "text", None) or "")
                 if piece:
                     stream_started = True
@@ -1269,7 +1270,9 @@ def chat():
                 yield emit("error", {"error": "وصلنا رد فارغ من خدمة الذكاء الاصطناعي. جرّب تاني."})
                 return
 
+            app.logger.info("AI generation completed; opening database connection to save reply")
             save_conn = db()
+            app.logger.info("AI reply database connection opened")
             result = save_conn.execute("""
                 UPDATE users SET credits = credits - 1
                 WHERE id = ? AND credits > 0
@@ -1296,6 +1299,7 @@ def chat():
                 WHERE id = ? AND user_id = ?
             """, ((message[:55] or ("ملف: " + attachment_names[0][:45])) if attachment_names else message[:55], conversation_id, user_id))
             save_conn.commit()
+            app.logger.info("AI reply and credit transaction committed")
             # Deliver the completed answer only after the credit deduction and
             # conversation writes have committed successfully. This prevents a
             # user from seeing a reply that the server later reports as failed.
@@ -1333,10 +1337,14 @@ def chat():
                 except Exception:
                     pass
 
-    response = Response(stream_with_context(generate()), mimetype="text/event-stream")
+    # Buffer the short SSE event sequence before returning it. Vercel's
+    # serverless Python adapter can keep a streamed Flask generator alive
+    # after upstream work has completed; that leaves invocations open until
+    # the platform's 300-second hard timeout. The browser still parses the
+    # same SSE events, but the serverless invocation now has a clear end.
+    response = Response("".join(generate()), mimetype="text/event-stream")
     response.headers["Cache-Control"] = "no-cache, no-transform"
     response.headers["X-Accel-Buffering"] = "no"
-    response.headers["Connection"] = "keep-alive"
     return response
 
 
