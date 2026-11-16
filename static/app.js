@@ -431,13 +431,6 @@ if (composerMic) composerMic.addEventListener("click", function () {
     recognition.onend = function () { composerMic.classList.remove("is-listening"); };
     try { recognition.start(); } catch (error) { composerMic.classList.remove("is-listening"); }
 });
-const composerVoice = document.getElementById("composerVoice");
-if (composerVoice) composerVoice.addEventListener("click", function () {
-    const last = messages ? Array.from(messages.querySelectorAll(".message.assistant .message-content")).pop() : null;
-    if (!last) { showSidebarNotice("لما يوصلك رد، اضغط هنا لسماعه بالصوت."); return; }
-    if (!("speechSynthesis" in window)) { showSidebarNotice("قراءة الرد صوتياً غير مدعومة."); return; }
-    window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(last.textContent); utterance.lang = "ar"; window.speechSynthesis.speak(utterance);
-});
 
 /* =========================
    MESSAGES
