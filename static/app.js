@@ -1220,13 +1220,19 @@ async function createNewConversation() {
     }
 }
 
-const newChatButton = document.querySelector(".new-chat");
-
-if (newChatButton) {
-    newChatButton.addEventListener("click", function (event) {
+/* Bind the New Chat action through delegation so it survives DOM refreshes. */
+if (!document.documentElement.dataset.zolakNewChatBound) {
+    document.addEventListener("click", function (event) {
+        const button = event.target.closest("#newChat, .new-chat");
+        if (!button) return;
         event.preventDefault();
-        createNewConversation();
-    });
+        if (button.dataset.zolakBusy === "1") return;
+        button.dataset.zolakBusy = "1";
+        Promise.resolve(createNewConversation()).finally(function () {
+            button.dataset.zolakBusy = "0";
+        });
+    }, true);
+    document.documentElement.dataset.zolakNewChatBound = "1";
 }
 
 /* =========================
