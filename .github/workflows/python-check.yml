@@ -56,6 +56,7 @@ jobs:
           admin_entry = client.get("/admin", follow_redirects=False)
           assert admin_entry.status_code == 302
           assert admin_entry.headers.get("Location", "").endswith("/login?next=/admin")
+          assert client.get("/login").status_code == 200
           login_page = client.get("/login?next=/admin").get_data(as_text=True)
           assert "دخول لوحة المدير" in login_page
           assert "admin@zolak.ai" in login_page
