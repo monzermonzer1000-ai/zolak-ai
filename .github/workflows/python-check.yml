@@ -68,7 +68,7 @@ jobs:
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
           assert "/static/premium-ui.css?v=1" in home_html
-          assert "theme if theme in ['light', 'dark'] else 'dark'" in home_source
+          assert "theme if theme in ['light', 'dark'] else 'dark'" in open("templates/index.html", encoding="utf-8").read()
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
@@ -159,7 +159,8 @@ jobs:
                   self.calls.append(kwargs.get("model"))
                   if self.fail_primary and kwargs.get("model") == "gemini-3.5-flash-lite":
                       raise RuntimeError(self.primary_error)
-                  yield SimpleNamespace(text="رد تجريبي من زولك AI")
+                  yield SimpleNamespace(text="رد تجريبي ")
+                  yield SimpleNamespace(text="من زولك AI")
 
           class FakeClient:
               def __init__(self, api_key, http_options=None):
@@ -200,10 +201,11 @@ jobs:
 
           ai_ok = client.post("/api/chat", json={"message": "اختبار الرد"}, buffered=True)
           assert ai_ok.status_code == 200
-          assert not ai_ok.is_streamed, "Vercel chat response must be fully buffered"
+          assert ai_ok.is_streamed, "AI chat must return a streamed response"
           assert ai_ok.mimetype == "text/event-stream"
           ok_events = parse_sse(ai_ok)
-          assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in ok_events)
+          streamed_answer = "".join(payload.get("text", "") for name, payload in ok_events if name == "token")
+          assert streamed_answer == "رد تجريبي من زولك AI", streamed_answer
           conversation_id = next(payload["conversation_id"] for name, payload in ok_events if name == "meta")
 
           assigned = client.patch(f"/api/conversations/{conversation_id}", json={"project_id": project_id})
@@ -229,7 +231,8 @@ jobs:
           ai_fallback = client.post("/api/chat", json={"message": "اختبار الموديل الاحتياطي"}, buffered=True)
           FakeModels.fail_primary = False
           assert ai_fallback.status_code == 200
-          assert any(name == "token" and payload.get("text") == "رد تجريبي من زولك AI" for name, payload in parse_sse(ai_fallback))
+          fallback_answer = "".join(payload.get("text", "") for name, payload in parse_sse(ai_fallback) if name == "token")
+          assert fallback_answer == "رد تجريبي من زولك AI", fallback_answer
           assert FakeModels.calls == ["gemini-3.5-flash-lite", "gemini-3.8-flash"], FakeModels.calls
 
           # A deadline timeout must fail within the bounded wait; do not start
