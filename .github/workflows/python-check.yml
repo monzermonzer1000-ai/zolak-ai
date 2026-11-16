@@ -264,6 +264,9 @@ jobs:
               "password": "ci-test-password"
           })
           assert admin_login.status_code == 200, admin_login.get_json()
+          admin_page = client.get("/admin")
+          assert admin_page.status_code == 200, admin_page.get_data(as_text=True)[:500]
+          assert "لوحة المدير" in admin_page.get_data(as_text=True)
 
           stale_client = app.app.test_client()
           stale_login = stale_client.post("/api/login", json={
