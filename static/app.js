@@ -44,6 +44,29 @@ const homeQuickActions = document.getElementById("homeQuickActions");
 const messages = document.getElementById("messages");
 const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
+const appShell = document.querySelector(".app.chatgpt-layout");
+const desktopSidebarToggle = document.getElementById("sidebarCollapseButton");
+
+function setDesktopSidebarCollapsed(collapsed) {
+    if (!appShell || window.innerWidth <= 800) return;
+    appShell.classList.toggle("sidebar-collapsed", Boolean(collapsed));
+    if (desktopSidebarToggle) {
+        desktopSidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+        desktopSidebarToggle.setAttribute("aria-label", collapsed ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية");
+        desktopSidebarToggle.title = collapsed ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية";
+    }
+    try { localStorage.setItem("zolak-sidebar-collapsed", collapsed ? "1" : "0"); } catch (_) {}
+}
+
+if (appShell && window.innerWidth > 800) {
+    try { setDesktopSidebarCollapsed(localStorage.getItem("zolak-sidebar-collapsed") === "1"); } catch (_) {}
+}
+if (desktopSidebarToggle) {
+    desktopSidebarToggle.addEventListener("click", function () {
+        if (!appShell) return;
+        setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
+    });
+}
 const conversationSearch = document.getElementById("conversationSearch");
 const pinnedItems = document.getElementById("pinnedItems");
 const sidebarPinnedSection = document.querySelector(".sidebar-pinned");
@@ -457,11 +480,55 @@ function appendInlineMarkdown(container, source) {
     }
 }
 
+function highlightCodeElement(element, source, language) {
+    const lang = String(language || "").toLowerCase();
+    const keywordSets = {
+        javascript: "const let var function return if else for while class new this async await try catch throw import export from default true false null undefined",
+        js: "const let var function return if else for while class new this async await try catch throw import export from default true false null undefined",
+        typescript: "const let var function return if else for while class new this async await try catch throw import export from default interface type enum public private readonly",
+        ts: "const let var function return if else for while class new this async await try catch throw import export from default interface type enum public private readonly",
+        python: "def class return if elif else for while in not and or is import from as try except finally with lambda yield async await True False None self",
+        py: "def class return if elif else for while in not and or is import from as try except finally with lambda yield async await True False None self",
+        json: "true false null",
+        sql: "select from where insert into values update set delete create table alter drop join left right inner on as and or not null primary key foreign references order by group limit desc asc",
+        css: "important inherit initial unset",
+        html: "DOCTYPE html head body div span section main header footer script style link meta button input form"
+    };
+    const keywords = new Set((keywordSets[lang] || keywordSets.javascript).split(/\s+/));
+    const pattern = /(\/\/[^\n]*|#[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|\b\d+(?:\.\d+)?\b|\b[A-Za-z_$][\w$]*\b(?=\s*\()|\b[A-Za-z_$][\w$]*\b|[{}()[\];,.]/g;
+    let cursor = 0;
+    let match;
+    const fragment = document.createDocumentFragment();
+    while ((match = pattern.exec(source)) !== null) {
+        if (match.index > cursor) fragment.appendChild(document.createTextNode(source.slice(cursor, match.index)));
+        const token = match[0];
+        let kind = "";
+        if (/^(\/\/|#|\/\*)/.test(token)) kind = "comment";
+        else if (/^["'`]/.test(token)) kind = "string";
+        else if (/^\d/.test(token)) kind = "number";
+        else if (keywords.has(token)) kind = "keyword";
+        else if (/^[A-Za-z_$][\w$]*$/.test(token) && /\($/.test(source.slice(match.index + token.length, match.index + token.length + 1))) kind = "function";
+        else if (/^[{}()[\];,.]$/.test(token)) kind = "punctuation";
+        if (kind) {
+            const span = document.createElement("span");
+            span.className = "token-" + kind;
+            span.textContent = token;
+            fragment.appendChild(span);
+        } else {
+            fragment.appendChild(document.createTextNode(token));
+        }
+        cursor = pattern.lastIndex;
+    }
+    if (cursor < source.length) fragment.appendChild(document.createTextNode(source.slice(cursor)));
+    element.replaceChildren(fragment);
+}
+
 function renderAssistantMarkdown(container, source) {
     const lines = String(source || "").replace(/\r\n/g, "\n").split("\n");
     let paragraph = [];
     let list = null;
     let codeLines = null;
+    let codeLanguage = "";
 
     function flushParagraph() {
         if (!paragraph.length) return;
@@ -480,13 +547,13 @@ function renderAssistantMarkdown(container, source) {
         list = null;
     }
 
-    function appendCodeBlock(code) {
+    function appendCodeBlock(code, language) {
         const wrapper = document.createElement("div");
         wrapper.className = "code-block";
         const toolbar = document.createElement("div");
         toolbar.className = "code-toolbar";
         const label = document.createElement("span");
-        label.textContent = "كود";
+        label.textContent = language || "كود";
         const copy = document.createElement("button");
         copy.type = "button";
         copy.className = "code-copy";
@@ -503,7 +570,8 @@ function renderAssistantMarkdown(container, source) {
         toolbar.appendChild(copy);
         const pre = document.createElement("pre");
         const codeElement = document.createElement("code");
-        codeElement.textContent = code;
+        codeElement.dataset.language = language || "text";
+        highlightCodeElement(codeElement, code, language);
         pre.appendChild(codeElement);
         wrapper.appendChild(toolbar);
         wrapper.appendChild(pre);
@@ -513,18 +581,21 @@ function renderAssistantMarkdown(container, source) {
     lines.forEach(function (line) {
         if (codeLines !== null) {
             if (/^\s*```/.test(line)) {
-                appendCodeBlock(codeLines.join("\n"));
+                appendCodeBlock(codeLines.join("\n"), codeLanguage);
                 codeLines = null;
+                codeLanguage = "";
             } else {
                 codeLines.push(line);
             }
             return;
         }
 
-        if (/^\s*```/.test(line)) {
+        const fence = line.match(/^\s*```\s*([\w+#.-]*)/);
+        if (fence) {
             flushParagraph();
             flushList();
             codeLines = [];
+            codeLanguage = fence[1] || "";
             return;
         }
 
@@ -573,7 +644,7 @@ function renderAssistantMarkdown(container, source) {
         paragraph.push(line);
     });
 
-    if (codeLines !== null) appendCodeBlock(codeLines.join("\n"));
+    if (codeLines !== null) appendCodeBlock(codeLines.join("\n"), codeLanguage);
     flushParagraph();
     flushList();
 }
@@ -701,6 +772,20 @@ function getConversationItems() {
     return items;
 }
 
+function getConversationDateGroup(value) {
+    if (!value) return "أقدم";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "أقدم";
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    const daysAgo = Math.floor((today.getTime() - date.getTime()) / 86400000);
+    if (daysAgo <= 0) return "اليوم";
+    if (daysAgo === 1) return "أمس";
+    if (daysAgo <= 7) return "آخر 7 أيام";
+    return "أقدم";
+}
+
 async function loadConversations(searchTerm = "") {
     const items = getConversationItems();
     if (!items) return;
@@ -735,6 +820,7 @@ async function loadConversations(searchTerm = "") {
             return;
         }
 
+        const conversationGroups = new Map();
         conversations.forEach(function (conversation) {
             const item = document.createElement("div");
             item.className = "conversation-item";
@@ -894,8 +980,26 @@ async function loadConversations(searchTerm = "") {
             item.appendChild(title);
             item.appendChild(actionsButton);
             item.appendChild(actionsMenu);
-            const destination = Number(conversation.is_pinned) === 1 && pinnedItems ? pinnedItems : items;
-            destination.appendChild(item);
+            if (Number(conversation.is_pinned) === 1 && pinnedItems) {
+                pinnedItems.appendChild(item);
+            } else {
+                const groupName = getConversationDateGroup(conversation.updated_at);
+                let group = conversationGroups.get(groupName);
+                if (!group) {
+                    group = document.createElement("section");
+                    group.className = "conversation-group";
+                    const heading = document.createElement("div");
+                    heading.className = "conversation-group-heading";
+                    heading.textContent = groupName;
+                    const groupItems = document.createElement("div");
+                    groupItems.className = "conversation-group-items";
+                    group.appendChild(heading);
+                    group.appendChild(groupItems);
+                    items.appendChild(group);
+                    conversationGroups.set(groupName, group);
+                }
+                group.querySelector(".conversation-group-items").appendChild(item);
+            }
 
         });
         if (sidebarPinnedSection && pinnedItems) {
