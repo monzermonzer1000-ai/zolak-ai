@@ -507,7 +507,7 @@ function highlightCodeElement(element, source, language) {
         else if (/^["'`]/.test(token)) kind = "string";
         else if (/^\d/.test(token)) kind = "number";
         else if (keywords.has(token)) kind = "keyword";
-        else if (/^[A-Za-z_$][\w$]*$/.test(token) && /\($/.test(source.slice(match.index + token.length, match.index + token.length + 1))) kind = "function";
+        else if (/^[A-Za-z_$][\w$]*$/.test(token) && /^\s*\(/.test(source.slice(match.index + token.length))) kind = "function";
         else if (/^[{}()[\];,.]$/.test(token)) kind = "punctuation";
         if (kind) {
             const span = document.createElement("span");
