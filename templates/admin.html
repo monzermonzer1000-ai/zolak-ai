@@ -15,17 +15,18 @@
 }
 
 :root{
-    --bg:#07111f;
-    --panel:#0d1b2a;
-    --panel2:#102337;
-    --border:#1d354d;
-    --text:#f1f5f9;
-    --muted:#94a3b8;
-    --green:#00c896;
-    --red:#ef4444;
-    --yellow:#f59e0b;
-    --blue:#3b82f6;
-    --input:#071522;
+    color-scheme:dark;
+    --bg:#252c36;
+    --panel:#2d3540;
+    --panel2:#394351;
+    --border:#465260;
+    --text:#e9edf2;
+    --muted:#b2bdc9;
+    --green:#78c9b1;
+    --red:#ed8585;
+    --yellow:#e7bd70;
+    --blue:#82a9e8;
+    --input:#252c36;
 }
 
 body{
@@ -36,13 +37,18 @@ body{
 }
 
 body.light{
-    --bg:#f4f7fb;
-    --panel:#fff;
-    --panel2:#eef3f8;
-    --border:#d5dde7;
-    --text:#17202a;
-    --muted:#64748b;
-    --input:#fff;
+    color-scheme:light;
+    --bg:#f3f5f7;
+    --panel:#ffffff;
+    --panel2:#edf1f4;
+    --border:#dce2e8;
+    --text:#26313d;
+    --muted:#687586;
+    --green:#168d78;
+    --red:#c84d58;
+    --yellow:#a66a16;
+    --blue:#3569b5;
+    --input:#ffffff;
 }
 
 button,
@@ -111,7 +117,7 @@ header{
 
 .btn.green{
     background:var(--green);
-    color:#001b14;
+    color:#18342e;
 }
 
 .btn.red{
@@ -158,13 +164,13 @@ main{
 }
 
 .message.success{
-    background:#063d32;
-    color:#70f0cb;
+    background:rgba(22,141,120,.14);
+    color:var(--green);
 }
 
 .message.error{
-    background:#451515;
-    color:#ff9a9a;
+    background:rgba(200,77,88,.13);
+    color:var(--red);
 }
 
 .stats{
@@ -211,7 +217,8 @@ main{
 
 .tab.active{
     background:var(--green);
-    color:#001b14;
+    color:#18342e;
+    border-color:transparent;
 }
 
 .section{
