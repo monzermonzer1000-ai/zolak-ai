@@ -106,6 +106,13 @@ def init_db():
 
     c = db()
 
+    # Vercel may start several Python workers at once. Serialize PostgreSQL
+    # schema checks and migrations so concurrent CREATE INDEX / ALTER TABLE
+    # operations cannot deadlock on shared relation locks.
+    if os.getenv("DATABASE_URL", "").strip():
+        c.execute("SET LOCAL lock_timeout = '18000ms'")
+        c.execute("SELECT pg_advisory_xact_lock(1515148353, 1262766641)")
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -391,6 +391,9 @@ jobs:
           assert "handleSidebarAction" in app_source
           assert "createProjectFromSidebar" in app_source
           assert "sidebar.addEventListener(\"click\", handleSidebarAction)" in app_source
+          backend_source = open("app.py", encoding="utf-8").read()
+          assert "pg_advisory_xact_lock(1515148353, 1262766641)" in backend_source
+          assert "users.gemini_interaction_id IS NOT NULL" in backend_source
           theme_source = open("static/soft-slate-theme.css", encoding="utf-8").read()
           assert "--ui-bg:#303844" in theme_source
           assert "body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content p" in theme_source
