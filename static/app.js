@@ -91,78 +91,89 @@ if (conversationSearch) {
     });
 }
 
-document.querySelectorAll(".sidebar-tool").forEach(function (tool) {
-    tool.addEventListener("click", function () {
-        if (tool.dataset.tool === "projects") {
+/* Sidebar actions are delegated from one stable root so dynamically
+   rendered controls remain interactive after panel/list updates. */
+function handleSidebarAction(event) {
+    const tool = event.target.closest(".sidebar-tool[data-tool]");
+    if (tool && sidebar && sidebar.contains(tool)) {
+        const action = tool.dataset.tool;
+        if (action === "projects") {
+            event.preventDefault();
             if (!projectsPanel) return;
             projectsPanel.hidden = !projectsPanel.hidden;
             if (explorePanel) explorePanel.hidden = true;
             if (!projectsPanel.hidden) loadProjects();
             return;
         }
-        if (tool.dataset.tool === "explore") {
+        if (action === "explore") {
+            event.preventDefault();
             if (!explorePanel) return;
             explorePanel.hidden = !explorePanel.hidden;
             if (projectsPanel) projectsPanel.hidden = true;
             return;
         }
-        if (tool.dataset.tool === "images" || tool.dataset.tool === "library") {
+        if (action === "images" || action === "library") {
+            event.preventDefault();
             const picker = document.getElementById("attachmentInput");
-            if (picker) {
-                const previousAccept = picker.accept;
-                if (tool.dataset.tool === "images") picker.accept = "image/*";
-                window.addEventListener("focus", function restorePicker() {
-                    picker.accept = previousAccept;
-                }, { once: true });
-                picker.click();
+            if (!picker) {
+                showSidebarNotice("خيار إرفاق الملفات غير متاح حالياً.");
+                return;
             }
+            const previousAccept = picker.accept;
+            picker.accept = action === "images" ? "image/*" : "image/*,.pdf,.docx,.txt,.md,.csv";
+            const restorePicker = function () { picker.accept = previousAccept; };
+            window.addEventListener("focus", restorePicker, { once: true });
+            picker.click();
             return;
         }
-    });
-});
+    }
 
-document.querySelectorAll(".explore-prompt").forEach(function (button) {
-    button.addEventListener("click", function () {
+    const exploreButton = event.target.closest(".explore-prompt[data-explore-prompt]");
+    if (exploreButton && sidebar && sidebar.contains(exploreButton)) {
+        event.preventDefault();
         if (!promptBox) return;
-        promptBox.value = button.dataset.explorePrompt || "";
+        promptBox.value = exploreButton.dataset.explorePrompt || "";
         promptBox.focus();
         promptBox.setSelectionRange(promptBox.value.length, promptBox.value.length);
         if (explorePanel) explorePanel.hidden = true;
-    });
-});
-
-if (createProjectButton) {
-    createProjectButton.addEventListener("click", async function () {
-        const name = window.prompt("اكتب اسم المشروع الجديد:");
-        if (name === null || !name.trim()) return;
-        try {
-            const response = await fetch("/api/projects", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: name.trim() })
-            });
-            const result = await response.json();
-            if (!response.ok) {
-                showSidebarNotice(result.error || "ما قدرنا ننشئ المشروع.");
-                return;
-            }
-            currentProjectId = result.project_id;
-            await loadProjects();
-            await loadConversations();
-        } catch (error) {
-            console.error("خطأ في إنشاء المشروع:", error);
-            showSidebarNotice("حصل خطأ أثناء إنشاء المشروع.");
-        }
-    });
+        updateComposerMode();
+    }
 }
+if (sidebar) sidebar.addEventListener("click", handleSidebarAction);
 
-if (allConversationsButton) {
-    allConversationsButton.addEventListener("click", function () {
+async function createProjectFromSidebar() {
+    const name = window.prompt("اكتب اسم المشروع الجديد:");
+    if (name === null || !name.trim()) return;
+    try {
+        const response = await fetch("/api/projects", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name.trim() })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            showSidebarNotice(result.error || "ما قدرنا ننشئ المشروع.");
+            return;
+        }
+        currentProjectId = result.project_id;
+        await loadProjects();
+        await loadConversations();
+    } catch (error) {
+        console.error("خطأ في إنشاء المشروع:", error);
+        showSidebarNotice("حصل خطأ أثناء إنشاء المشروع.");
+    }
+}
+if (sidebar) sidebar.addEventListener("click", function (event) {
+    if (event.target.closest("#createProjectButton")) {
+        event.preventDefault();
+        createProjectFromSidebar();
+    } else if (event.target.closest("#allConversationsButton")) {
+        event.preventDefault();
         currentProjectId = null;
         updateProjectFilterState();
         loadConversations();
-    });
-}
+    }
+});
 
 if (projectPickerModal) {
     const cancelPicker = document.getElementById("projectPickerCancel");
