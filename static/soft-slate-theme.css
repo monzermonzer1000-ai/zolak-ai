@@ -447,3 +447,65 @@ html,body { background:var(--z-main-bg)!important; color:var(--z-ink)!important;
  .app.chatgpt-layout > .sidebar.open { transform:translateX(0)!important; }
  .app.chatgpt-layout > .main { z-index:1!important; }
 }
+
+
+/* ZOLAK APP SHELL — scoped full-viewport layout and solid, isolated surfaces */
+html, body { width:100%; min-width:0; min-height:100%; margin:0!important; padding:0!important; overflow:hidden; }
+body > .app.chatgpt-layout {
+  display:flex!important; flex-direction:row!important; width:100%!important; max-width:none!important;
+  min-width:0!important; height:100vh!important; height:100dvh!important; min-height:100vh!important;
+  min-height:100dvh!important; margin:0!important; padding:0!important; overflow:hidden!important;
+  isolation:isolate!important; box-sizing:border-box!important;
+}
+.app.chatgpt-layout > .sidebar {
+  flex:0 0 290px!important; width:290px!important; min-width:290px!important; max-width:290px!important;
+  height:100%!important; box-sizing:border-box!important; opacity:1!important;
+  background:var(--z-sidebar-bg,#303b49)!important; background-color:var(--z-sidebar-bg,#303b49)!important;
+  background-image:none!important; backdrop-filter:none!important; -webkit-backdrop-filter:none!important;
+  isolation:isolate!important; z-index:20!important;
+}
+.app.chatgpt-layout > .main.main-chat {
+  display:flex!important; flex:1 1 auto!important; flex-direction:column!important;
+  width:calc(100% - 290px)!important; min-width:0!important; max-width:none!important;
+  height:100%!important; min-height:0!important; margin:0!important; padding:0!important;
+  box-sizing:border-box!important; overflow:hidden!important;
+  background:var(--z-main-bg,#f5f7fa)!important; color:var(--z-ink,#172033)!important;
+  isolation:isolate!important; z-index:1!important;
+}
+.app.chatgpt-layout > .main.main-chat > .messages {
+  flex:1 1 auto!important; width:100%!important; max-width:none!important; min-width:0!important;
+  min-height:0!important; margin:0!important; box-sizing:border-box!important; overflow-y:auto!important;
+  background:transparent!important;
+}
+.app.chatgpt-layout > .main.main-chat > .composer,
+.app.chatgpt-layout > .main.main-chat > .composer-area {
+  flex:0 0 auto!important; width:100%!important; max-width:none!important;
+  margin:0!important; box-sizing:border-box!important;
+}
+.app.chatgpt-layout > .main.main-chat .composer-inner {
+  width:min(100%,1100px)!important; max-width:1100px!important; margin-inline:auto!important;
+  box-sizing:border-box!important;
+}
+.app.chatgpt-layout > .main.main-chat #prompt,
+.app.chatgpt-layout > .main.main-chat textarea#prompt {
+  min-width:0!important; color:var(--z-input-text,#172033)!important;
+  -webkit-text-fill-color:var(--z-input-text,#172033)!important;
+  caret-color:var(--z-input-text,#172033)!important; opacity:1!important;
+}
+.app.chatgpt-layout > .sidebar, .app.chatgpt-layout > .sidebar * { mix-blend-mode:normal!important; filter:none!important; }
+.app.chatgpt-layout > .sidebar button, .app.chatgpt-layout > .sidebar a,
+.app.chatgpt-layout > .sidebar input, .app.chatgpt-layout > .main button,
+.app.chatgpt-layout > .main a, .app.chatgpt-layout > .main textarea {
+  pointer-events:auto!important; touch-action:manipulation;
+}
+@media(max-width:800px) {
+  body > .app.chatgpt-layout { display:flex!important; }
+  .app.chatgpt-layout > .sidebar {
+    position:fixed!important; top:0!important; right:0!important; bottom:0!important; left:auto!important;
+    width:min(310px,88vw)!important; min-width:0!important; max-width:88vw!important;
+    height:100dvh!important; transform:translate3d(105%,0,0)!important; z-index:100!important;
+  }
+  .app.chatgpt-layout > .sidebar.open { transform:translate3d(0,0,0)!important; }
+  .app.chatgpt-layout > .main.main-chat { width:100%!important; max-width:none!important; }
+  .app.chatgpt-layout .sidebar-overlay { z-index:90!important; }
+}
