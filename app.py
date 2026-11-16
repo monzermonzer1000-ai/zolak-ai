@@ -228,7 +228,9 @@ def init_db():
             ADD COLUMN gemini_interaction_id TEXT
         """)
 
-    # Preserve the legacy Gemini context when migrating old chat history.
+    # Preserve legacy Gemini context only when there is a real value to copy.
+    # Without this guard, every cold start rewrites NULL conversation rows,
+    # needlessly locking active conversations and risking PostgreSQL deadlocks.
     c.execute("""
         UPDATE conversations
         SET gemini_interaction_id = (
@@ -237,6 +239,11 @@ def init_db():
             WHERE users.id = conversations.user_id
         )
         WHERE gemini_interaction_id IS NULL
+          AND EXISTS (
+              SELECT 1 FROM users
+              WHERE users.id = conversations.user_id
+                AND users.gemini_interaction_id IS NOT NULL
+          )
           AND EXISTS (
               SELECT 1 FROM chats
               WHERE chats.conversation_id = conversations.id
