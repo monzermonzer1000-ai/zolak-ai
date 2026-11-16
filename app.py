@@ -1283,17 +1283,17 @@ def chat():
             yield emit("meta", {"conversation_id": conversation_id})
 
             try:
-                # Keep the upstream request bounded and log each stage so a
-                # production stall can be isolated without exposing user data.
-                app.logger.info("AI generation started (model=%s)", model)
-                response = client.models.generate_content(
+                # Stream each Gemini chunk to the browser as soon as it arrives.
+                app.logger.info("AI streaming started (model=%s)", model)
+                for chunk in client.models.generate_content_stream(
                     model=model, contents=contents, config=generation_config
-                )
-                app.logger.info("AI generation response received (model=%s)", model)
-                piece = (getattr(response, "text", None) or "")
-                if piece:
-                    stream_started = True
-                    answer_parts.append(piece)
+                ):
+                    piece = getattr(chunk, "text", None) or ""
+                    if piece:
+                        stream_started = True
+                        answer_parts.append(piece)
+                        yield emit("token", {"text": piece})
+                app.logger.info("AI streaming completed (model=%s)", model)
             except Exception as primary_error:
                 error_text = str(primary_error).upper()
                 temporary = any(marker in error_text for marker in (
@@ -1305,15 +1305,16 @@ def chat():
                 ).strip()
                 if stream_started or not temporary or not fallback_model.startswith("gemini-") or fallback_model == model:
                     raise
-                app.logger.warning("Primary Gemini model unavailable; trying fallback model %s", fallback_model)
-                response = client.models.generate_content(
+                app.logger.warning("Primary Gemini stream unavailable; trying fallback model %s", fallback_model)
+                for chunk in client.models.generate_content_stream(
                     model=fallback_model, contents=contents, config=generation_config
-                )
-                app.logger.info("AI fallback response received (model=%s)", fallback_model)
-                piece = (getattr(response, "text", None) or "")
-                if piece:
-                    stream_started = True
-                    answer_parts.append(piece)
+                ):
+                    piece = getattr(chunk, "text", None) or ""
+                    if piece:
+                        stream_started = True
+                        answer_parts.append(piece)
+                        yield emit("token", {"text": piece})
+                app.logger.info("AI fallback streaming completed (model=%s)", fallback_model)
 
             answer = "".join(answer_parts).strip()
             if not answer:
@@ -1350,10 +1351,8 @@ def chat():
             """, ((message[:55] or ("ملف: " + attachment_names[0][:45])) if attachment_names else message[:55], conversation_id, user_id))
             save_conn.commit()
             app.logger.info("AI reply and credit transaction committed")
-            # Deliver the completed answer only after the credit deduction and
-            # conversation writes have committed successfully. This prevents a
-            # user from seeing a reply that the server later reports as failed.
-            yield emit("token", {"text": answer})
+            # The text chunks have already been streamed. Send done only
+            # after the credit deduction and conversation writes are committed.
             yield emit("done", {"conversation_id": conversation_id})
 
         except Exception as error:
@@ -1387,12 +1386,9 @@ def chat():
                 except Exception:
                     pass
 
-    # Buffer the short SSE event sequence before returning it. Vercel's
-    # serverless Python adapter can keep a streamed Flask generator alive
-    # after upstream work has completed; that leaves invocations open until
-    # the platform's 300-second hard timeout. The browser still parses the
-    # same SSE events, but the serverless invocation now has a clear end.
-    response = Response("".join(generate()), mimetype="text/event-stream")
+    # Vercel's Python runtime supports streamed Flask generator responses.
+    # Keep the request context active while Gemini chunks are forwarded.
+    response = Response(stream_with_context(generate()), mimetype="text/event-stream")
     response.headers["Cache-Control"] = "no-cache, no-transform"
     response.headers["X-Accel-Buffering"] = "no"
     return response
