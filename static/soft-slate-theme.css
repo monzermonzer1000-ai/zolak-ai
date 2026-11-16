@@ -1,0 +1,167 @@
+/* Zolak AI — Soft Slate theme refresh
+   Calm, low-glare dark surfaces and a quiet neutral light mode. */
+:root {
+  color-scheme: light;
+  --ui-bg: #f3f5f7;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #edf1f4;
+  --ui-text: #26313d;
+  --ui-muted: #687586;
+  --ui-border: rgba(55, 70, 88, .13);
+  --ui-accent: #168d78;
+  --ui-accent-2: #117560;
+  --ui-accent-soft: rgba(22, 141, 120, .10);
+  --ui-shadow: 0 12px 34px rgba(37, 51, 67, .07);
+  --ui-focus: 0 0 0 4px rgba(22, 141, 120, .15);
+}
+body.theme-dark {
+  color-scheme: dark;
+  --ui-bg: #222831;
+  --ui-surface: #2a313b;
+  --ui-surface-2: #333c48;
+  --ui-text: #e7ecf2;
+  --ui-muted: #aeb8c5;
+  --ui-border: rgba(218, 228, 239, .12);
+  --ui-accent: #65bba5;
+  --ui-accent-2: #83cdb8;
+  --ui-accent-soft: rgba(101, 187, 165, .13);
+  --ui-shadow: 0 12px 34px rgba(10, 15, 22, .16);
+  --ui-focus: 0 0 0 4px rgba(101, 187, 165, .17);
+}
+html, body { background: var(--ui-bg) !important; }
+body {
+  color: var(--ui-text) !important;
+  background-color: var(--ui-bg) !important;
+}
+.app.chatgpt-layout,
+body.theme-dark .app.chatgpt-layout {
+  background: var(--ui-bg) !important;
+  background-image: radial-gradient(ellipse at 70% 0%, var(--ui-accent-soft), transparent 48%) !important;
+}
+.app.chatgpt-layout > .sidebar,
+body.theme-dark .app.chatgpt-layout > .sidebar,
+.sidebar-bottom,
+body.theme-dark .sidebar-bottom,
+.sidebar-bottom .account-box,
+body.theme-dark .sidebar-bottom .account-box {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border) !important;
+  box-shadow: none !important;
+}
+.sidebar-history .conversation-list-title,
+body.theme-dark .sidebar-history .conversation-list-title {
+  color: var(--ui-muted) !important;
+  background: var(--ui-surface) !important;
+}
+.sidebar-search,
+body.theme-dark .sidebar-search,
+.theme-toggle {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-2) !important;
+  border-color: var(--ui-border) !important;
+}
+.sidebar-tool, body.theme-dark .sidebar-tool,
+.project-filter, body.theme-dark .project-filter,
+.project-open, body.theme-dark .project-open,
+.explore-prompt, body.theme-dark .explore-prompt,
+.sidebar-account-links .sidebar-link {
+  color: var(--ui-text) !important;
+}
+.sidebar-tool:hover, .project-filter:hover, .project-open:hover,
+.explore-prompt:hover, .sidebar-account-links .sidebar-link:hover {
+  color: var(--ui-accent-2) !important;
+  background: var(--ui-accent-soft) !important;
+}
+.sidebar-new-chat, #newChat {
+  color: #fff !important;
+  background: linear-gradient(135deg, #249b83, #187d6b) !important;
+  border-color: transparent !important;
+  box-shadow: 0 5px 14px rgba(22, 125, 105, .14) !important;
+}
+body.theme-dark .sidebar-new-chat,
+body.theme-dark #newChat {
+  color: #172d2a !important;
+  background: linear-gradient(135deg, #83cdb8, #65bba5) !important;
+  box-shadow: none !important;
+}
+.app.chatgpt-layout > .main,
+.app.chatgpt-layout > .main .messages {
+  color: var(--ui-text) !important;
+  background: transparent !important;
+}
+.app.chatgpt-layout > .main .topbar,
+.app.chatgpt-layout > .main .chat-navbar,
+.app.chatgpt-layout > .main .composer,
+.app.chatgpt-layout > .main .composer-area,
+body.theme-dark .app.chatgpt-layout > .main .topbar,
+body.theme-dark .app.chatgpt-layout > .main .chat-navbar,
+body.theme-dark .app.chatgpt-layout > .main .composer,
+body.theme-dark .app.chatgpt-layout > .main .composer-area {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border) !important;
+  box-shadow: none !important;
+}
+.app.chatgpt-layout > .main .welcome-screen {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border) !important;
+  box-shadow: var(--ui-shadow) !important;
+}
+.app.chatgpt-layout > .main .welcome-screen h1 { color: var(--ui-text) !important; }
+.app.chatgpt-layout > .main .welcome-screen p { color: var(--ui-muted) !important; }
+.message.assistant .message-content,
+body.theme-dark .message.assistant .message-content {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: none !important;
+}
+.message.user .message-content {
+  color: #23483f !important;
+  background: #e6f3ef !important;
+  border: 1px solid #d6e9e2 !important;
+}
+body.theme-dark .message.user .message-content {
+  color: #e4f2ee !important;
+  background: #3a4b58 !important;
+  border: 1px solid rgba(191, 216, 207, .13) !important;
+}
+.composer-inner,
+body.theme-dark .composer-inner {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border) !important;
+  box-shadow: 0 4px 15px rgba(30, 43, 58, .045) !important;
+}
+#prompt, .composer textarea, .composer-area textarea {
+  color: var(--ui-text) !important;
+}
+#prompt::placeholder, .composer textarea::placeholder { color: var(--ui-muted) !important; }
+#send, button#send {
+  color: #fff !important;
+  background: linear-gradient(135deg, #239780, #187c68) !important;
+  box-shadow: none !important;
+}
+body.theme-dark #send, body.theme-dark button#send {
+  color: #172d2a !important;
+  background: #83cdb8 !important;
+}
+.composer-voice {
+  color: #fff !important;
+  background: #607fae !important;
+  box-shadow: none !important;
+}
+.code-block { box-shadow: none !important; }
+.sidebar-overlay { background: rgba(27, 36, 47, .34) !important; }
+body.theme-dark .sidebar-overlay { background: rgba(12, 17, 24, .46) !important; }
+.sidebar-collapse-toggle {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-2) !important;
+  border-color: var(--ui-border) !important;
+}
+* { scrollbar-color: rgba(125, 143, 160, .42) transparent; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; }
+}
