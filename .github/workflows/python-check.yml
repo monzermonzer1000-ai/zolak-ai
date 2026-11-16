@@ -72,13 +72,15 @@ jobs:
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
-          assert "zolak-ai-assets-v33" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v34" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
           assert "display: none" in performance_css
           assert client.get("/static/style.css").status_code == 200
           assert client.get("/static/app.js").status_code == 200
+          assert client.get("/static/chat-enhancements.css").status_code == 200
+          assert 'id="sidebarCollapseButton"' in home_html
 
           csrf_blocked = client.post("/api/register", json={"name": "Bad", "email": "bad@example.test", "password": "test-password"}, headers={"Origin": "https://attacker.example"})
           assert csrf_blocked.status_code == 403, csrf_blocked.get_json()
@@ -371,6 +373,9 @@ jobs:
           assert 'id="projectsPanel"' in home_source
           assert 'id="explorePanel"' in home_source
           assert 'class="home-icon-button mobile-menu"' in home_source
+          assert 'id="sidebarCollapseButton"' in home_source
+          assert "highlightCodeElement" in app_source
+          assert "getConversationDateGroup" in app_source
           assert "plusSubscribe" not in home_source
           assert "homeQuickActions" not in home_source
           login_source = open("templates/login.html", encoding="utf-8").read()
@@ -383,7 +388,8 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=31" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=29" in home_source
+          assert "filename='app.js') }}?v=30" in home_source
+          assert "filename='chat-enhancements.css') }}?v=1" in home_source
           assert 'data-tool="remote"' not in home_source
           assert 'data-tool="customize"' not in home_source
 
