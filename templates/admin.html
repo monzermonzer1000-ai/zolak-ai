@@ -666,6 +666,21 @@ input, textarea, select { transition: border-color .18s ease, box-shadow .18s ea
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+ 
+/* Analytics control center */
+.analytics-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:22px 0 16px}
+.analytics-head h2{font-size:23px;margin-bottom:5px}.analytics-head p,.analytics-note,.analytics-chart p{color:var(--muted);font-size:13px;line-height:1.7}
+.analytics-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.analytics-kpi,.analytics-chart{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:19px;box-shadow:var(--shadow,0 10px 28px rgba(20,50,35,.05));min-width:0}
+.analytics-kpi{display:flex;flex-direction:column;gap:8px}.analytics-kpi span{font-size:13px;color:var(--muted);font-weight:700}
+.analytics-kpi strong{font-size:30px;line-height:1.2;color:var(--green);font-variant-numeric:tabular-nums}
+.analytics-kpi small{font-size:12px;color:var(--muted)}
+.analytics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.analytics-chart h3{font-size:17px;margin-bottom:5px}.analytics-chart canvas{display:block;width:100%;height:230px;margin-top:15px}
+.analytics-chart:last-child{grid-column:1/-1}
+.analytics-note{margin-top:13px}
+@media(max-width:850px){.analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-grid{grid-template-columns:1fr}.analytics-chart:last-child{grid-column:auto}}
+@media(max-width:500px){.analytics-head{align-items:flex-start;flex-direction:column}.analytics-kpis{gap:9px}.analytics-kpi{padding:14px}.analytics-kpi strong{font-size:25px}.analytics-chart{padding:15px}}
 </style>
 </head>
 
@@ -726,6 +741,7 @@ input, textarea, select { transition: border-color .18s ease, box-shadow .18s ea
 </div>
 
 <div class="tabs">
+<button type="button" class="tab" onclick="showSection('analytics',this);loadAnalytics()">📊 التحليلات</button>
 
 <button type="button" class="tab active" onclick="showSection('users',this)">
 👥 المستخدمون
@@ -771,6 +787,26 @@ input, textarea, select { transition: border-color .18s ease, box-shadow .18s ea
 
 </div>
 
+
+<!-- التحليلات -->
+<section id="analytics" class="section">
+  <div class="analytics-head">
+    <div><h2>مركز التحليلات</h2><p>مؤشرات النشاط واستخدام الذكاء الاصطناعي خلال آخر 7 أيام</p></div>
+    <button type="button" class="btn green" id="analyticsRefresh" onclick="loadAnalytics()">تحديث البيانات</button>
+  </div>
+  <div class="analytics-kpis">
+    <article class="analytics-kpi"><span>المستخدمون النشطون</span><strong id="analyticsActive">—</strong><small>لديهم رسائل خلال الفترة</small></article>
+    <article class="analytics-kpi"><span>إجمالي الرسائل</span><strong id="analyticsMessages">—</strong><small>رسائل المستخدمين والردود</small></article>
+    <article class="analytics-kpi"><span>ردود الذكاء الاصطناعي</span><strong id="analyticsAi">—</strong><small>رسائل المساعد المسجلة</small></article>
+    <article class="analytics-kpi"><span>مستخدمون جدد</span><strong id="analyticsNewUsers">—</strong><small>حسابات أُنشئت خلال الفترة</small></article>
+  </div>
+  <div class="analytics-grid">
+    <article class="analytics-chart"><h3>حركة الرسائل اليومية</h3><p>عدد الرسائل المسجلة في كل يوم</p><canvas id="messagesChart" height="230" role="img" aria-label="رسم بياني للرسائل اليومية"></canvas></article>
+    <article class="analytics-chart"><h3>استهلاك الذكاء الاصطناعي</h3><p>عدد ردود المساعد المسجلة يومياً</p><canvas id="aiChart" height="230" role="img" aria-label="رسم بياني لردود الذكاء الاصطناعي"></canvas></article>
+    <article class="analytics-chart"><h3>نمو المستخدمين</h3><p>الحسابات الجديدة يومياً</p><canvas id="usersChart" height="230" role="img" aria-label="رسم بياني للمستخدمين الجدد"></canvas></article>
+  </div>
+  <p class="analytics-note" id="analyticsUpdated">البيانات مجمّعة من قاعدة البيانات ولا تعرض محتوى المحادثات.</p>
+</section>
 
 <!-- المستخدمون -->
 
@@ -3025,6 +3061,80 @@ document.getElementById("adminPasswordForm").addEventListener("submit", async fu
 });
 
 /* =========================
+   لوحة التحليلات
+========================= */
+function drawAdminChart(canvasId, labels, values, caption){
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+    const width = Math.max(280, Math.floor(canvas.getBoundingClientRect().width || 600));
+    const height = 230;
+    const ratio = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+    canvas.style.height = height + "px";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(ratio, ratio);
+    ctx.clearRect(0,0,width,height);
+    const pad = {top:16,right:12,bottom:36,left:30};
+    const chartW = width-pad.left-pad.right;
+    const chartH = height-pad.top-pad.bottom;
+    const max = Math.max(1,...values);
+    ctx.font = "11px Arial";
+    ctx.textAlign = "right";
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--muted").trim() || "#718078";
+    for(let n=0;n<=3;n++){
+        const y=pad.top+chartH-(chartH*n/3);
+        ctx.strokeStyle="rgba(120,140,130,.18)";
+        ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(width-pad.right,y);ctx.stroke();
+        ctx.fillText(String(Math.round(max*n/3)),pad.left-5,y+4);
+    }
+    const slot=chartW/Math.max(1,values.length);
+    const barW=Math.min(34,slot*.52);
+    const color=getComputedStyle(document.body).getPropertyValue("--green").trim() || "#078765";
+    values.forEach((value,index)=>{
+        const h=(Math.max(0,value)/max)*(chartH-5);
+        const x=pad.left+slot*index+(slot-barW)/2;
+        const y=pad.top+chartH-h;
+        ctx.fillStyle=color;
+        ctx.beginPath();
+        const radius=Math.min(6,barW/2);
+        ctx.roundRect(x,y,barW,Math.max(2,h),[radius,radius,2,2]);
+        ctx.fill();
+        ctx.fillStyle=getComputedStyle(document.body).getPropertyValue("--muted").trim() || "#718078";
+        ctx.textAlign="center";
+        const label=String(labels[index]||"").slice(5);
+        ctx.fillText(label,x+barW/2,height-12);
+    });
+    canvas.setAttribute("aria-label",caption+": "+values.join(", "));
+}
+
+async function loadAnalytics(){
+    const button=document.getElementById("analyticsRefresh");
+    if(button){button.disabled=true;button.textContent="جاري التحديث...";}
+    try{
+        const data=await api("/api/admin/analytics");
+        const fmt=n=>Number(n||0).toLocaleString("ar");
+        document.getElementById("analyticsActive").textContent=fmt(data.active_users);
+        document.getElementById("analyticsMessages").textContent=fmt(data.messages);
+        document.getElementById("analyticsAi").textContent=fmt(data.ai_messages);
+        document.getElementById("analyticsNewUsers").textContent=fmt(data.new_users);
+        const labels=(data.labels||[]).map(x=>String(x).slice(5));
+        drawAdminChart("messagesChart",labels,data.daily_messages||[],"الرسائل اليومية");
+        drawAdminChart("aiChart",labels,data.daily_ai_messages||[],"ردود الذكاء الاصطناعي");
+        drawAdminChart("usersChart",labels,data.daily_new_users||[],"المستخدمون الجدد");
+        const updated=document.getElementById("analyticsUpdated");
+        if(updated) updated.textContent="آخر تحديث: "+new Date().toLocaleString("ar")+" — بيانات مجمّعة فقط.";
+    }catch(error){
+        showMessage("تعذر تحميل التحليلات: "+error.message,"error");
+    }finally{
+        if(button){button.disabled=false;button.textContent="تحديث البيانات";}
+    }
+}
+window.addEventListener("resize",()=>{
+    if(document.getElementById("analytics")?.classList.contains("active")) loadAnalytics();
+});
+
+/* =========================
    التشغيل الأول
 ========================= */
 
@@ -3033,7 +3143,8 @@ async function loadAll(){
     await Promise.all([
         loadStats(),
         loadUsers(),
-        loadSettings()
+        loadSettings(),
+        loadAnalytics()
     ]);
 
 }
