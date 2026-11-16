@@ -1220,20 +1220,7 @@ async function createNewConversation() {
     }
 }
 
-/* Bind the New Chat action through delegation so it survives DOM refreshes. */
-if (!document.documentElement.dataset.zolakNewChatBound) {
-    document.addEventListener("click", function (event) {
-        const button = event.target.closest("#newChat, .new-chat");
-        if (!button) return;
-        event.preventDefault();
-        if (button.dataset.zolakBusy === "1") return;
-        button.dataset.zolakBusy = "1";
-        Promise.resolve(createNewConversation()).finally(function () {
-            button.dataset.zolakBusy = "0";
-        });
-    }, true);
-    document.documentElement.dataset.zolakNewChatBound = "1";
-}
+/* New Chat is handled by the unified sidebar controller below. */
 
 /* =========================
    SEND MESSAGE
@@ -1398,3 +1385,113 @@ if (promptBox) {
 }
 
 
+
+
+/* =========================================================
+   ZOLAK SIDEBAR CONTROLLER — one explicit capture-phase router
+   Prevents duplicate handlers and click interception by legacy
+   bubbling listeners. Only handles the primary sidebar controls.
+========================================================= */
+(function bindZolakSidebarControls() {
+    if (document.documentElement.dataset.zolakSidebarController === "v1") return;
+    document.documentElement.dataset.zolakSidebarController = "v1";
+
+    function closestFromEvent(event, selector) {
+        const target = event.target instanceof Element ? event.target : event.target && event.target.parentElement;
+        return target ? target.closest(selector) : null;
+    }
+
+    function applyTheme(next) {
+        const body = document.body;
+        const dark = next === "dark";
+        body.classList.toggle("theme-dark", dark);
+        body.classList.toggle("theme-light", !dark);
+        try { localStorage.setItem("zolak-theme", dark ? "dark" : "light"); } catch (_) {}
+        const toggle = document.getElementById("themeToggle");
+        const label = document.getElementById("themeToggleLabel");
+        if (toggle) {
+            toggle.setAttribute("aria-pressed", String(dark));
+            toggle.setAttribute("aria-label", dark ? "التبديل إلى الوضع النهاري" : "التبديل إلى الوضع الليلي");
+        }
+        if (label) label.textContent = dark ? "الوضع النهاري" : "الوضع الليلي";
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.content = dark ? "#343e4b" : "#ffffff";
+    }
+
+    document.addEventListener("click", function (event) {
+        const newChat = closestFromEvent(event, "#newChat");
+        const themeButton = closestFromEvent(event, "#themeToggle");
+        const tool = closestFromEvent(event, ".sidebar-tool[data-tool]");
+        const createProject = closestFromEvent(event, "#createProjectButton");
+        const allChats = closestFromEvent(event, "#allConversationsButton");
+        const explore = closestFromEvent(event, ".explore-prompt[data-explore-prompt]");
+        const collapse = closestFromEvent(event, "#sidebarCollapseButton");
+        const mobile = closestFromEvent(event, ".mobile-menu");
+
+        if (!(newChat || themeButton || tool || createProject || allChats || explore || collapse || mobile)) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        if (newChat) {
+            if (newChat.dataset.busy === "1") return;
+            newChat.dataset.busy = "1";
+            Promise.resolve(createNewConversation())
+                .catch(function (error) { console.error("New chat failed:", error); showSidebarNotice("تعذر إنشاء محادثة جديدة. حاول مرة أخرى."); })
+                .finally(function () { newChat.dataset.busy = "0"; });
+            closeSidebar();
+            return;
+        }
+
+        if (themeButton) {
+            applyTheme(document.body.classList.contains("theme-dark") ? "light" : "dark");
+            return;
+        }
+
+        if (tool) {
+            const action = tool.dataset.tool;
+            if (action === "projects") {
+                if (!projectsPanel) return;
+                projectsPanel.hidden = !projectsPanel.hidden;
+                if (explorePanel) explorePanel.hidden = true;
+                if (!projectsPanel.hidden) loadProjects();
+            } else if (action === "explore") {
+                if (!explorePanel) return;
+                explorePanel.hidden = !explorePanel.hidden;
+                if (projectsPanel) projectsPanel.hidden = true;
+            } else if (action === "images" || action === "library") {
+                const picker = document.getElementById("attachmentInput");
+                if (!picker) { showSidebarNotice("خيار إرفاق الملفات غير متاح حالياً."); return; }
+                picker.accept = action === "images" ? "image/*" : "image/*,.pdf,.docx,.txt,.md,.csv";
+                picker.click();
+                closeSidebar();
+            }
+            return;
+        }
+
+        if (createProject) { createProjectFromSidebar(); return; }
+        if (allChats) {
+            currentProjectId = null;
+            updateProjectFilterState();
+            loadConversations();
+            return;
+        }
+        if (explore) {
+            if (promptBox) {
+                promptBox.value = explore.dataset.explorePrompt || "";
+                promptBox.focus();
+                promptBox.setSelectionRange(promptBox.value.length, promptBox.value.length);
+                updateComposerMode();
+            }
+            if (explorePanel) explorePanel.hidden = true;
+            closeSidebar();
+            return;
+        }
+        if (collapse) {
+            if (appShell) setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
+            return;
+        }
+        if (mobile) toggleSidebar();
+    }, true);
+})();
