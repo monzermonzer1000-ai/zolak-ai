@@ -552,12 +552,32 @@ function renderAssistantMarkdown(container, source) {
         copy.className = "code-copy";
         copy.textContent = "نسخ الكود";
         copy.addEventListener("click", async function () {
+            const originalLabel = copy.textContent;
             try {
-                await navigator.clipboard.writeText(code);
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(code);
+                } else {
+                    throw new Error("Clipboard API unavailable");
+                }
                 copy.textContent = "تم النسخ ✓";
             } catch (error) {
-                copy.textContent = "تعذر النسخ";
+                const fallback = document.createElement("textarea");
+                fallback.value = code;
+                fallback.setAttribute("readonly", "");
+                fallback.style.position = "fixed";
+                fallback.style.opacity = "0";
+                fallback.style.pointerEvents = "none";
+                document.body.appendChild(fallback);
+                fallback.select();
+                fallback.setSelectionRange(0, fallback.value.length);
+                let copied = false;
+                try { copied = document.execCommand("copy"); } catch (_) {}
+                fallback.remove();
+                copy.textContent = copied ? "تم النسخ ✓" : "تعذر النسخ";
             }
+            window.setTimeout(function () {
+                if (copy.isConnected) copy.textContent = originalLabel;
+            }, 1800);
         });
         toolbar.appendChild(label);
         toolbar.appendChild(copy);
