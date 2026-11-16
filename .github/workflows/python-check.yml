@@ -73,7 +73,7 @@ jobs:
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
-          assert "zolak-ai-assets-v37" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v38" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -81,6 +81,7 @@ jobs:
           assert client.get("/static/style.css").status_code == 200
           assert client.get("/static/app.js").status_code == 200
           assert client.get("/static/chat-enhancements.css").status_code == 200
+          assert client.get("/static/soft-slate-theme.css").status_code == 200
           assert client.get("/static/mobile-overrides.css").status_code == 200
           assert "/static/mobile-overrides.css?v=1" in home_html
           assert 'id="composerVoice"' not in home_html
@@ -396,7 +397,7 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=31" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=31" in home_source
+          assert "filename='app.js') }}?v=32" in home_source
           assert "filename='mobile-overrides.css') }}?v=1" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
