@@ -53,6 +53,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='performance.css') }}?v=2">
     <link rel="stylesheet" href="{{ url_for('static', filename='premium-ui.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='chat-enhancements.css') }}?v=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='mobile-overrides.css') }}?v=1">
 </head>
 
 <body class="theme-{{ theme if theme in ['light', 'dark'] else 'dark' }}">
@@ -204,7 +205,6 @@
                 <button class="composer-icon-button composer-add" id="composerAdd" type="button" aria-label="إضافة"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
                 <textarea id="prompt" placeholder="اسأل زولك AI" rows="1" aria-label="اكتب رسالتك"></textarea>
                 <button class="composer-icon-button composer-mic" id="composerMic" type="button" aria-label="الإملاء الصوتي"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v4M9 22h6"></path></svg></button>
-                <button class="composer-voice" id="composerVoice" type="button" aria-label="الصوت"><span>قراءة الرد</span><svg viewBox="0 0 24 24"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 6v12M22 10v4"></path></svg></button>
                 <button id="send" type="button" aria-label="إرسال الرسالة" title="إرسال"><span class="send-icon">↑</span></button>
             </div>
             <div class="composer-note"><span>زولك AI قد يخطئ، راجع المعلومات المهمة.</span><span class="composer-flag">صُنع في السودان 🇸🇩</span></div>
@@ -230,7 +230,7 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=30"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=31"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
