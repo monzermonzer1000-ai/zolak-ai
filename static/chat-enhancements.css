@@ -1,0 +1,125 @@
+/* Zolak AI — focused chat UX enhancements */
+@media (min-width: 801px) {
+  .app.chatgpt-layout > .sidebar {
+    transition: width 220ms ease, flex-basis 220ms ease, padding 220ms ease, border-color 220ms ease;
+  }
+  .app.chatgpt-layout.sidebar-collapsed > .sidebar {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    flex: 0 0 0 !important;
+    padding-inline: 0 !important;
+    border-inline: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+  .sidebar-collapse-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--ui-border);
+    border-radius: 12px;
+    color: var(--ui-text);
+    background: var(--ui-surface-2);
+    transition: background 160ms ease, transform 160ms ease;
+  }
+  .sidebar-collapse-toggle:hover {
+    background: var(--ui-accent-soft);
+    transform: translateY(-1px);
+  }
+  .sidebar-collapse-toggle svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .app.chatgpt-layout.sidebar-collapsed .sidebar-collapse-toggle svg {
+    transform: scaleX(-1);
+  }
+}
+@media (max-width: 800px) {
+  .sidebar-collapse-toggle { display: none !important; }
+}
+
+.conversation-group { display: flex; flex-direction: column; gap: 3px; }
+.conversation-group + .conversation-group { margin-top: 8px; }
+.conversation-group-heading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 9px 5px;
+  color: var(--ui-muted);
+  background: var(--ui-surface);
+  font-size: 11px;
+  font-weight: 750;
+}
+.conversation-group-items { display: flex; flex-direction: column; gap: 3px; }
+
+.code-block {
+  max-width: 100%;
+  margin: 14px 0;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  background: #0d1720;
+  direction: ltr;
+  text-align: left;
+}
+.code-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  color: #c6d2dc;
+  background: #15222d;
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+.code-copy {
+  padding: 5px 9px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 8px;
+  color: #eaf2f8;
+  background: rgba(255,255,255,.07);
+  font: inherit;
+}
+.code-copy:hover { background: rgba(255,255,255,.14); }
+.code-block pre {
+  max-width: 100%;
+  max-height: 520px;
+  margin: 0;
+  padding: 15px;
+  overflow: auto;
+  color: #e6edf3;
+  background: transparent;
+  direction: ltr;
+  text-align: left;
+  tab-size: 4;
+  white-space: pre;
+  overflow-wrap: normal;
+  -webkit-overflow-scrolling: touch;
+}
+.code-block code {
+  color: inherit;
+  font: 12.5px/1.75 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  white-space: pre;
+  overflow-wrap: normal;
+}
+.code-block .token-comment { color: #8b949e; font-style: italic; }
+.code-block .token-string { color: #a5d6ff; }
+.code-block .token-number { color: #79c0ff; }
+.code-block .token-keyword { color: #ff7b72; font-weight: 650; }
+.code-block .token-function { color: #d2a8ff; }
+.code-block .token-punctuation { color: #c9d1d9; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app.chatgpt-layout > .sidebar,
+  .sidebar-collapse-toggle { transition: none !important; }
+}
