@@ -201,7 +201,7 @@ jobs:
                       events.append((event_name, json.loads(data_line)))
               return events
 
-          ai_ok = client.post("/api/chat", json={"message": "اختبار الرد"}, buffered=True)
+          ai_ok = client.post("/api/chat", json={"message": "اختبار الرد"}, buffered=False)
           assert ai_ok.status_code == 200
           assert ai_ok.is_streamed, "AI chat must return a streamed response"
           assert ai_ok.mimetype == "text/event-stream"
