@@ -74,7 +74,7 @@ jobs:
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
-          assert "zolak-ai-assets-v38" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v39" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -386,6 +386,12 @@ jobs:
           assert 'id="sidebarCollapseButton"' in home_source
           assert "highlightCodeElement" in app_source
           assert "getConversationDateGroup" in app_source
+          assert "handleSidebarAction" in app_source
+          assert "createProjectFromSidebar" in app_source
+          assert "sidebar.addEventListener(\"click\", handleSidebarAction)" in app_source
+          theme_source = open("static/soft-slate-theme.css", encoding="utf-8").read()
+          assert "--ui-bg:#303844" in theme_source
+          assert "pointer-events:auto!important" in theme_source
           assert "plusSubscribe" not in home_source
           assert "homeQuickActions" not in home_source
           login_source = open("templates/login.html", encoding="utf-8").read()
@@ -398,7 +404,7 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=31" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=32" in home_source
+          assert "filename='app.js') }}?v=33" in home_source
           assert "filename='mobile-overrides.css') }}?v=1" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
