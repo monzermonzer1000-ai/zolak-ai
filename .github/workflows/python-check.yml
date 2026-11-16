@@ -416,7 +416,7 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=32" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=34" in home_source
+          assert "filename='app.js') }}?v=36" in home_source
           assert "filename='mobile-overrides.css') }}?v=1" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
