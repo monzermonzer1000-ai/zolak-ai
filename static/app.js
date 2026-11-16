@@ -24,7 +24,7 @@
         }
         if (label) label.textContent = isDark ? "الوضع النهاري" : "الوضع الليلي";
         const themeMeta = document.querySelector('meta[name="theme-color"]');
-        if (themeMeta) themeMeta.setAttribute("content", isDark ? "#071d18" : "#f7faf8");
+        if (themeMeta) themeMeta.setAttribute("content", isDark ? "#222831" : "#f3f5f7");
         try { localStorage.setItem("zolak-theme", theme); } catch (_) {}
     }
 
