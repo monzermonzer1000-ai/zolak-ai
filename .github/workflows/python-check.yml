@@ -74,7 +74,7 @@ jobs:
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
-          assert "zolak-ai-assets-v41" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v42" in client.get("/sw.js").get_data(as_text=True)
           assert "/static/soft-slate-theme.css?v=3" in home_html
           assert "/static/app.js?v=34" in home_html
           assert client.get("/static/mobile-fixes.css").status_code == 200
@@ -402,13 +402,16 @@ jobs:
           assert "homeQuickActions" not in home_source
           login_source = open("templates/login.html", encoding="utf-8").read()
           css_source = open("static/style.css", encoding="utf-8").read()
+          chat_css_source = open("static/chat-enhancements.css", encoding="utf-8").read()
+          assert ".app.chatgpt-layout > .main .message.assistant .message-content span {" not in css_source
+          assert ".code-block .token-keyword" in chat_css_source
           performance_source = open("static/performance.css", encoding="utf-8").read()
           premium_source = open("static/premium-ui.css", encoding="utf-8").read()
           assert "display: flex !important" in premium_source
           assert "theme-dark" in premium_source and "theme-light" in app_source
           assert "zolak-theme" in app_source
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
-          assert "filename='style.css') }}?v=31" in home_source
+          assert "filename='style.css') }}?v=32" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
           assert "filename='app.js') }}?v=34" in home_source
           assert "filename='mobile-overrides.css') }}?v=1" in home_source

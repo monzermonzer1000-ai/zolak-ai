@@ -3017,8 +3017,7 @@ body.theme-light .app.chatgpt-layout > .main .message.assistant .message-content
     word-break: normal;
 }
 .app.chatgpt-layout > .main .message.assistant .message-content p,
-.app.chatgpt-layout > .main .message.assistant .message-content li,
-.app.chatgpt-layout > .main .message.assistant .message-content span {
+.app.chatgpt-layout > .main .message.assistant .message-content li {
     color: #26352e !important;
 }
 .app.chatgpt-layout > .main .message.assistant .message-content h2,
