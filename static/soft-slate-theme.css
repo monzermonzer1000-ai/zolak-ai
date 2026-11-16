@@ -316,3 +316,34 @@ body.theme-dark .app.chatgpt-layout .sidebar-overlay { background:rgba(22,31,43,
 @media(prefers-reduced-motion:reduce) {
  *,*::before,*::after { transition-duration:.01ms!important;animation-duration:.01ms!important; }
 }
+
+
+/* Dark-mode assistant content must override legacy !important light-palette rules. */
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content,
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content p,
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content li,
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content h2,
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content h3,
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content strong,
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content em {
+  color:var(--ui-text)!important;
+}
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content a {
+  color:var(--ui-accent-2)!important;
+}
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content blockquote {
+  color:var(--ui-text)!important;
+  background:var(--ui-surface-2)!important;
+  border-right-color:var(--ui-accent)!important;
+}
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content p code,
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content li code {
+  color:#ffd7e8!important;
+  background:#514356!important;
+  border-color:rgba(226,232,240,.20)!important;
+}
+body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content .message-copy {
+  color:var(--ui-text)!important;
+  background:var(--ui-surface-2)!important;
+  border-color:var(--ui-border)!important;
+}
