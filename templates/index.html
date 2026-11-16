@@ -54,7 +54,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='premium-ui.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='chat-enhancements.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='mobile-overrides.css') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='soft-slate-theme.css') }}?v=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='soft-slate-theme.css') }}?v=2">
 </head>
 
 <body class="theme-{{ theme if theme in ['light', 'dark'] else 'dark' }}">
@@ -231,7 +231,7 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=33"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=34"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
