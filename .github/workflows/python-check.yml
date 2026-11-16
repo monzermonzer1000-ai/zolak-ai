@@ -395,7 +395,10 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=31" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=30" in home_source
+          assert "filename='app.js') }}?v=31" in home_source
+          assert "filename='mobile-overrides.css') }}?v=1" in home_source
+          assert 'id="composerVoice"' not in home_source
+          assert "composerVoice" not in app_source
           assert "filename='chat-enhancements.css') }}?v=1" in home_source
           assert 'data-tool="remote"' not in home_source
           assert 'data-tool="customize"' not in home_source
