@@ -72,7 +72,7 @@ jobs:
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
-          assert "zolak-ai-assets-v34" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v35" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -80,6 +80,10 @@ jobs:
           assert client.get("/static/style.css").status_code == 200
           assert client.get("/static/app.js").status_code == 200
           assert client.get("/static/chat-enhancements.css").status_code == 200
+          assert client.get("/static/mobile-overrides.css").status_code == 200
+          assert "/static/mobile-overrides.css?v=1" in home_html
+          assert 'id="composerVoice"' not in home_html
+          assert "composerVoice" not in open("static/app.js", encoding="utf-8").read()
           assert 'id="sidebarCollapseButton"' in home_html
 
           csrf_blocked = client.post("/api/register", json={"name": "Bad", "email": "bad@example.test", "password": "test-password"}, headers={"Origin": "https://attacker.example"})
