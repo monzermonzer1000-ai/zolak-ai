@@ -7,7 +7,7 @@ import secrets
 import hashlib
 from urllib.parse import urlsplit
 from functools import wraps
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from flask import (
     Flask,
@@ -1715,6 +1715,71 @@ def delete_conversation(conversation_id):
 # =========================================================
 # إحصائيات الإدارة
 # =========================================================
+
+@app.get("/api/admin/analytics")
+@admin_required
+def admin_analytics():
+    """Return aggregate-only activity metrics for the protected admin dashboard."""
+    today = datetime.now(timezone.utc).date()
+    start_day = today - timedelta(days=6)
+    start_text = start_day.isoformat()
+
+    c = db()
+    totals = c.execute("""
+        SELECT
+            COUNT(*) AS messages,
+            SUM(CASE WHEN LOWER(role) IN ('assistant', 'model') THEN 1 ELSE 0 END) AS ai_messages,
+            COUNT(DISTINCT user_id) AS active_users
+        FROM chats
+        WHERE SUBSTR(CAST(created_at AS TEXT), 1, 10) >= ?
+    """, (start_text,)).fetchone()
+
+    daily_messages = c.execute("""
+        SELECT SUBSTR(CAST(created_at AS TEXT), 1, 10) AS day, COUNT(*) AS total
+        FROM chats
+        WHERE SUBSTR(CAST(created_at AS TEXT), 1, 10) >= ?
+        GROUP BY SUBSTR(CAST(created_at AS TEXT), 1, 10)
+        ORDER BY day ASC
+    """, (start_text,)).fetchall()
+
+    daily_ai = c.execute("""
+        SELECT SUBSTR(CAST(created_at AS TEXT), 1, 10) AS day, COUNT(*) AS total
+        FROM chats
+        WHERE SUBSTR(CAST(created_at AS TEXT), 1, 10) >= ?
+          AND LOWER(role) IN ('assistant', 'model')
+        GROUP BY SUBSTR(CAST(created_at AS TEXT), 1, 10)
+        ORDER BY day ASC
+    """, (start_text,)).fetchall()
+
+    daily_users = c.execute("""
+        SELECT SUBSTR(CAST(created_at AS TEXT), 1, 10) AS day, COUNT(*) AS total
+        FROM users
+        WHERE SUBSTR(CAST(created_at AS TEXT), 1, 10) >= ?
+        GROUP BY SUBSTR(CAST(created_at AS TEXT), 1, 10)
+        ORDER BY day ASC
+    """, (start_text,)).fetchall()
+    c.close()
+
+    def series(rows):
+        return {str(row["day"]): int(row["total"] or 0) for row in rows if row["day"]}
+
+    days = [(start_day + timedelta(days=offset)).isoformat() for offset in range(7)]
+    messages = series(daily_messages)
+    ai = series(daily_ai)
+    users = series(daily_users)
+
+    return jsonify(
+        period_days=7,
+        active_users=int(totals["active_users"] or 0),
+        messages=int(totals["messages"] or 0),
+        ai_messages=int(totals["ai_messages"] or 0),
+        new_users=sum(users.values()),
+        labels=days,
+        daily_messages=[messages.get(day, 0) for day in days],
+        daily_ai_messages=[ai.get(day, 0) for day in days],
+        daily_new_users=[users.get(day, 0) for day in days]
+    )
+
 
 @app.get("/api/admin/stats")
 @admin_required
