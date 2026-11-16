@@ -69,13 +69,13 @@ jobs:
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
           assert "/static/premium-ui.css?v=1" in home_html
-          assert "/static/soft-slate-theme.css?v=2" in home_html
+          assert "/static/soft-slate-theme.css?v=3" in home_html
           assert "theme if theme in ['light', 'dark'] else 'dark'" in open("templates/index.html", encoding="utf-8").read()
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
-          assert "zolak-ai-assets-v40" in client.get("/sw.js").get_data(as_text=True)
-          assert "/static/soft-slate-theme.css?v=2" in home_html
+          assert "zolak-ai-assets-v41" in client.get("/sw.js").get_data(as_text=True)
+          assert "/static/soft-slate-theme.css?v=3" in home_html
           assert "/static/app.js?v=34" in home_html
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
@@ -393,6 +393,7 @@ jobs:
           assert "sidebar.addEventListener(\"click\", handleSidebarAction)" in app_source
           theme_source = open("static/soft-slate-theme.css", encoding="utf-8").read()
           assert "--ui-bg:#303844" in theme_source
+assert "body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content p" in theme_source
           assert "pointer-events:auto!important" in theme_source
           assert "plusSubscribe" not in home_source
           assert "homeQuickActions" not in home_source
