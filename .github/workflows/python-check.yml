@@ -393,7 +393,7 @@ jobs:
           assert "sidebar.addEventListener(\"click\", handleSidebarAction)" in app_source
           theme_source = open("static/soft-slate-theme.css", encoding="utf-8").read()
           assert "--ui-bg:#303844" in theme_source
-assert "body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content p" in theme_source
+          assert "body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content p" in theme_source
           assert "pointer-events:auto!important" in theme_source
           assert "plusSubscribe" not in home_source
           assert "homeQuickActions" not in home_source
