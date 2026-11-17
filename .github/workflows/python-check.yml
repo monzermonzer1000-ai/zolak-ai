@@ -68,8 +68,8 @@ jobs:
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
-          assert "/static/soft-slate-theme.css?v=9" in home_html
-          assert "/static/app.js?v=43" in home_html
+          assert "/static/soft-slate-theme.css?v=10" in home_html
+          assert "/static/app.js?v=44" in home_html
           assert 'class="theme-light"' in home_html
           assert 'id="adminLink"' in home_html and 'id="newChat"' in home_html
           assert 'id="explorePanel"' in home_html and 'data-tool="explore"' in home_html
@@ -89,7 +89,7 @@ jobs:
           assert "backdrop-filter:none!important" in sidebar_css
           assert "background:#fff!important" in sidebar_css
           assert "theme-dark" not in sidebar_css
-          assert "zolak-ai-assets-v52" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v53" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -406,6 +406,8 @@ jobs:
           assert "highlightCodeElement" in app_source
           assert "renderAssistantMarkdown" in app_source
           assert "bindZolakSidebarControls" in app_source
+          assert 'const explorePanel = document.getElementById("explorePanel")' in app_source
+          assert "refreshAccount();" in app_source
           assert "createNewConversation" in app_source
           assert 'sendButton.addEventListener("click", sendMessage)' in app_source
           assert 'sidebar.addEventListener("click"' in app_source
@@ -432,11 +434,12 @@ jobs:
           assert "theme-light" in home_source
           assert "أنا زولك AI، مساعدك الذكي، تحت تطوير منذر (FOX)" in backend_source
           assert "الموقع تحت تطوير منذر السيد." in backend_source
+          assert "identity_answer = \"الموقع تحت تطوير منذر السيد.\"" in backend_source
           assert "width:100%!important" in theme_source
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=32" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=43" in home_source
+          assert "filename='app.js') }}?v=44" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
           assert "filename='chat-enhancements.css') }}?v=1" in home_source
