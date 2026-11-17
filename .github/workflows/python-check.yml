@@ -68,7 +68,7 @@ jobs:
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
-          assert "/static/soft-slate-theme.css?v=11" in home_html
+          assert "/static/soft-slate-theme.css?v=12" in home_html
           assert "/static/app.js?v=44" in home_html
           assert 'class="theme-light"' in home_html
           assert 'id="adminLink"' in home_html and 'id="newChat"' in home_html
