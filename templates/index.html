@@ -52,7 +52,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='mobile-fixes.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='performance.css') }}?v=2">
     <link rel="stylesheet" href="{{ url_for('static', filename='chat-enhancements.css') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='soft-slate-theme.css') }}?v=11">
+    <link rel="stylesheet" href="{{ url_for('static', filename='soft-slate-theme.css') }}?v=12">
 </head>
 
 <body class="theme-light">
@@ -76,6 +76,15 @@
             <span>محادثة جديدة</span>
             <span class="sidebar-shortcut" aria-hidden="true">＋</span>
         </button>
+
+        <div class="sidebar-utility-actions" aria-label="أدوات القائمة">
+            <button class="sidebar-tool" id="clearHistoryButton" type="button">
+                <span class="nav-icon" aria-hidden="true">⌫</span><span>حذف كل المحادثات</span>
+            </button>
+            <button class="sidebar-tool" id="themeToggleButton" type="button" aria-pressed="false">
+                <span class="nav-icon" aria-hidden="true">◐</span><span data-theme-label>الوضع الليلي</span>
+            </button>
+        </div>
 
         <nav class="sidebar-primary-nav" aria-label="التنقل الرئيسي">
             <button class="sidebar-tool" type="button" data-tool="explore" aria-controls="explorePanel" aria-expanded="false">
@@ -179,7 +188,7 @@
 
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=44"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=45"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
