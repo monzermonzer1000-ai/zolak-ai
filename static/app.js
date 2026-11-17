@@ -556,21 +556,99 @@ if (promptBox) {
 
 
 /* =========================================================
-   ZOLAK SIDEBAR CONTROLLER — minimal, explicit actions
+   SIDEBAR CONTROLS — explicit event bindings
 ========================================================= */
 (function bindZolakSidebarControls() {
     if (!sidebar || sidebar.dataset.controllerBound === "1") return;
     sidebar.dataset.controllerBound = "1";
-    sidebar.addEventListener("click", function (event) {
-        const target=event.target instanceof Element?event.target:event.target&&event.target.parentElement;
-        if(!target)return;
-        const newChat=target.closest("#newChat"), exploreButton=target.closest('[data-tool="explore"]'), explorePrompt=target.closest(".explore-prompt[data-explore-prompt]");
-        if(!newChat&&!exploreButton&&!explorePrompt)return;
+    const newChatButton = document.getElementById("newChat");
+    const clearHistoryButton = document.getElementById("clearHistoryButton");
+    const themeToggleButton = document.getElementById("themeToggleButton");
+    const exploreButton = sidebar.querySelector('[data-tool="explore"]');
+
+    if (newChatButton) newChatButton.addEventListener("click", async function (event) {
         event.preventDefault();
-        if(newChat){if(newChat.disabled)return;newChat.disabled=true;createNewConversation().finally(function(){newChat.disabled=false;});closeSidebar();return;}
-        if(exploreButton){const willOpen=Boolean(explorePanel&&explorePanel.hidden);if(explorePanel)explorePanel.hidden=!willOpen;exploreButton.setAttribute("aria-expanded",String(willOpen));return;}
-        if(explorePrompt){if(promptBox){promptBox.value=explorePrompt.dataset.explorePrompt||"";promptBox.focus();promptBox.setSelectionRange(promptBox.value.length,promptBox.value.length);updateComposerMode();}if(explorePanel)explorePanel.hidden=true;const button=sidebar.querySelector('[data-tool="explore"]');if(button)button.setAttribute("aria-expanded","false");closeSidebar();}
-    },true);
-    if(mobileMenu)mobileMenu.addEventListener("click",function(event){event.preventDefault();event.stopPropagation();toggleSidebar();});
-    if(desktopSidebarToggle)desktopSidebarToggle.addEventListener("click",function(event){event.preventDefault();event.stopPropagation();if(window.innerWidth>800)setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));else toggleSidebar();});
+        if (newChatButton.disabled) return;
+        newChatButton.disabled = true;
+        try { await createNewConversation(); }
+        finally { newChatButton.disabled = false; }
+    });
+
+    if (exploreButton) exploreButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        const willOpen = Boolean(explorePanel && explorePanel.hidden);
+        if (explorePanel) explorePanel.hidden = !willOpen;
+        exploreButton.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    sidebar.querySelectorAll(".explore-prompt[data-explore-prompt]").forEach(function (button) {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            if (promptBox) {
+                promptBox.value = button.dataset.explorePrompt || "";
+                promptBox.focus();
+                promptBox.setSelectionRange(promptBox.value.length, promptBox.value.length);
+                updateComposerMode();
+            }
+            if (explorePanel) explorePanel.hidden = true;
+            if (exploreButton) exploreButton.setAttribute("aria-expanded", "false");
+            closeSidebar();
+        });
+    });
+
+    if (clearHistoryButton) clearHistoryButton.addEventListener("click", async function (event) {
+        event.preventDefault();
+        if (clearHistoryButton.disabled) return;
+        if (!window.confirm("متأكد داير تحذف كل محادثاتك؟ الحذف نهائي وما ممكن التراجع عنه.")) return;
+        clearHistoryButton.disabled = true;
+        try {
+            const listResponse = await fetch("/api/conversations");
+            if (listResponse.status === 401) { window.location.href = "/login"; return; }
+            if (!listResponse.ok) throw new Error("تعذر تحميل سجل المحادثات");
+            const data = await listResponse.json();
+            const conversations = Array.isArray(data.conversations) ? data.conversations : [];
+            for (const conversation of conversations) {
+                const response = await fetch("/api/conversations/" + encodeURIComponent(conversation.id), { method: "DELETE" });
+                if (!response.ok) throw new Error("تعذر حذف إحدى المحادثات");
+            }
+            currentConversationId = null;
+            showWelcome(false);
+            addMessage(conversations.length ? "تم حذف سجل المحادثات بالكامل." : "ما عندك محادثات محفوظة للحذف.", "assistant");
+            closeSidebar();
+        } catch (error) {
+            console.error("تعذر مسح سجل المحادثات:", error);
+            addMessage("ما قدرنا نمسح كل المحادثات. حاول تاني.", "assistant");
+        } finally {
+            clearHistoryButton.disabled = false;
+        }
+    });
+
+    function applyTheme(theme) {
+        const dark = theme === "dark";
+        document.body.classList.toggle("theme-dark", dark);
+        document.body.classList.toggle("theme-light", !dark);
+        if (themeToggleButton) {
+            themeToggleButton.setAttribute("aria-pressed", String(dark));
+            const label = themeToggleButton.querySelector("[data-theme-label]");
+            if (label) label.textContent = dark ? "الوضع الفاتح" : "الوضع الليلي";
+        }
+        try { localStorage.setItem("zolak-theme", dark ? "dark" : "light"); } catch (_) {}
+    }
+
+    let savedTheme = "light";
+    try { savedTheme = localStorage.getItem("zolak-theme") === "dark" ? "dark" : "light"; } catch (_) {}
+    applyTheme(savedTheme);
+    if (themeToggleButton) themeToggleButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        applyTheme(document.body.classList.contains("theme-dark") ? "light" : "dark");
+    });
+
+    if (mobileMenu) mobileMenu.addEventListener("click", function (event) {
+        event.preventDefault(); event.stopPropagation(); toggleSidebar();
+    });
+    if (desktopSidebarToggle) desktopSidebarToggle.addEventListener("click", function (event) {
+        event.preventDefault(); event.stopPropagation();
+        if (window.innerWidth > 800) setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
+        else toggleSidebar();
+    });
 })();
