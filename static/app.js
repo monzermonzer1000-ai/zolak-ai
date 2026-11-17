@@ -591,4 +591,3 @@ if (promptBox) {
     if(mobileMenu)mobileMenu.addEventListener("click",function(event){event.preventDefault();event.stopPropagation();toggleSidebar();});
     if(desktopSidebarToggle)desktopSidebarToggle.addEventListener("click",function(event){event.preventDefault();event.stopPropagation();if(window.innerWidth>800)setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));else toggleSidebar();});
 })();
-})();
