@@ -430,7 +430,7 @@ jobs:
           premium_source = open("static/premium-ui.css", encoding="utf-8").read()
           assert "display: flex !important" in premium_source
           assert "theme-light" in home_source
-          assert "أنا زولك AI، مساعدك الذكي، تحت تطوير منذر (FOX)." in backend_source
+          assert "أنا زولك AI، مساعدك الذكي، تحت تطوير منذر (FOX)" in backend_source
           assert "الموقع تحت تطوير منذر السيد." in backend_source
           assert "width:100%!important" in theme_source
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
