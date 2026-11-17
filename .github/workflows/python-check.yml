@@ -395,8 +395,11 @@ jobs:
           assert "pg_advisory_xact_lock(1515148353, 1262766641)" in backend_source
           assert "users.gemini_interaction_id IS NOT NULL" in backend_source
           theme_source = open("static/soft-slate-theme.css", encoding="utf-8").read()
-          assert "--ui-bg:#303844" in theme_source
-          assert "body.theme-dark .app.chatgpt-layout > .main .message.assistant .message-content p" in theme_source
+          assert "--z-bg:#252d38" in theme_source
+          assert "--z-sidebar:#202833" in theme_source
+          assert "background-image:none!important" in theme_source
+          assert "backdrop-filter:none!important" in theme_source
+          assert ".main-chat .message.assistant .message-content *" in theme_source
           assert "pointer-events:auto!important" in theme_source
           assert "plusSubscribe" not in home_source
           assert "homeQuickActions" not in home_source
@@ -416,8 +419,7 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=32" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=36" in home_source
-          assert "filename='mobile-overrides.css') }}?v=1" in home_source
+          assert "filename='app.js') }}?v=37" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
           assert "filename='chat-enhancements.css') }}?v=1" in home_source
