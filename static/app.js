@@ -1,39 +1,5 @@
 "use strict";
 
-/* Persistent light/dark appearance */
-(function initZolakTheme() {
-    const root = document.body;
-    const toggle = document.getElementById("themeToggle");
-    const label = document.getElementById("themeToggleLabel");
-    if (!root) return;
-
-    let theme = root.classList.contains("theme-light") ? "light" : "dark";
-    try {
-        const saved = localStorage.getItem("zolak-theme");
-        if (saved === "light" || saved === "dark") theme = saved;
-    } catch (_) {}
-
-    function applyTheme(nextTheme) {
-        theme = nextTheme === "light" ? "light" : "dark";
-        root.classList.remove("theme-light", "theme-dark");
-        root.classList.add("theme-" + theme);
-        const isDark = theme === "dark";
-        if (toggle) {
-            toggle.setAttribute("aria-pressed", String(isDark));
-            toggle.setAttribute("title", isDark ? "التبديل إلى الوضع النهاري" : "التبديل إلى الوضع الليلي");
-        }
-        if (label) label.textContent = isDark ? "الوضع النهاري" : "الوضع الليلي";
-        const themeMeta = document.querySelector('meta[name="theme-color"]');
-        if (themeMeta) themeMeta.setAttribute("content", isDark ? "#222831" : "#f3f5f7");
-        try { localStorage.setItem("zolak-theme", theme); } catch (_) {}
-    }
-
-    applyTheme(theme);
-    if (toggle) toggle.addEventListener("click", function () {
-        applyTheme(theme === "dark" ? "light" : "dark");
-    });
-})();
-
 /* =========================
    ZOLAK AI — APP
 ========================= */
@@ -50,24 +16,7 @@ const desktopSidebarToggle = document.getElementById("sidebarCollapseButton");
 function setDesktopSidebarCollapsed(collapsed) {
     if (!appShell || window.innerWidth <= 800) return;
     appShell.classList.toggle("sidebar-collapsed", Boolean(collapsed));
-    if (desktopSidebarToggle) {
-        desktopSidebarToggle.setAttribute("aria-expanded", String(!collapsed));
-        desktopSidebarToggle.setAttribute("aria-label", collapsed ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية");
-        desktopSidebarToggle.title = collapsed ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية";
-    }
-    try { localStorage.setItem("zolak-sidebar-collapsed", collapsed ? "1" : "0"); } catch (_) {}
-}
-
-if (appShell && window.innerWidth > 800) {
-    try { setDesktopSidebarCollapsed(localStorage.getItem("zolak-sidebar-collapsed") === "1"); } catch (_) {}
-}
-if (desktopSidebarToggle) {
-    desktopSidebarToggle.addEventListener("click", function () {
-        if (!appShell) return;
-        setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
-    });
-}
-const conversationSearch = document.getElementById("conversationSearch");
+    const conversationSearch = document.getElementById("conversationSearch");
 const pinnedItems = document.getElementById("pinnedItems");
 const sidebarPinnedSection = document.querySelector(".sidebar-pinned");
 const projectsPanel = document.getElementById("projectsPanel");
@@ -91,56 +40,6 @@ if (conversationSearch) {
     });
 }
 
-/* Sidebar actions are delegated from one stable root so dynamically
-   rendered controls remain interactive after panel/list updates. */
-function handleSidebarAction(event) {
-    const tool = event.target.closest(".sidebar-tool[data-tool]");
-    if (tool && sidebar && sidebar.contains(tool)) {
-        const action = tool.dataset.tool;
-        if (action === "projects") {
-            event.preventDefault();
-            if (!projectsPanel) return;
-            projectsPanel.hidden = !projectsPanel.hidden;
-            if (explorePanel) explorePanel.hidden = true;
-            if (!projectsPanel.hidden) loadProjects();
-            return;
-        }
-        if (action === "explore") {
-            event.preventDefault();
-            if (!explorePanel) return;
-            explorePanel.hidden = !explorePanel.hidden;
-            if (projectsPanel) projectsPanel.hidden = true;
-            return;
-        }
-        if (action === "images" || action === "library") {
-            event.preventDefault();
-            const picker = document.getElementById("attachmentInput");
-            if (!picker) {
-                showSidebarNotice("خيار إرفاق الملفات غير متاح حالياً.");
-                return;
-            }
-            const previousAccept = picker.accept;
-            picker.accept = action === "images" ? "image/*" : "image/*,.pdf,.docx,.txt,.md,.csv";
-            const restorePicker = function () { picker.accept = previousAccept; };
-            window.addEventListener("focus", restorePicker, { once: true });
-            picker.click();
-            return;
-        }
-    }
-
-    const exploreButton = event.target.closest(".explore-prompt[data-explore-prompt]");
-    if (exploreButton && sidebar && sidebar.contains(exploreButton)) {
-        event.preventDefault();
-        if (!promptBox) return;
-        promptBox.value = exploreButton.dataset.explorePrompt || "";
-        promptBox.focus();
-        promptBox.setSelectionRange(promptBox.value.length, promptBox.value.length);
-        if (explorePanel) explorePanel.hidden = true;
-        updateComposerMode();
-    }
-}
-if (sidebar) sidebar.addEventListener("click", handleSidebarAction);
-
 async function createProjectFromSidebar() {
     const name = window.prompt("اكتب اسم المشروع الجديد:");
     if (name === null || !name.trim()) return;
@@ -163,18 +62,6 @@ async function createProjectFromSidebar() {
         showSidebarNotice("حصل خطأ أثناء إنشاء المشروع.");
     }
 }
-if (sidebar) sidebar.addEventListener("click", function (event) {
-    if (event.target.closest("#createProjectButton")) {
-        event.preventDefault();
-        createProjectFromSidebar();
-    } else if (event.target.closest("#allConversationsButton")) {
-        event.preventDefault();
-        currentProjectId = null;
-        updateProjectFilterState();
-        loadConversations();
-    }
-});
-
 if (projectPickerModal) {
     const cancelPicker = document.getElementById("projectPickerCancel");
     const savePicker = document.getElementById("projectPickerSave");
@@ -262,19 +149,6 @@ function toggleSidebar() {
     } else {
         openSidebar();
     }
-}
-
-if (mobileMenu) {
-    mobileMenu.setAttribute("aria-expanded", "false");
-    mobileMenu.setAttribute("aria-label", "فتح القائمة");
-
-    mobileMenu.addEventListener("click", function (event) {
-        event.preventDefault();
-
-        if (window.innerWidth <= 800) {
-            toggleSidebar();
-        }
-    });
 }
 
 if (sidebarOverlay) {
@@ -1393,8 +1267,8 @@ if (promptBox) {
    bubbling listeners. Only handles the primary sidebar controls.
 ========================================================= */
 (function bindZolakSidebarControls() {
-    if (document.documentElement.dataset.zolakSidebarController === "v1") return;
-    document.documentElement.dataset.zolakSidebarController = "v1";
+    if (document.documentElement.dataset.zolakSidebarController === "v2") return;
+    document.documentElement.dataset.zolakSidebarController = "v2";
 
     function closestFromEvent(event, selector) {
         const target = event.target instanceof Element ? event.target : event.target && event.target.parentElement;
@@ -1415,8 +1289,12 @@ if (promptBox) {
         }
         if (label) label.textContent = dark ? "الوضع النهاري" : "الوضع الليلي";
         const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.content = dark ? "#343e4b" : "#ffffff";
+        if (meta) meta.content = dark ? "#303844" : "#f4f6f8";
     }
+
+    let initialTheme = document.body.classList.contains("theme-light") ? "light" : "dark";
+    try { const savedTheme = localStorage.getItem("zolak-theme"); if (savedTheme === "light" || savedTheme === "dark") initialTheme = savedTheme; } catch (_) {}
+    applyTheme(initialTheme);
 
     document.addEventListener("click", function (event) {
         const newChat = closestFromEvent(event, "#newChat");
@@ -1470,7 +1348,7 @@ if (promptBox) {
             return;
         }
 
-        if (createProject) { createProjectFromSidebar(); return; }
+        if (createProject) { createProjectFromSidebar().catch(function (error) { console.error(error); showSidebarNotice("تعذر إنشاء المشروع."); }); return; }
         if (allChats) {
             currentProjectId = null;
             updateProjectFilterState();
@@ -1489,7 +1367,7 @@ if (promptBox) {
             return;
         }
         if (collapse) {
-            if (appShell) setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
+            if (appShell && window.innerWidth > 800) setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
             return;
         }
         if (mobile) toggleSidebar();
