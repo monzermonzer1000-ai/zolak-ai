@@ -87,6 +87,14 @@ jobs:
           assert "function handleDesktopSidebarToggleClick" in sidebar_js
           assert "zolakClickBound" in sidebar_js
           assert "bindZolakSidebarControls();" in sidebar_js
+          assert "function showTypingIndicator()" in sidebar_js
+          assert "function removeTypingIndicator()" in sidebar_js
+          assert "showTypingIndicator();" in sidebar_js
+          assert "removeTypingIndicator();" in sidebar_js
+          assert "response.body.getReader" in sidebar_js
+          assert 'eventName==="token"' in sidebar_js
+          assert "typing-message" in sidebar_js
+          assert "typing-dots" in sidebar_js
           assert "createNewConversation" in sidebar_js
           assert 'sendButton.addEventListener("click", sendMessage)' in sidebar_js
           for removed in ("attachmentInput", "attachmentPreview", "composerAdd", "loadConversations", "selectedAttachments", "fileToPayload"):
