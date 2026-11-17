@@ -70,3 +70,29 @@ body>.app.chatgpt-layout{display:flex!important;flex-direction:row!important;ali
 .code-block .token-function{color:#6941c6!important}
 .code-block .token-punctuation{color:#344054!important}
 .message.user .message-content{color:#172334!important;background:#eaf2fb!important;border:1px solid #cdddf0!important}
+
+
+/* Sidebar utility controls and persistent dark theme */
+.sidebar-utility-actions{display:grid;gap:5px;padding:7px 0;border-bottom:1px solid var(--z-border)}
+.sidebar-utility-actions .sidebar-tool{min-height:40px}
+.sidebar-utility-actions button:disabled{opacity:.55!important;cursor:wait!important}
+body.theme-dark{color-scheme:dark;--z-bg:#111827;--z-surface:#1f2937;--z-surface-2:#273449;--z-sidebar:#182232;--z-text:#e5edf7;--z-muted:#a8b5c7;--z-border:#39485d;--z-accent:#5b9ce0;--z-shadow:0 10px 28px rgba(0,0,0,.25);background:#111827!important;color:#e5edf7!important}
+body.theme-dark>.app.chatgpt-layout,body.theme-dark .app.chatgpt-layout>.main.main-chat{background:#111827!important;color:#e5edf7!important}
+body.theme-dark .app.chatgpt-layout>.sidebar,body.theme-dark .sidebar-bottom,body.theme-dark .main-chat>.topbar,body.theme-dark .main-chat>.chat-navbar,body.theme-dark .composer,body.theme-dark .composer-area{background:#182232!important;color:#e5edf7!important;border-color:#39485d!important}
+body.theme-dark .sidebar-tool,body.theme-dark .sidebar-link,body.theme-dark .explore-prompt,body.theme-dark .home-icon-button,body.theme-dark .sidebar-collapse-toggle{color:#e5edf7!important}
+body.theme-dark .sidebar-tool:hover,body.theme-dark .sidebar-link:hover,body.theme-dark .explore-prompt:hover,body.theme-dark .sidebar-link.active{background:#273449!important;border-color:#39485d!important}
+body.theme-dark .account-box,body.theme-dark .sidebar-explore,body.theme-dark .composer-inner{background:#202d40!important;border-color:#39485d!important}
+body.theme-dark .welcome-screen,body.theme-dark .message.assistant .message-content{background:#1b2738!important;color:#e5edf7!important;border-color:#39485d!important}
+body.theme-dark .welcome-screen h1,body.theme-dark .welcome-screen p,body.theme-dark .message.assistant .message-content,body.theme-dark .message.assistant .message-content *{color:#e5edf7!important}
+body.theme-dark #prompt{color:#e5edf7!important;-webkit-text-fill-color:#e5edf7!important}
+body.theme-dark #prompt::placeholder{color:#a8b5c7!important;-webkit-text-fill-color:#a8b5c7!important}
+body.theme-dark .message.user .message-content{background:#243b56!important;color:#e5edf7!important;border-color:#405b78!important}
+body.theme-dark .code-block{background:#111c2b!important;color:#e5edf7!important;border-color:#39485d!important}
+body.theme-dark .code-toolbar{background:#202d40!important;color:#e5edf7!important;border-color:#39485d!important}
+body.theme-dark .code-copy{background:#273449!important;color:#e5edf7!important;border-color:#52647b!important}
+body.theme-dark .code-block pre,body.theme-dark .code-block code{color:#e5edf7!important}
+body.theme-dark .code-block .token-comment{color:#a8b5c7!important}
+body.theme-dark .code-block .token-string{color:#6ee7b7!important}
+body.theme-dark .code-block .token-number{color:#93c5fd!important}
+body.theme-dark .code-block .token-keyword{color:#fda4af!important}
+body.theme-dark .code-block .token-function{color:#c4b5fd!important}
