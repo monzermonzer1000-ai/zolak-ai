@@ -65,3 +65,36 @@ body.theme-dark .app.chatgpt-layout>.main.main-chat #send{color:#172536!importan
 .app.chatgpt-layout>.main.main-chat .mobile-brand{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important}
 .app.chatgpt-layout>.main.main-chat .mobile-brand-logo{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:34px!important;height:34px!important;flex:0 0 34px!important;border-radius:10px!important;background:var(--z-accent)!important;color:#fff!important;font-weight:800!important}
 body.theme-dark .app.chatgpt-layout>.main.main-chat .mobile-brand-logo{color:#172536!important}
+
+/* Sidebar hierarchy v2 — compact, readable, opaque surfaces */
+.app.chatgpt-layout>.sidebar{gap:9px!important;padding:18px 13px 12px!important}
+.app.chatgpt-layout>.sidebar .sidebar-brand{display:flex!important;align-items:center!important;gap:11px!important}
+.app.chatgpt-layout>.sidebar .sidebar-brand-mark{display:grid!important;place-items:center!important;width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:13px!important;background:var(--z-accent)!important;color:#fff!important;font-size:20px!important;font-weight:900!important}
+body.theme-dark .app.chatgpt-layout>.sidebar .sidebar-brand-mark{color:#172536!important}
+.app.chatgpt-layout>.sidebar .sidebar-brand-copy{min-width:0!important}
+.app.chatgpt-layout>.sidebar .sidebar-primary-nav{display:grid!important;gap:5px!important;flex:0 0 auto!important;padding:2px 0 7px!important;border-bottom:1px solid var(--z-border)!important}
+.app.chatgpt-layout>.sidebar .sidebar-primary-nav .sidebar-tool{min-height:43px!important;padding:9px 11px!important}
+.app.chatgpt-layout>.sidebar .sidebar-primary-nav .sidebar-tool svg,.app.chatgpt-layout>.sidebar .sidebar-utility svg{width:19px!important;height:19px!important;flex:0 0 19px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.app.chatgpt-layout>.sidebar .sidebar-nav-chevron{margin-inline-start:auto!important;color:var(--z-muted)!important;font-size:20px!important;line-height:1!important;transition:transform .18s ease!important}
+.app.chatgpt-layout>.sidebar .sidebar-tool[aria-expanded="true"] .sidebar-nav-chevron{transform:rotate(-90deg)!important}
+.app.chatgpt-layout>.sidebar .sidebar-section-heading{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:8px!important;flex:0 0 auto!important;padding:3px 5px 0!important;color:var(--z-text)!important;font-size:13px!important;font-weight:800!important}
+.app.chatgpt-layout>.sidebar .sidebar-section-caption{color:var(--z-muted)!important;font-size:10px!important;font-weight:500!important}
+.app.chatgpt-layout>.sidebar .sidebar-search-wrap{display:flex!important;align-items:center!important;gap:8px!important;min-height:40px!important;padding:0 10px!important;border:1px solid var(--z-border)!important;border-radius:10px!important;background:var(--z-surface-2)!important;color:var(--z-muted)!important}
+.app.chatgpt-layout>.sidebar .sidebar-search-wrap svg{width:17px!important;height:17px!important;flex:0 0 17px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important}
+.app.chatgpt-layout>.sidebar .sidebar-search-wrap .sidebar-search{min-width:0!important;min-height:36px!important;padding:6px 0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+.app.chatgpt-layout>.sidebar .sidebar-history{flex:1 1 auto!important;min-height:60px!important;overflow-y:auto!important;overscroll-behavior:contain!important}
+.app.chatgpt-layout>.sidebar .sidebar-bottom{display:flex!important;flex:0 0 auto!important;flex-direction:column!important;gap:8px!important;padding-top:9px!important}
+.app.chatgpt-layout>.sidebar .sidebar-account-links{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;margin:0!important;padding:0!important}
+.app.chatgpt-layout>.sidebar .sidebar-utility{justify-content:center!important;gap:6px!important;min-width:0!important;min-height:38px!important;padding:6px 4px!important;font-size:11px!important;white-space:nowrap!important}
+.app.chatgpt-layout>.sidebar .sidebar-utility span{overflow:hidden!important;text-overflow:ellipsis!important}
+.app.chatgpt-layout>.sidebar .account-box{min-height:54px!important;margin:0!important}
+.app.chatgpt-layout>.sidebar .sidebar-footer-links{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;padding-top:5px!important;border-top:1px solid var(--z-border)!important}
+.app.chatgpt-layout>.sidebar .sidebar-footer-links .sidebar-link{min-width:0!important;min-height:34px!important;padding:7px 8px!important;font-size:12px!important}
+.app.chatgpt-layout>.sidebar .sidebar-footer-links .sidebar-link[hidden]{display:none!important}
+.app.chatgpt-layout>.sidebar .sidebar-projects,.app.chatgpt-layout>.sidebar .sidebar-explore{flex:0 0 auto!important;max-height:32vh!important;overflow:auto!important;padding:7px!important;border:1px solid var(--z-border)!important;border-radius:11px!important;background:var(--z-surface-2)!important}
+.app.chatgpt-layout>.sidebar .sidebar-tool,.app.chatgpt-layout>.sidebar .sidebar-link,.app.chatgpt-layout>.sidebar .project-filter,.app.chatgpt-layout>.sidebar .explore-prompt{transition:background-color .16s ease,border-color .16s ease,transform .16s ease,color .16s ease!important}
+.app.chatgpt-layout>.sidebar .sidebar-tool:active,.app.chatgpt-layout>.sidebar .sidebar-link:active,.app.chatgpt-layout>.sidebar .explore-prompt:active{transform:scale(.985)!important}
+.app.chatgpt-layout>.sidebar .sidebar-new-chat{justify-content:flex-start!important;gap:10px!important;min-height:48px!important;box-shadow:0 5px 14px rgba(35,100,160,.14)!important}
+.app.chatgpt-layout>.sidebar .sidebar-new-chat svg{width:19px!important;height:19px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important}
+.app.chatgpt-layout>.sidebar .sidebar-shortcut{margin-inline-start:auto!important;opacity:.8!important}
+@media(max-width:800px){.app.chatgpt-layout>.sidebar{gap:8px!important;padding:15px 12px 12px!important}.app.chatgpt-layout>.sidebar .sidebar-history{min-height:80px!important}.app.chatgpt-layout>.sidebar .sidebar-bottom{padding-bottom:max(4px,env(safe-area-inset-bottom))!important}}
