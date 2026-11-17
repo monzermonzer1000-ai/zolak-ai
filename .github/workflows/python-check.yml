@@ -68,7 +68,7 @@ jobs:
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
-          assert "/static/soft-slate-theme.css?v=10" in home_html
+          assert "/static/soft-slate-theme.css?v=11" in home_html
           assert "/static/app.js?v=44" in home_html
           assert 'class="theme-light"' in home_html
           assert 'id="adminLink"' in home_html and 'id="newChat"' in home_html
@@ -89,7 +89,7 @@ jobs:
           assert "backdrop-filter:none!important" in sidebar_css
           assert "background:#fff!important" in sidebar_css
           assert "theme-dark" not in sidebar_css
-          assert "zolak-ai-assets-v53" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v54" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -419,6 +419,8 @@ jobs:
           assert "background-image:none!important" in theme_source
           assert "backdrop-filter:none!important" in theme_source
           assert "theme-dark" not in theme_source
+          assert ".code-block{background:#f8fafc!important}" in theme_source
+          assert "background:transparent!important;backdrop-filter:none!important" in theme_source
           assert ".message.assistant .message-content *" in theme_source
           assert "pointer-events:auto!important" in theme_source
           assert "plusSubscribe" not in home_source
