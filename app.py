@@ -1250,93 +1250,117 @@ def chat():
                 "عند سؤال المستخدم عن المطوّر تكون إجابة المطوّر المحددة هي الأولوية."
             )
 
-            from google import genai
-            from google.genai import types
+            normalized_question = re.sub(r"[\\u064b-\\u065f\\u0670]", "", message.strip().lower())
+            normalized_question = normalized_question.translate(str.maketrans({"أ": "ا", "إ": "ا", "آ": "ا", "ى": "ي"}))
+            normalized_question = re.sub(r"[؟?!.,،؛:]+", " ", normalized_question)
+            normalized_question = re.sub(r"\\s+", " ", normalized_question).strip()
 
-            client = genai.Client(
-                api_key=api_key,
-                http_options=types.HttpOptions(
-                    timeout=12000,
-                    retry_options=types.HttpRetryOptions(
-                        attempts=1,
-                        initial_delay=0.8,
-                        max_delay=2.0,
-                        exp_base=2.0,
-                        jitter=0.2,
-                        http_status_codes=[500, 502, 503, 504]
-                    )
-                )
+            developer_phrases = (
+                "من طورك", "من المطور", "من المطوّر", "من هو المطور",
+                "من هو المطوّر", "تحت تطوير منو", "من قام بتطويرك",
+                "من المسؤول عن تطويرك", "من المطور بتاعك"
             )
-
-            model = setting("ai_model", "gemini-3.5-flash-lite").strip()
-            if not model.startswith("gemini-"):
-                model = "gemini-3.5-flash-lite"
-
-            contents = []
-            for row in reversed(history_rows):
-                role = "user" if row["role"] == "user" else "model"
-                contents.append(types.Content(
-                    role=role,
-                    parts=[types.Part.from_text(text=row["content"])]
-                ))
-
-            user_parts = []
-            if message:
-                user_parts.append(types.Part.from_text(text=message))
-            for attachment in attachments:
-                if attachment["text"] is not None:
-                    user_parts.append(types.Part.from_text(
-                        text="\n\nمحتوى الملف " + attachment["name"] + ":\n" + attachment["text"]
-                    ))
-                else:
-                    user_parts.append(types.Part.from_bytes(
-                        data=attachment["data"],
-                        mime_type=attachment["mime_type"]
-                    ))
-            contents.append(types.Content(role="user", parts=user_parts))
-
-            generation_config = types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                thinking_config=types.ThinkingConfig(thinking_level="LOW"),
-                max_output_tokens=1536
+            identity_phrases = (
+                "عرفني عليك", "عرفنا عليك", "من انت", "من تكون",
+                "من هو زولك", "عرف نفسك"
             )
+            identity_answer = None
+            if any(phrase in normalized_question for phrase in developer_phrases):
+                identity_answer = "الموقع تحت تطوير منذر السيد."
+            elif any(phrase in normalized_question for phrase in identity_phrases):
+                identity_answer = "أنا زولك AI، مساعدك الذكي، تحت تطوير منذر (FOX)"
 
             yield emit("meta", {"conversation_id": conversation_id})
-
-            try:
-                # Stream each Gemini chunk to the browser as soon as it arrives.
-                app.logger.info("AI streaming started (model=%s)", model)
-                for chunk in client.models.generate_content_stream(
-                    model=model, contents=contents, config=generation_config
-                ):
-                    piece = getattr(chunk, "text", None) or ""
-                    if piece:
-                        stream_started = True
-                        answer_parts.append(piece)
-                        yield emit("token", {"text": piece})
-                app.logger.info("AI streaming completed (model=%s)", model)
-            except Exception as primary_error:
-                error_text = str(primary_error).upper()
-                temporary = any(marker in error_text for marker in (
-                    "503", "UNAVAILABLE", "HIGH DEMAND", "MODEL_OVERLOADED",
-                    "429", "RESOURCE_EXHAUSTED"
-                ))
-                fallback_model = os.getenv(
-                    "GEMINI_FALLBACK_MODEL", "gemini-3.8-flash"
-                ).strip()
-                if stream_started or not temporary or not fallback_model.startswith("gemini-") or fallback_model == model:
-                    raise
-                app.logger.warning("Primary Gemini stream unavailable; trying fallback model %s", fallback_model)
-                for chunk in client.models.generate_content_stream(
-                    model=fallback_model, contents=contents, config=generation_config
-                ):
-                    piece = getattr(chunk, "text", None) or ""
-                    if piece:
-                        stream_started = True
-                        answer_parts.append(piece)
-                        yield emit("token", {"text": piece})
-                app.logger.info("AI fallback streaming completed (model=%s)", fallback_model)
-
+            if identity_answer:
+                answer_parts.append(identity_answer)
+                yield emit("token", {"text": identity_answer})
+            else:
+                    from google import genai
+                    from google.genai import types
+        
+                    client = genai.Client(
+                        api_key=api_key,
+                        http_options=types.HttpOptions(
+                            timeout=12000,
+                            retry_options=types.HttpRetryOptions(
+                                attempts=1,
+                                initial_delay=0.8,
+                                max_delay=2.0,
+                                exp_base=2.0,
+                                jitter=0.2,
+                                http_status_codes=[500, 502, 503, 504]
+                            )
+                        )
+                    )
+        
+                    model = setting("ai_model", "gemini-3.5-flash-lite").strip()
+                    if not model.startswith("gemini-"):
+                        model = "gemini-3.5-flash-lite"
+        
+                    contents = []
+                    for row in reversed(history_rows):
+                        role = "user" if row["role"] == "user" else "model"
+                        contents.append(types.Content(
+                            role=role,
+                            parts=[types.Part.from_text(text=row["content"])]
+                        ))
+        
+                    user_parts = []
+                    if message:
+                        user_parts.append(types.Part.from_text(text=message))
+                    for attachment in attachments:
+                        if attachment["text"] is not None:
+                            user_parts.append(types.Part.from_text(
+                                text="\n\nمحتوى الملف " + attachment["name"] + ":\n" + attachment["text"]
+                            ))
+                        else:
+                            user_parts.append(types.Part.from_bytes(
+                                data=attachment["data"],
+                                mime_type=attachment["mime_type"]
+                            ))
+                    contents.append(types.Content(role="user", parts=user_parts))
+        
+                    generation_config = types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        thinking_config=types.ThinkingConfig(thinking_level="LOW"),
+                        max_output_tokens=1536
+                    )
+        
+                    try:
+                        # Stream each Gemini chunk to the browser as soon as it arrives.
+                        app.logger.info("AI streaming started (model=%s)", model)
+                        for chunk in client.models.generate_content_stream(
+                            model=model, contents=contents, config=generation_config
+                        ):
+                            piece = getattr(chunk, "text", None) or ""
+                            if piece:
+                                stream_started = True
+                                answer_parts.append(piece)
+                                yield emit("token", {"text": piece})
+                        app.logger.info("AI streaming completed (model=%s)", model)
+                    except Exception as primary_error:
+                        error_text = str(primary_error).upper()
+                        temporary = any(marker in error_text for marker in (
+                            "503", "UNAVAILABLE", "HIGH DEMAND", "MODEL_OVERLOADED",
+                            "429", "RESOURCE_EXHAUSTED"
+                        ))
+                        fallback_model = os.getenv(
+                            "GEMINI_FALLBACK_MODEL", "gemini-3.8-flash"
+                        ).strip()
+                        if stream_started or not temporary or not fallback_model.startswith("gemini-") or fallback_model == model:
+                            raise
+                        app.logger.warning("Primary Gemini stream unavailable; trying fallback model %s", fallback_model)
+                        for chunk in client.models.generate_content_stream(
+                            model=fallback_model, contents=contents, config=generation_config
+                        ):
+                            piece = getattr(chunk, "text", None) or ""
+                            if piece:
+                                stream_started = True
+                                answer_parts.append(piece)
+                                yield emit("token", {"text": piece})
+                        app.logger.info("AI fallback streaming completed (model=%s)", fallback_model)
+        
+        
             answer = "".join(answer_parts).strip()
             if not answer:
                 yield emit("error", {"error": "وصلنا رد فارغ من خدمة الذكاء الاصطناعي. جرّب تاني."})
