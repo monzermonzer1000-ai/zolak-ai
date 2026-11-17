@@ -433,7 +433,7 @@ jobs:
           assert "background-image:none!important" in theme_source
           assert "backdrop-filter:none!important" in theme_source
           assert "theme-dark" not in theme_source
-          assert ".code-block{background:#f8fafc!important}" in theme_source
+          assert ".code-block{background:#f8fafc!important;border:" in theme_source
           assert "background:transparent!important;backdrop-filter:none!important" in theme_source
           assert ".message.assistant .message-content *" in theme_source
           assert "pointer-events:auto!important" in theme_source
