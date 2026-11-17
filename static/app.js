@@ -16,7 +16,18 @@ const desktopSidebarToggle = document.getElementById("sidebarCollapseButton");
 function setDesktopSidebarCollapsed(collapsed) {
     if (!appShell || window.innerWidth <= 800) return;
     appShell.classList.toggle("sidebar-collapsed", Boolean(collapsed));
-    const conversationSearch = document.getElementById("conversationSearch");
+    if (desktopSidebarToggle) {
+        desktopSidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+        desktopSidebarToggle.setAttribute("aria-label", collapsed ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية");
+        desktopSidebarToggle.title = collapsed ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية";
+    }
+    try { localStorage.setItem("zolak-sidebar-collapsed", collapsed ? "1" : "0"); } catch (_) {}
+}
+
+if (appShell && window.innerWidth > 800) {
+    try { setDesktopSidebarCollapsed(localStorage.getItem("zolak-sidebar-collapsed") === "1"); } catch (_) {}
+}
+const conversationSearch = document.getElementById("conversationSearch");
 const pinnedItems = document.getElementById("pinnedItems");
 const sidebarPinnedSection = document.querySelector(".sidebar-pinned");
 const projectsPanel = document.getElementById("projectsPanel");
