@@ -56,3 +56,17 @@ body>.app.chatgpt-layout{display:flex!important;flex-direction:row!important;ali
 @media(min-width:801px){.mobile-menu{display:none!important}}
 @media(max-width:800px){.sidebar-collapse-toggle{display:none!important}.mobile-menu{display:inline-flex!important}body>.app.chatgpt-layout{display:flex!important}.app.chatgpt-layout>.sidebar{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:auto!important;z-index:100!important;flex:0 0 auto!important;width:min(320px,88vw)!important;min-width:0!important;max-width:88vw!important;height:100dvh!important;padding:15px 12px!important;overflow-y:auto!important;background:#fff!important;transform:translate3d(105%,0,0)!important;transition:transform .22s ease!important;box-shadow:-10px 0 28px rgba(20,35,55,.12)!important}.app.chatgpt-layout>.sidebar.open{transform:translate3d(0,0,0)!important}.app.chatgpt-layout>.main.main-chat{width:100%!important;max-width:none!important}.main-chat>.topbar{min-height:54px!important;padding:6px 12px!important}.app.chatgpt-layout.sidebar-collapsed>.sidebar{width:min(320px,88vw)!important;min-width:0!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+/* Keep code samples readable without a dark code-editor surface. */
+.code-block{background:#f8fafc!important;border:1px solid #d8e0e9!important;color:#263548!important}
+.code-toolbar{background:#edf2f7!important;border-bottom:1px solid #d8e0e9!important;color:#344054!important}
+.code-copy{color:#344054!important;background:#fff!important;border:1px solid #cbd5e1!important}
+.code-copy:hover{background:#f1f5f9!important}
+.code-block pre,.code-block code{color:#263548!important;background:transparent!important}
+.code-block .token-comment{color:#667085!important}
+.code-block .token-string{color:#067647!important}
+.code-block .token-number{color:#175cd3!important}
+.code-block .token-keyword{color:#b42318!important;font-weight:700}
+.code-block .token-function{color:#6941c6!important}
+.code-block .token-punctuation{color:#344054!important}
+.message.user .message-content{color:#172334!important;background:#eaf2fb!important;border:1px solid #cdddf0!important}
