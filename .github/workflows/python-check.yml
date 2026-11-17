@@ -69,14 +69,14 @@ jobs:
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
           assert "/static/premium-ui.css?v=1" in home_html
-          assert "/static/soft-slate-theme.css?v=5" in home_html
+          assert "/static/soft-slate-theme.css?v=6" in home_html
           assert "theme if theme in ['light', 'dark'] else 'dark'" in open("templates/index.html", encoding="utf-8").read()
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
-          assert "zolak-ai-assets-v44" in client.get("/sw.js").get_data(as_text=True)
-          assert "/static/soft-slate-theme.css?v=5" in home_html
-          assert "/static/app.js?v=36" in home_html
+          assert "zolak-ai-assets-v45" in client.get("/sw.js").get_data(as_text=True)
+          assert "/static/soft-slate-theme.css?v=6" in home_html
+          assert "/static/app.js?v=37" in home_html
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -389,6 +389,9 @@ jobs:
           assert "highlightCodeElement" in app_source
           assert "getConversationDateGroup" in app_source
           assert "bindZolakSidebarControls" in app_source
+          assert "zolakSidebarController === \"v2\"" in app_source
+          assert "handleSidebarAction" not in app_source
+          assert "sidebar.addEventListener(\"click\"" not in app_source
           assert "createProjectFromSidebar" in app_source
           assert "document.addEventListener(\"click\"" in app_source
           backend_source = open("app.py", encoding="utf-8").read()
