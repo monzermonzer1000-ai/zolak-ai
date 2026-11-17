@@ -1071,6 +1071,20 @@ def chat():
 
     data = request.get_json(silent=True) or {}
     message = str(data.get("message", "")).strip()
+    normalized_question = re.sub(r"[\u064b-\u065f\u0670]", "", message.strip().lower())
+    normalized_question = normalized_question.translate(str.maketrans({"أ": "ا", "إ": "ا", "آ": "ا", "ى": "ي"}))
+    normalized_question = re.sub(r"[؟?!.,،؛:]+", " ", normalized_question)
+    normalized_question = re.sub(r"\s+", " ", normalized_question).strip()
+    developer_phrases = (
+        "من طورك", "من المطور", "تحت تطوير منو", "من قام بتطويرك",
+        "من المسؤول عن تطويرك", "من المطور بتاعك"
+    )
+    identity_phrases = ("عرفني عليك", "عرفنا عليك", "من انت", "من تكون", "من هو زولك", "عرف نفسك")
+    identity_answer = None
+    if any(phrase in normalized_question for phrase in developer_phrases):
+        identity_answer = "الموقع تحت تطوير منذر السيد."
+    elif any(phrase in normalized_question for phrase in identity_phrases):
+        identity_answer = "أنا زولك AI، مساعدك الذكي، تحت تطوير منذر (FOX)"
     raw_attachments = data.get("attachments") or []
 
     if not isinstance(raw_attachments, list) or len(raw_attachments) > 4:
@@ -1173,7 +1187,7 @@ def chat():
         session.clear()
         return jsonify(error="سجل دخولك من جديد."), 401
 
-    if user["credits"] <= 0:
+    if user["credits"] <= 0 and not identity_answer:
         c.close()
         return jsonify(error="رصيدك المجاني خلص. قريباً نضيف باقات زولك بلس ❤️"), 402
 
@@ -1209,7 +1223,7 @@ def chat():
         c.commit()
 
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if not api_key:
+    if not api_key and not identity_answer:
         c.close()
         return jsonify(error="مفتاح Gemini غير مضاف. راجع إعدادات الاستضافة."), 503
 
@@ -1250,31 +1264,14 @@ def chat():
                 "عند سؤال المستخدم عن المطوّر تكون إجابة المطوّر المحددة هي الأولوية."
             )
 
-            normalized_question = re.sub(r"[\\u064b-\\u065f\\u0670]", "", message.strip().lower())
-            normalized_question = normalized_question.translate(str.maketrans({"أ": "ا", "إ": "ا", "آ": "ا", "ى": "ي"}))
-            normalized_question = re.sub(r"[؟?!.,،؛:]+", " ", normalized_question)
-            normalized_question = re.sub(r"\\s+", " ", normalized_question).strip()
-
-            developer_phrases = (
-                "من طورك", "من المطور", "من المطوّر", "من هو المطور",
-                "من هو المطوّر", "تحت تطوير منو", "من قام بتطويرك",
-                "من المسؤول عن تطويرك", "من المطور بتاعك"
-            )
-            identity_phrases = (
-                "عرفني عليك", "عرفنا عليك", "من انت", "من تكون",
-                "من هو زولك", "عرف نفسك"
-            )
-            identity_answer = None
-            if any(phrase in normalized_question for phrase in developer_phrases):
-                identity_answer = "الموقع تحت تطوير منذر السيد."
-            elif any(phrase in normalized_question for phrase in identity_phrases):
-                identity_answer = "أنا زولك AI، مساعدك الذكي، تحت تطوير منذر (FOX)"
-
             yield emit("meta", {"conversation_id": conversation_id})
             if identity_answer:
                 answer_parts.append(identity_answer)
                 yield emit("token", {"text": identity_answer})
             else:
+                    if not api_key:
+                        yield emit("error", {"error": "مفتاح Gemini غير مضاف. راجع إعدادات الاستضافة."})
+                        return
                     from google import genai
                     from google.genai import types
         
@@ -1369,14 +1366,15 @@ def chat():
             app.logger.info("AI generation completed; opening database connection to save reply")
             save_conn = db()
             app.logger.info("AI reply database connection opened")
-            result = save_conn.execute("""
-                UPDATE users SET credits = credits - 1
-                WHERE id = ? AND credits > 0
-            """, (user_id,))
-            if result.rowcount != 1:
-                save_conn.rollback()
-                yield emit("error", {"error": "رصيدك ما كفاية لإرسال رسالة جديدة."})
-                return
+            if not identity_answer:
+                result = save_conn.execute("""
+                    UPDATE users SET credits = credits - 1
+                    WHERE id = ? AND credits > 0
+                """, (user_id,))
+                if result.rowcount != 1:
+                    save_conn.rollback()
+                    yield emit("error", {"error": "رصيدك ما كفاية لإرسال رسالة جديدة."})
+                    return
 
             if save_history:
                 save_conn.execute("""
