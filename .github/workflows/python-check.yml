@@ -79,14 +79,16 @@ jobs:
               assert removed not in home_html
           sidebar_js = open("static/app.js", encoding="utf-8").read()
           assert "bindZolakSidebarControls" in sidebar_js
+          assert "function handleNewChatClick" in sidebar_js
+          assert "function handleClearHistoryClick" in sidebar_js
+          assert "function handleThemeToggleClick" in sidebar_js
+          assert "function handleExploreClick" in sidebar_js
+          assert "function handleMobileMenuClick" in sidebar_js
+          assert "function handleDesktopSidebarToggleClick" in sidebar_js
+          assert "zolakClickBound" in sidebar_js
+          assert "bindZolakSidebarControls();" in sidebar_js
           assert "createNewConversation" in sidebar_js
-          assert 'newChatButton.addEventListener("click"' in sidebar_js
-          assert 'clearHistoryButton.addEventListener("click"' in sidebar_js
-          assert 'themeToggleButton.addEventListener("click"' in sidebar_js
-          assert 'exploreButton.addEventListener("click"' in sidebar_js
           assert 'sendButton.addEventListener("click", sendMessage)' in sidebar_js
-          assert 'mobileMenu.addEventListener("click"' in sidebar_js
-          assert 'desktopSidebarToggle.addEventListener("click"' in sidebar_js
           for removed in ("attachmentInput", "attachmentPreview", "composerAdd", "loadConversations", "selectedAttachments", "fileToPayload"):
               assert removed not in sidebar_js
           sidebar_css = open("static/soft-slate-theme.css", encoding="utf-8").read()
@@ -428,12 +430,7 @@ jobs:
           assert 'const explorePanel = document.getElementById("explorePanel")' in app_source
           assert "refreshAccount();" in app_source
           assert "createNewConversation" in app_source
-          assert 'newChatButton.addEventListener("click"' in app_source
-          assert 'clearHistoryButton.addEventListener("click"' in app_source
-          assert 'themeToggleButton.addEventListener("click"' in app_source
-          assert 'exploreButton.addEventListener("click"' in app_source
           assert 'sendButton.addEventListener("click", sendMessage)' in app_source
-          assert 'sidebar.addEventListener("click"' in app_source
           assert "loadConversations" not in app_source
           backend_source = open("app.py", encoding="utf-8").read()
           assert "pg_advisory_xact_lock(1515148353, 1262766641)" in backend_source
