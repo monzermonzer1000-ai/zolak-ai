@@ -1278,8 +1278,8 @@ if (promptBox) {
    bubbling listeners. Only handles the primary sidebar controls.
 ========================================================= */
 (function bindZolakSidebarControls() {
-    if (document.documentElement.dataset.zolakSidebarController === "v2") return;
-    document.documentElement.dataset.zolakSidebarController = "v2";
+    if (document.documentElement.dataset.zolakSidebarController === "v3") return;
+    document.documentElement.dataset.zolakSidebarController = "v3";
 
     function closestFromEvent(event, selector) {
         const target = event.target instanceof Element ? event.target : event.target && event.target.parentElement;
