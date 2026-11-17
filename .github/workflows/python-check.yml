@@ -410,11 +410,10 @@ jobs:
           assert "highlightCodeElement" in app_source
           assert "getConversationDateGroup" in app_source
           assert "bindZolakSidebarControls" in app_source
-          assert "zolakSidebarController === \"v2\"" in app_source
-          assert "handleSidebarAction" not in app_source
-          assert "sidebar.addEventListener(\"click\", handleSidebarAction)" not in app_source
+          assert "zolakSidebarController === \"v4\"" in app_source
+          assert "handleSidebarAction" in app_source
+          assert 'sidebar.addEventListener("click", handleSidebarAction, true)' in app_source
           assert "createProjectFromSidebar" in app_source
-          assert "document.addEventListener(\"click\"" in app_source
           backend_source = open("app.py", encoding="utf-8").read()
           assert "pg_advisory_xact_lock(1515148353, 1262766641)" in backend_source
           assert "users.gemini_interaction_id IS NOT NULL" in backend_source
@@ -443,7 +442,7 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=32" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=38" in home_source
+          assert "filename='app.js') }}?v=41" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
           assert "filename='chat-enhancements.css') }}?v=1" in home_source
