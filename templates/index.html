@@ -52,58 +52,60 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='mobile-fixes.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='performance.css') }}?v=2">
     <link rel="stylesheet" href="{{ url_for('static', filename='chat-enhancements.css') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='soft-slate-theme.css') }}?v=7">
+    <link rel="stylesheet" href="{{ url_for('static', filename='soft-slate-theme.css') }}?v=8">
 </head>
 
 <body class="theme-{{ theme if theme in ['light', 'dark'] else 'dark' }}">
 
 <div class="app chatgpt-layout">
 
-    <!-- SIDEBAR: ChatGPT-inspired mobile drawer -->
-    <aside class="sidebar">
+    <!-- SIDEBAR: rebuilt hierarchy -->
+    <aside class="sidebar" id="appSidebar" aria-label="القائمة الرئيسية">
         <div class="sidebar-top">
-            <div class="sidebar-brand-name">{{ site_name or "زولك AI" }}</div>
-            <div class="sidebar-brand-caption">مساعدك الذكي السوداني</div>
+            <div class="sidebar-brand">
+                <span class="sidebar-brand-mark" aria-hidden="true">ز</span>
+                <div class="sidebar-brand-copy">
+                    <div class="sidebar-brand-name">{{ site_name or "زولك AI" }}</div>
+                    <div class="sidebar-brand-caption">مساعدك الذكي السوداني</div>
+                </div>
+            </div>
         </div>
 
         <button class="new-chat sidebar-new-chat" id="newChat" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
             <span>محادثة جديدة</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"></path></svg>
+            <span class="sidebar-shortcut" aria-hidden="true">＋</span>
         </button>
 
-        <div class="sidebar-search-wrap">
-            <input id="conversationSearch" class="sidebar-search" type="search" placeholder="ابحث في محادثاتك" aria-label="ابحث في محادثاتك" autocomplete="off">
-        </div>
-
-        <nav class="sidebar-tools" aria-label="أدوات زولك">
-            <button class="sidebar-tool" type="button" data-tool="images">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="14" height="14" rx="3"></rect><path d="m7 16 3-3 2 2 2-2 3 3M8 4h10a3 3 0 0 1 3 3v10"></path><circle cx="12" cy="11" r="1"></circle></svg><span>إرفاق صورة</span>
+        <nav class="sidebar-primary-nav" aria-label="التنقل الرئيسي">
+            <button class="sidebar-tool" type="button" data-tool="projects" aria-controls="projectsPanel" aria-expanded="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M3 10h18"></path></svg>
+                <span>المشروعات</span><span class="sidebar-nav-chevron" aria-hidden="true">‹</span>
             </button>
-            <button class="sidebar-tool" type="button" data-tool="library">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5 9 3l2 17-4 1.5zM12 3h4l2 18h-4zM19 3h2v18h-2z"></path></svg><span>إرفاق ملف</span>
-            </button>
-            <button class="sidebar-tool" type="button" data-tool="projects">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M3 10h18"></path></svg><span>المشروعات</span>
-            </button>
-            <button class="sidebar-tool" type="button" data-tool="explore">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><path d="m17.5 13 4 4-4 4-4-4z"></path></svg><span>استكشاف</span>
+            <button class="sidebar-tool" type="button" data-tool="explore" aria-controls="explorePanel" aria-expanded="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8z"></path></svg>
+                <span>استكشاف</span><span class="sidebar-nav-chevron" aria-hidden="true">‹</span>
             </button>
         </nav>
 
-        <button class="sidebar-tool theme-toggle" id="themeToggle" type="button" aria-label="تغيير مظهر الموقع" aria-pressed="false">
-            <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.7 8.7 0 1 0 20.2 15.1Z"></path></svg>
-            <span id="themeToggleLabel">الوضع الليلي</span>
-        </button>
+        <div class="sidebar-section-heading">
+            <span>محادثاتك</span>
+            <span class="sidebar-section-caption">سجل الدردشات</span>
+        </div>
+        <label class="sidebar-search-wrap" for="conversationSearch">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+            <input id="conversationSearch" class="sidebar-search" type="search" placeholder="ابحث في محادثاتك" aria-label="ابحث في محادثاتك" autocomplete="off">
+        </label>
 
         <section class="sidebar-pinned" hidden>
-            <div class="sidebar-section-label">مثبت</div>
+            <div class="sidebar-section-label">المحادثات المثبتة</div>
             <div class="conversation-items pinned-items" id="pinnedItems"></div>
         </section>
 
         <section class="sidebar-projects" id="projectsPanel" hidden>
             <div class="sidebar-projects-heading">
                 <span>المشروعات</span>
-                <button type="button" id="createProjectButton" aria-label="إنشاء مشروع جديد" title="مشروع جديد">+</button>
+                <button type="button" id="createProjectButton" aria-label="إنشاء مشروع جديد" title="إنشاء مشروع جديد">+</button>
             </div>
             <button type="button" class="project-filter active" id="allConversationsButton">كل الدردشات</button>
             <div class="project-items" id="projectItems"></div>
@@ -111,34 +113,46 @@
 
         <section class="sidebar-explore" id="explorePanel" hidden>
             <div class="sidebar-projects-heading"><span>استكشف زولك</span></div>
-            <button type="button" class="explore-prompt" data-explore-prompt="ساعدني أذاكر الموضوع التالي بطريقة مبسطة مع أسئلة تدريبية: ">📚 الدراسة والتعلّم</button>
-            <button type="button" class="explore-prompt" data-explore-prompt="لخّص النص التالي في نقاط واضحة: ">📝 تلخيص النصوص</button>
-            <button type="button" class="explore-prompt" data-explore-prompt="ترجم النص التالي إلى العربية مع توضيح المعنى: ">🌍 الترجمة</button>
-            <button type="button" class="explore-prompt" data-explore-prompt="اكتب لي رسالة احترافية عن الموضوع التالي: ">✍️ الكتابة</button>
-            <button type="button" class="explore-prompt" data-explore-prompt="اشرح لي الكود التالي واكتشف الأخطاء فيه: ">💻 البرمجة</button>
-            <button type="button" class="explore-prompt" data-explore-prompt="اقترح لي أفكاراً عملية للمشروع التالي مع خطة تنفيذ: ">💡 أفكار المشاريع</button>
+            <button type="button" class="explore-prompt" data-explore-prompt="ساعدني أذاكر الموضوع التالي بطريقة مبسطة مع أسئلة تدريبية: "><span class="explore-prompt-icon">📚</span><span>الدراسة والتعلّم</span></button>
+            <button type="button" class="explore-prompt" data-explore-prompt="لخّص النص التالي في نقاط واضحة: "><span class="explore-prompt-icon">📝</span><span>تلخيص النصوص</span></button>
+            <button type="button" class="explore-prompt" data-explore-prompt="ترجم النص التالي إلى العربية مع توضيح المعنى: "><span class="explore-prompt-icon">🌍</span><span>الترجمة</span></button>
+            <button type="button" class="explore-prompt" data-explore-prompt="اكتب لي رسالة احترافية عن الموضوع التالي: "><span class="explore-prompt-icon">✍️</span><span>الكتابة</span></button>
+            <button type="button" class="explore-prompt" data-explore-prompt="اشرح لي الكود التالي واكتشف الأخطاء فيه: "><span class="explore-prompt-icon">💻</span><span>البرمجة</span></button>
+            <button type="button" class="explore-prompt" data-explore-prompt="اقترح لي أفكاراً عملية للمشروع التالي مع خطة تنفيذ: "><span class="explore-prompt-icon">💡</span><span>أفكار المشاريع</span></button>
         </section>
 
-        <section class="conversation-list sidebar-history" id="conversationList">
-            <div class="conversation-list-title">الدردشات</div>
+        <section class="conversation-list sidebar-history" id="conversationList" aria-label="المحادثات السابقة">
+            <div class="conversation-list-title">كل المحادثات</div>
             <div class="conversation-items" id="conversationItems"></div>
         </section>
 
         <div class="sidebar-bottom">
+            <nav class="sidebar-account-links" aria-label="الحساب والإعدادات">
+                <button class="sidebar-tool sidebar-utility" type="button" data-tool="images">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="8.5" cy="9" r="1.5"></circle><path d="m21 15-5-5L5 20"></path></svg><span>إرفاق صورة</span>
+                </button>
+                <button class="sidebar-tool sidebar-utility" type="button" data-tool="library">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z"></path><path d="M15 3v5h4M8 13h8M8 17h8"></path></svg><span>إرفاق ملف</span>
+                </button>
+                <button class="sidebar-tool sidebar-utility theme-toggle" id="themeToggle" type="button" aria-label="تغيير مظهر الموقع" aria-pressed="false">
+                    <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.7 8.7 0 1 0 20.2 15.1Z"></path></svg>
+                    <span id="themeToggleLabel">الوضع الليلي</span>
+                </button>
+            </nav>
             <div class="account-box account">
                 <div class="account-avatar">ز</div>
                 <div class="account-info">
-                    <div id="who" class="account-name">يا زول 👋</div>
+                    <div id="who" class="account-name">يا زول</div>
                     <div id="credits" class="account-credits">سجّل دخولك للبدء</div>
                 </div>
                 <span class="account-status" aria-hidden="true"></span>
             </div>
-            <div class="sidebar-account-links">
-                <a href="/" class="sidebar-link active"><span class="nav-icon">⌂</span><span>الرئيسية</span></a>
-                <a href="/login" id="loginLink" class="sidebar-link"><span class="nav-icon">♙</span><span>تسجيل الدخول</span></a>
-                <a href="/admin" id="adminLink" class="sidebar-link"><span class="nav-icon">⚙</span><span>لوحة المدير</span></a>
-                <a href="/logout" id="logout" class="sidebar-link" hidden><span class="nav-icon">⇥</span><span>تسجيل الخروج</span></a>
-            </div>
+            <nav class="sidebar-footer-links" aria-label="روابط الحساب">
+                <a href="/" class="sidebar-link active"><span class="nav-icon" aria-hidden="true">⌂</span><span>الرئيسية</span></a>
+                <a href="/login" id="loginLink" class="sidebar-link"><span class="nav-icon" aria-hidden="true">♙</span><span>تسجيل الدخول</span></a>
+                <a href="/admin" id="adminLink" class="sidebar-link" hidden><span class="nav-icon" aria-hidden="true">⚙</span><span>لوحة المدير</span></a>
+                <a href="/logout" id="logout" class="sidebar-link" hidden><span class="nav-icon" aria-hidden="true">⇥</span><span>تسجيل الخروج</span></a>
+            </nav>
         </div>
     </aside>
 
@@ -229,7 +243,7 @@
 </div>
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=38"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=39"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
