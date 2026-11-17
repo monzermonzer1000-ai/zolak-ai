@@ -11,6 +11,7 @@ const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
 const appShell = document.querySelector(".app.chatgpt-layout");
 const desktopSidebarToggle = document.getElementById("sidebarCollapseButton");
+const explorePanel = document.getElementById("explorePanel");
 
 function setDesktopSidebarCollapsed(collapsed) {
     if (!appShell || window.innerWidth <= 800) return;
