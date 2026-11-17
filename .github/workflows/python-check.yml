@@ -87,7 +87,7 @@ jobs:
           assert 'sendButton.addEventListener("click", sendMessage)' in sidebar_js
           assert 'mobileMenu.addEventListener("click"' in sidebar_js
           assert 'desktopSidebarToggle.addEventListener("click"' in sidebar_js
-          for removed in ("attachmentInput", "attachmentPreview", "composerAdd", , "loadConversations", "selectedAttachments", "fileToPayload"):
+          for removed in ("attachmentInput", "attachmentPreview", "composerAdd", "loadConversations", "selectedAttachments", "fileToPayload"):
               assert removed not in sidebar_js
           sidebar_css = open("static/soft-slate-theme.css", encoding="utf-8").read()
           assert "background-image:none!important" in sidebar_css
@@ -419,7 +419,7 @@ jobs:
           assert 'id="adminLink"' in home_source
           assert 'id="loginLink"' in home_source
           assert 'id="logout"' in home_source
-          for removed in ("attachmentInput", "attachmentPreview", "composerAdd", , "conversationList", "conversationSearch", "projectsPanel", "allConversationsButton"):
+          for removed in ("attachmentInput", "attachmentPreview", "composerAdd", "conversationList", "conversationSearch", "projectsPanel", "allConversationsButton"):
               assert removed not in home_source
           app_source = open("static/app.js", encoding="utf-8").read()
           assert "highlightCodeElement" in app_source
