@@ -145,6 +145,20 @@ jobs:
           assert ai.status_code == 503, ai.get_json()
           assert "مفتاح Gemini" in ai.get_json().get("error", "")
 
+          # Fixed identity replies must work without Gemini and without consuming credits.
+          credits_before_identity = client.get("/api/me").get_json()["credits"]
+          identity_response = client.post("/api/chat", json={"message": "عرفني عليك؟"}, buffered=True)
+          identity_stream = identity_response.get_data(as_text=True)
+          assert identity_response.status_code == 200
+          assert "أنا زولك AI، مساعدك الذكي، تحت تطوير منذر (FOX)" in identity_stream
+          assert "event: done" in identity_stream
+          developer_response = client.post("/api/chat", json={"message": "من المطور؟"}, buffered=True)
+          developer_stream = developer_response.get_data(as_text=True)
+          assert developer_response.status_code == 200
+          assert "الموقع تحت تطوير منذر السيد." in developer_stream
+          credits_after_identity = client.get("/api/me").get_json()["credits"]
+          assert credits_after_identity == credits_before_identity
+
           # Mock Gemini so CI can exercise a successful response without
           # storing or spending a real API key.
           import os
