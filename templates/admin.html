@@ -688,6 +688,15 @@ input, textarea, select { transition: border-color .18s ease, box-shadow .18s ea
 .analytics-note{margin-top:13px}
 @media(max-width:850px){.analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-grid{grid-template-columns:1fr}.analytics-chart:last-child{grid-column:auto}}
 @media(max-width:500px){.analytics-head{align-items:flex-start;flex-direction:column}.analytics-kpis{gap:9px}.analytics-kpi{padding:14px}.analytics-kpi strong{font-size:25px}.analytics-chart{padding:15px}}
+
+/* Consistent high-contrast controls and tactile states */
+button,.btn,.small-btn{transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .16s ease;}
+button:hover:not(:disabled),.btn:hover:not(:disabled),.small-btn:hover:not(:disabled){filter:none;transform:translateY(-1px);box-shadow:0 5px 15px rgba(0,0,0,.14);}
+button:active:not(:disabled),.btn:active:not(:disabled),.small-btn:active:not(:disabled){transform:translateY(0) scale(.985);}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
+input,textarea,select{color:var(--text);background:var(--input);}
+header{box-shadow:0 3px 14px rgba(0,0,0,.08);}
+@media(prefers-reduced-motion:reduce){button,.btn,.small-btn{transition:none;}}
 </style>
 </head>
 
