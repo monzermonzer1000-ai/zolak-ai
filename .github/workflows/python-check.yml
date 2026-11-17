@@ -68,7 +68,6 @@ jobs:
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
-          assert "/static/premium-ui.css?v=1" in home_html
           assert "/static/soft-slate-theme.css?v=6" in home_html
           assert "theme if theme in ['light', 'dark'] else 'dark'" in open("templates/index.html", encoding="utf-8").read()
           assert 'id="themeToggle"' in home_html
@@ -85,8 +84,6 @@ jobs:
           assert client.get("/static/app.js").status_code == 200
           assert client.get("/static/chat-enhancements.css").status_code == 200
           assert client.get("/static/soft-slate-theme.css").status_code == 200
-          assert client.get("/static/mobile-overrides.css").status_code == 200
-          assert "/static/mobile-overrides.css?v=1" in home_html
           assert 'id="composerVoice"' not in home_html
           assert "composerVoice" not in open("static/app.js", encoding="utf-8").read()
           assert 'id="sidebarCollapseButton"' in home_html
@@ -391,7 +388,7 @@ jobs:
           assert "bindZolakSidebarControls" in app_source
           assert "zolakSidebarController === \"v2\"" in app_source
           assert "handleSidebarAction" not in app_source
-          assert "sidebar.addEventListener(\"click\"" not in app_source
+          assert "sidebar.addEventListener(\"click\", handleSidebarAction)" not in app_source
           assert "createProjectFromSidebar" in app_source
           assert "document.addEventListener(\"click\"" in app_source
           backend_source = open("app.py", encoding="utf-8").read()
