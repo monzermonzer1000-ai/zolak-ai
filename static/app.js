@@ -604,6 +604,8 @@ function applyZolakTheme(theme) {
         const label = button.querySelector("[data-theme-label]");
         if (label) label.textContent = dark ? "الوضع الفاتح" : "الوضع الليلي";
     }
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) themeMeta.setAttribute("content", dark ? "#111827" : "#ffffff");
     try { localStorage.setItem("zolak-theme", dark ? "dark" : "light"); } catch (_) {}
 }
 
