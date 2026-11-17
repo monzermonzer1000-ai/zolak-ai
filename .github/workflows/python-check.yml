@@ -69,12 +69,12 @@ jobs:
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
           assert "/static/soft-slate-theme.css?v=12" in home_html
-          assert "/static/app.js?v=44" in home_html
+          assert "/static/app.js?v=45" in home_html
           assert 'class="theme-light"' in home_html
           assert 'id="adminLink"' in home_html and 'id="newChat"' in home_html
           assert 'id="explorePanel"' in home_html and 'data-tool="explore"' in home_html
           assert 'id="loginLink"' in home_html and 'id="logout"' in home_html
-          for removed in ("attachmentInput", "attachmentPreview", "composerAdd", "themeToggle", "conversationList", "conversationSearch", "allConversationsButton"):
+          for removed in ("attachmentInput", "attachmentPreview", "composerAdd",  "conversationList", "conversationSearch", "allConversationsButton"):
               assert removed not in home_html
           sidebar_js = open("static/app.js", encoding="utf-8").read()
           assert "bindZolakSidebarControls" in sidebar_js
@@ -88,8 +88,8 @@ jobs:
           assert "background-image:none!important" in sidebar_css
           assert "backdrop-filter:none!important" in sidebar_css
           assert "background:#fff!important" in sidebar_css
-          assert "theme-dark" not in sidebar_css
-          assert "zolak-ai-assets-v54" in client.get("/sw.js").get_data(as_text=True)
+          assert "theme-dark" in sidebar_css
+          assert "zolak-ai-assets-v55" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -432,7 +432,7 @@ jobs:
           theme_source = open("static/soft-slate-theme.css", encoding="utf-8").read()
           assert "background-image:none!important" in theme_source
           assert "backdrop-filter:none!important" in theme_source
-          assert "theme-dark" not in theme_source
+          assert "theme-dark" in theme_source
           assert ".code-block{background:#f8fafc!important;border:" in theme_source
           assert "background:transparent!important;backdrop-filter:none!important" in theme_source
           assert ".message.assistant .message-content *" in theme_source
@@ -455,7 +455,7 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=32" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=44" in home_source
+          assert "filename='app.js') }}?v=45" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
           assert "filename='chat-enhancements.css') }}?v=1" in home_source
