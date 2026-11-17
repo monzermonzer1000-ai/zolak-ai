@@ -1430,5 +1430,4 @@ if (promptBox) {
             toggleSidebar();
         }
     });
-e);
 })();
