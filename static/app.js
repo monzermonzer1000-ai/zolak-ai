@@ -6,7 +6,6 @@
 
 const promptBox = document.getElementById("prompt");
 const sendButton = document.getElementById("send");
-const homeQuickActions = document.getElementById("homeQuickActions");
 const messages = document.getElementById("messages");
 const sidebar = document.querySelector(".sidebar");
 const mobileMenu = document.querySelector(".mobile-menu");
@@ -112,25 +111,6 @@ if (sidebar) {
 
 
 /* HOME HEADER + COMPOSER CONTROLS */
-function showSidebarNotice(message) {
-    let notice = document.querySelector(".sidebar-feature-notice");
-    if (!notice) { notice = document.createElement("div"); notice.className = "sidebar-feature-notice"; document.body.appendChild(notice); }
-    notice.textContent = message; notice.hidden = false;
-    window.clearTimeout(notice._hideTimer);
-    notice._hideTimer = window.setTimeout(function () { notice.hidden = true; }, 2400);
-}
-const composerMic = document.getElementById("composerMic");
-if (composerMic) composerMic.addEventListener("click", function () {
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) { showSidebarNotice("الإملاء الصوتي غير مدعوم في المتصفح الحالي."); return; }
-    const recognition = new Recognition(); recognition.lang = "ar"; recognition.interimResults = false;
-    composerMic.classList.add("is-listening");
-    recognition.onresult = function (event) { promptBox.value = (promptBox.value ? promptBox.value + " " : "") + event.results[0][0].transcript; promptBox.focus(); };
-    recognition.onerror = function () { showSidebarNotice("ما قدرنا نلتقط الصوت. حاول تاني."); };
-    recognition.onend = function () { composerMic.classList.remove("is-listening"); };
-    try { recognition.start(); } catch (error) { composerMic.classList.remove("is-listening"); }
-});
-
 /* =========================
    MESSAGES
 ========================= */
@@ -438,7 +418,6 @@ async function refreshAccount() {
 
 function showWelcome(focusInput = true) {
     if (!messages) return;
-    if (homeQuickActions) homeQuickActions.hidden = false;
 
     messages.innerHTML = `
         <div class="welcome-screen">
@@ -503,7 +482,7 @@ async function sendMessage() {
     const question = promptBox.value.trim();
     if (!question) return;
     isSending = true;
-    if (homeQuickActions) homeQuickActions.hidden = true;
+
     addMessage(question, "user");
     promptBox.value = "";
     updateComposerMode();
