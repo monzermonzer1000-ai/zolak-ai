@@ -72,6 +72,7 @@ jobs:
           assert "/static/app.js?v=45" in home_html
           assert 'class="theme-light"' in home_html
           assert 'id="adminLink"' in home_html and 'id="newChat"' in home_html
+          assert 'id="clearHistoryButton"' in home_html and 'id="themeToggleButton"' in home_html
           assert 'id="explorePanel"' in home_html and 'data-tool="explore"' in home_html
           assert 'id="loginLink"' in home_html and 'id="logout"' in home_html
           for removed in ("attachmentInput", "attachmentPreview", "composerAdd",  "conversationList", "conversationSearch", "allConversationsButton"):
@@ -79,6 +80,10 @@ jobs:
           sidebar_js = open("static/app.js", encoding="utf-8").read()
           assert "bindZolakSidebarControls" in sidebar_js
           assert "createNewConversation" in sidebar_js
+          assert 'newChatButton.addEventListener("click"' in sidebar_js
+          assert 'clearHistoryButton.addEventListener("click"' in sidebar_js
+          assert 'themeToggleButton.addEventListener("click"' in sidebar_js
+          assert 'exploreButton.addEventListener("click"' in sidebar_js
           assert 'sendButton.addEventListener("click", sendMessage)' in sidebar_js
           assert 'mobileMenu.addEventListener("click"' in sidebar_js
           assert 'desktopSidebarToggle.addEventListener("click"' in sidebar_js
@@ -423,6 +428,10 @@ jobs:
           assert 'const explorePanel = document.getElementById("explorePanel")' in app_source
           assert "refreshAccount();" in app_source
           assert "createNewConversation" in app_source
+          assert 'newChatButton.addEventListener("click"' in app_source
+          assert 'clearHistoryButton.addEventListener("click"' in app_source
+          assert 'themeToggleButton.addEventListener("click"' in app_source
+          assert 'exploreButton.addEventListener("click"' in app_source
           assert 'sendButton.addEventListener("click", sendMessage)' in app_source
           assert 'sidebar.addEventListener("click"' in app_source
           assert "loadConversations" not in app_source
