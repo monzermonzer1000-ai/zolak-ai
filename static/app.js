@@ -1278,8 +1278,8 @@ if (promptBox) {
    bubbling listeners. Only handles the primary sidebar controls.
 ========================================================= */
 (function bindZolakSidebarControls() {
-    if (document.documentElement.dataset.zolakSidebarController === "v3") return;
-    document.documentElement.dataset.zolakSidebarController = "v3";
+    if (document.documentElement.dataset.zolakSidebarController === "v4") return;
+    document.documentElement.dataset.zolakSidebarController = "v4";
 
     function closestFromEvent(event, selector) {
         const target = event.target instanceof Element ? event.target : event.target && event.target.parentElement;
@@ -1307,17 +1307,15 @@ if (promptBox) {
     try { const savedTheme = localStorage.getItem("zolak-theme"); if (savedTheme === "light" || savedTheme === "dark") initialTheme = savedTheme; } catch (_) {}
     applyTheme(initialTheme);
 
-    document.addEventListener("click", function (event) {
+    function handleSidebarAction(event) {
         const newChat = closestFromEvent(event, "#newChat");
         const themeButton = closestFromEvent(event, "#themeToggle");
         const tool = closestFromEvent(event, ".sidebar-tool[data-tool]");
         const createProject = closestFromEvent(event, "#createProjectButton");
         const allChats = closestFromEvent(event, "#allConversationsButton");
         const explore = closestFromEvent(event, ".explore-prompt[data-explore-prompt]");
-        const collapse = closestFromEvent(event, "#sidebarCollapseButton");
-        const mobile = closestFromEvent(event, ".mobile-menu");
 
-        if (!(newChat || themeButton || tool || createProject || allChats || explore || collapse || mobile)) return;
+        if (!(newChat || themeButton || tool || createProject || allChats || explore)) return;
 
         event.preventDefault();
         event.stopPropagation();
@@ -1326,9 +1324,16 @@ if (promptBox) {
         if (newChat) {
             if (newChat.dataset.busy === "1") return;
             newChat.dataset.busy = "1";
-            Promise.resolve(createNewConversation())
-                .catch(function (error) { console.error("New chat failed:", error); showSidebarNotice("تعذر إنشاء محادثة جديدة. حاول مرة أخرى."); })
-                .finally(function () { newChat.dataset.busy = "0"; });
+            newChat.disabled = true;
+            Promise.resolve().then(createNewConversation)
+                .catch(function (error) {
+                    console.error("New chat failed:", error);
+                    showSidebarNotice("تعذر إنشاء محادثة جديدة. حاول مرة أخرى.");
+                })
+                .finally(function () {
+                    newChat.dataset.busy = "0";
+                    newChat.disabled = false;
+                });
             closeSidebar();
             return;
         }
@@ -1341,31 +1346,58 @@ if (promptBox) {
         if (tool) {
             const action = tool.dataset.tool;
             if (action === "projects") {
-                if (!projectsPanel) return;
-                projectsPanel.hidden = !projectsPanel.hidden;
+                const willOpen = Boolean(projectsPanel && projectsPanel.hidden);
+                if (projectsPanel) projectsPanel.hidden = !willOpen;
                 if (explorePanel) explorePanel.hidden = true;
-                if (!projectsPanel.hidden) loadProjects();
+                tool.setAttribute("aria-expanded", String(willOpen));
+                const exploreButton = sidebar && sidebar.querySelector('[data-tool="explore"]');
+                if (exploreButton) exploreButton.setAttribute("aria-expanded", "false");
+                if (willOpen) {
+                    loadProjects().catch(function (error) {
+                        console.error("Projects could not load:", error);
+                        showSidebarNotice("تعذر تحميل المشروعات.");
+                    });
+                }
             } else if (action === "explore") {
-                if (!explorePanel) return;
-                explorePanel.hidden = !explorePanel.hidden;
+                const willOpen = Boolean(explorePanel && explorePanel.hidden);
+                if (explorePanel) explorePanel.hidden = !willOpen;
                 if (projectsPanel) projectsPanel.hidden = true;
+                tool.setAttribute("aria-expanded", String(willOpen));
+                const projectsButton = sidebar && sidebar.querySelector('[data-tool="projects"]');
+                if (projectsButton) projectsButton.setAttribute("aria-expanded", "false");
             } else if (action === "images" || action === "library") {
                 const picker = document.getElementById("attachmentInput");
-                if (!picker) { showSidebarNotice("خيار إرفاق الملفات غير متاح حالياً."); return; }
-                picker.accept = action === "images" ? "image/*" : "image/*,.pdf,.docx,.txt,.md,.csv";
+                if (!picker) {
+                    showSidebarNotice("خيار إرفاق الملفات غير متاح حالياً.");
+                    return;
+                }
+                picker.accept = action === "images"
+                    ? "image/*"
+                    : "image/*,.pdf,.docx,.txt,.md,.csv";
                 picker.click();
                 closeSidebar();
             }
             return;
         }
 
-        if (createProject) { createProjectFromSidebar().catch(function (error) { console.error(error); showSidebarNotice("تعذر إنشاء المشروع."); }); return; }
+        if (createProject) {
+            createProjectFromSidebar().catch(function (error) {
+                console.error("Project creation failed:", error);
+                showSidebarNotice("تعذر إنشاء المشروع.");
+            });
+            return;
+        }
+
         if (allChats) {
             currentProjectId = null;
             updateProjectFilterState();
-            loadConversations();
+            loadConversations().catch(function (error) {
+                console.error("Conversation list could not load:", error);
+                showSidebarNotice("تعذر تحميل المحادثات.");
+            });
             return;
         }
+
         if (explore) {
             if (promptBox) {
                 promptBox.value = explore.dataset.explorePrompt || "";
@@ -1374,13 +1406,29 @@ if (promptBox) {
                 updateComposerMode();
             }
             if (explorePanel) explorePanel.hidden = true;
+            const exploreButton = sidebar && sidebar.querySelector('[data-tool="explore"]');
+            if (exploreButton) exploreButton.setAttribute("aria-expanded", "false");
             closeSidebar();
-            return;
         }
-        if (collapse) {
-            if (appShell && window.innerWidth > 800) setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
-            return;
+    }
+
+    /* One delegated listener handles all current and dynamically-created sidebar actions. */
+    if (sidebar) sidebar.addEventListener("click", handleSidebarAction, true);
+
+    if (mobileMenu) mobileMenu.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleSidebar();
+    });
+
+    if (desktopSidebarToggle) desktopSidebarToggle.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (window.innerWidth > 800) {
+            setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
+        } else {
+            toggleSidebar();
         }
-        if (mobile) toggleSidebar();
-    }, true);
+    });
+e);
 })();
