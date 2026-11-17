@@ -30,23 +30,19 @@ if (appShell && window.innerWidth > 800) {
 let currentConversationId = null;
 let isSending = false;
 
+/* Attach navigation handlers before the rest of the app initializes. */
+bindZolakSidebarControls();
+
 /* =========================
    SIDEBAR
 ========================= */
 
-let sidebarOverlay = document.querySelector(".sidebar-overlay");
-
-if (!sidebarOverlay) {
-    sidebarOverlay = document.createElement("div");
-    sidebarOverlay.className = "sidebar-overlay";
-    document.body.appendChild(sidebarOverlay);
-}
+/* No full-screen overlay: it can never intercept taps on the drawer. */
 
 function openSidebar() {
     if (!sidebar || window.innerWidth > 800) return;
 
     sidebar.classList.add("open");
-    sidebarOverlay.classList.add("active");
 
     document.body.style.overflow = "hidden";
 
@@ -59,10 +55,6 @@ function openSidebar() {
 function closeSidebar() {
     if (sidebar) {
         sidebar.classList.remove("open");
-    }
-
-    if (sidebarOverlay) {
-        sidebarOverlay.classList.remove("active");
     }
 
     document.body.style.overflow = "";
@@ -83,10 +75,6 @@ function toggleSidebar() {
     }
 }
 
-if (sidebarOverlay) {
-    sidebarOverlay.addEventListener("click", closeSidebar);
-}
-
 document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
         closeSidebar();
@@ -99,16 +87,12 @@ window.addEventListener("resize", function () {
     }
 });
 
-/* إغلاق القائمة عند اختيار رابط داخلها */
-if (sidebar) {
-    sidebar.addEventListener("click", function (event) {
-        const link = event.target.closest("a");
-
-        if (link && window.innerWidth <= 800) {
-            closeSidebar();
-        }
-    });
-}
+/* Outside taps close the drawer without a transparent overlay layer. */
+document.addEventListener("click", function (event) {
+    if (window.innerWidth > 800 || !sidebar || !sidebar.classList.contains("open")) return;
+    if (sidebar.contains(event.target) || (mobileMenu && mobileMenu.contains(event.target))) return;
+    closeSidebar();
+});
 
 
 /* HOME HEADER + COMPOSER CONTROLS */
@@ -556,99 +540,155 @@ if (promptBox) {
 
 
 /* =========================================================
-   SIDEBAR CONTROLS — explicit event bindings
+   SIDEBAR CONTROLS — named handlers + direct click bindings
 ========================================================= */
-(function bindZolakSidebarControls() {
-    if (!sidebar || sidebar.dataset.controllerBound === "1") return;
-    sidebar.dataset.controllerBound = "1";
-    const newChatButton = document.getElementById("newChat");
-    const clearHistoryButton = document.getElementById("clearHistoryButton");
-    const themeToggleButton = document.getElementById("themeToggleButton");
-    const exploreButton = sidebar.querySelector('[data-tool="explore"]');
-
-    if (newChatButton) newChatButton.addEventListener("click", async function (event) {
-        event.preventDefault();
-        if (newChatButton.disabled) return;
-        newChatButton.disabled = true;
-        try { await createNewConversation(); }
-        finally { newChatButton.disabled = false; }
+function handleNewChatClick(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    if (button.disabled) return;
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    createNewConversation().finally(function () {
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
     });
+}
 
-    if (exploreButton) exploreButton.addEventListener("click", function (event) {
-        event.preventDefault();
-        const willOpen = Boolean(explorePanel && explorePanel.hidden);
-        if (explorePanel) explorePanel.hidden = !willOpen;
-        exploreButton.setAttribute("aria-expanded", String(willOpen));
-    });
-
-    sidebar.querySelectorAll(".explore-prompt[data-explore-prompt]").forEach(function (button) {
-        button.addEventListener("click", function (event) {
-            event.preventDefault();
-            if (promptBox) {
-                promptBox.value = button.dataset.explorePrompt || "";
-                promptBox.focus();
-                promptBox.setSelectionRange(promptBox.value.length, promptBox.value.length);
-                updateComposerMode();
-            }
-            if (explorePanel) explorePanel.hidden = true;
-            if (exploreButton) exploreButton.setAttribute("aria-expanded", "false");
-            closeSidebar();
-        });
-    });
-
-    if (clearHistoryButton) clearHistoryButton.addEventListener("click", async function (event) {
-        event.preventDefault();
-        if (clearHistoryButton.disabled) return;
-        if (!window.confirm("متأكد داير تحذف كل محادثاتك؟ الحذف نهائي وما ممكن التراجع عنه.")) return;
-        clearHistoryButton.disabled = true;
-        try {
-            const listResponse = await fetch("/api/conversations");
-            if (listResponse.status === 401) { window.location.href = "/login"; return; }
-            if (!listResponse.ok) throw new Error("تعذر تحميل سجل المحادثات");
-            const data = await listResponse.json();
-            const conversations = Array.isArray(data.conversations) ? data.conversations : [];
-            for (const conversation of conversations) {
-                const response = await fetch("/api/conversations/" + encodeURIComponent(conversation.id), { method: "DELETE" });
-                if (!response.ok) throw new Error("تعذر حذف إحدى المحادثات");
-            }
-            currentConversationId = null;
-            showWelcome(false);
-            addMessage(conversations.length ? "تم حذف سجل المحادثات بالكامل." : "ما عندك محادثات محفوظة للحذف.", "assistant");
-            closeSidebar();
-        } catch (error) {
-            console.error("تعذر مسح سجل المحادثات:", error);
-            addMessage("ما قدرنا نمسح كل المحادثات. حاول تاني.", "assistant");
-        } finally {
-            clearHistoryButton.disabled = false;
+async function handleClearHistoryClick(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    if (button.disabled) return;
+    if (!window.confirm("متأكد داير تحذف كل محادثاتك؟ الحذف نهائي وما ممكن التراجع عنه.")) return;
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    try {
+        const listResponse = await fetch("/api/conversations", { credentials: "same-origin" });
+        if (listResponse.status === 401) {
+            window.location.href = "/login";
+            return;
         }
-    });
-
-    function applyTheme(theme) {
-        const dark = theme === "dark";
-        document.body.classList.toggle("theme-dark", dark);
-        document.body.classList.toggle("theme-light", !dark);
-        if (themeToggleButton) {
-            themeToggleButton.setAttribute("aria-pressed", String(dark));
-            const label = themeToggleButton.querySelector("[data-theme-label]");
-            if (label) label.textContent = dark ? "الوضع الفاتح" : "الوضع الليلي";
+        if (!listResponse.ok) throw new Error("تعذر تحميل سجل المحادثات");
+        const data = await listResponse.json();
+        const conversations = Array.isArray(data.conversations) ? data.conversations : [];
+        for (const conversation of conversations) {
+            const response = await fetch("/api/conversations/" + encodeURIComponent(conversation.id), {
+                method: "DELETE",
+                credentials: "same-origin"
+            });
+            if (response.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            if (!response.ok) throw new Error("تعذر حذف إحدى المحادثات");
         }
-        try { localStorage.setItem("zolak-theme", dark ? "dark" : "light"); } catch (_) {}
+        currentConversationId = null;
+        showWelcome(false);
+        addMessage(conversations.length ? "تم حذف سجل المحادثات بالكامل." : "ما عندك محادثات محفوظة للحذف.", "assistant");
+        closeSidebar();
+    } catch (error) {
+        console.error("تعذر مسح سجل المحادثات:", error);
+        addMessage("ما قدرنا نمسح كل المحادثات. حاول تاني.", "assistant");
+    } finally {
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
     }
+}
+
+function applyZolakTheme(theme) {
+    const dark = theme === "dark";
+    document.body.classList.toggle("theme-dark", dark);
+    document.body.classList.toggle("theme-light", !dark);
+    const button = document.getElementById("themeToggleButton");
+    if (button) {
+        button.setAttribute("aria-pressed", String(dark));
+        const label = button.querySelector("[data-theme-label]");
+        if (label) label.textContent = dark ? "الوضع الفاتح" : "الوضع الليلي";
+    }
+    try { localStorage.setItem("zolak-theme", dark ? "dark" : "light"); } catch (_) {}
+}
+
+function handleThemeToggleClick(event) {
+    event.preventDefault();
+    applyZolakTheme(document.body.classList.contains("theme-dark") ? "light" : "dark");
+}
+
+function handleExploreClick(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const panel = document.getElementById("explorePanel");
+    const willOpen = Boolean(panel && panel.hidden);
+    if (panel) panel.hidden = !willOpen;
+    button.setAttribute("aria-expanded", String(willOpen));
+}
+
+function handleExplorePromptClick(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const panel = document.getElementById("explorePanel");
+    if (promptBox) {
+        promptBox.value = button.dataset.explorePrompt || "";
+        promptBox.focus();
+        promptBox.setSelectionRange(promptBox.value.length, promptBox.value.length);
+        updateComposerMode();
+    }
+    if (panel) panel.hidden = true;
+    const exploreButton = document.querySelector('.sidebar [data-tool="explore"]');
+    if (exploreButton) exploreButton.setAttribute("aria-expanded", "false");
+    closeSidebar();
+}
+
+function handleMobileMenuClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleSidebar();
+}
+
+function handleDesktopSidebarToggleClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (window.innerWidth > 800) {
+        setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
+    } else {
+        toggleSidebar();
+    }
+}
+
+function bindZolakSidebarControls() {
+    const sidebarElement = document.getElementById("appSidebar");
+    if (!sidebarElement || sidebarElement.dataset.zolakEventsBound === "1") return;
+    sidebarElement.dataset.zolakEventsBound = "1";
+
+    const bindings = [
+        [document.getElementById("newChat"), handleNewChatClick],
+        [document.getElementById("clearHistoryButton"), handleClearHistoryClick],
+        [document.getElementById("themeToggleButton"), handleThemeToggleClick],
+        [sidebarElement.querySelector('[data-tool="explore"]'), handleExploreClick],
+        [document.getElementById("mobileMenu"), handleMobileMenuClick],
+        [document.getElementById("sidebarCollapseButton"), handleDesktopSidebarToggleClick]
+    ];
+    bindings.forEach(function (binding) {
+        const element = binding[0];
+        if (element && element.dataset.zolakClickBound !== "1") {
+            element.addEventListener("click", binding[1], { passive: false });
+            element.dataset.zolakClickBound = "1";
+        }
+    });
+
+    sidebarElement.querySelectorAll(".explore-prompt[data-explore-prompt]").forEach(function (button) {
+        if (button.dataset.zolakClickBound === "1") return;
+        button.addEventListener("click", handleExplorePromptClick, { passive: false });
+        button.dataset.zolakClickBound = "1";
+    });
+
+    sidebarElement.querySelectorAll("a").forEach(function (link) {
+        if (link.dataset.zolakClickBound === "1") return;
+        link.addEventListener("click", function () {
+            if (window.innerWidth <= 800) closeSidebar();
+        });
+        link.dataset.zolakClickBound = "1";
+    });
 
     let savedTheme = "light";
     try { savedTheme = localStorage.getItem("zolak-theme") === "dark" ? "dark" : "light"; } catch (_) {}
-    applyTheme(savedTheme);
-    if (themeToggleButton) themeToggleButton.addEventListener("click", function (event) {
-        event.preventDefault();
-        applyTheme(document.body.classList.contains("theme-dark") ? "light" : "dark");
-    });
-
-    if (mobileMenu) mobileMenu.addEventListener("click", function (event) {
-        event.preventDefault(); event.stopPropagation(); toggleSidebar();
-    });
-    if (desktopSidebarToggle) desktopSidebarToggle.addEventListener("click", function (event) {
-        event.preventDefault(); event.stopPropagation();
-        if (window.innerWidth > 800) setDesktopSidebarCollapsed(!appShell.classList.contains("sidebar-collapsed"));
-        else toggleSidebar();
-    });
-})();
+    applyZolakTheme(savedTheme);
+}
