@@ -68,14 +68,38 @@ jobs:
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
-          assert "/static/soft-slate-theme.css?v=7" in home_html
+          assert "/static/soft-slate-theme.css?v=8" in home_html
           assert "theme if theme in ['light', 'dark'] else 'dark'" in open("templates/index.html", encoding="utf-8").read()
           assert 'id="themeToggle"' in home_html
           assert 'id="conversationSearch"' in home_html
           assert 'id="adminLink"' in home_html
-          assert "zolak-ai-assets-v47" in client.get("/sw.js").get_data(as_text=True)
-          assert "/static/soft-slate-theme.css?v=7" in home_html
-          assert "/static/app.js?v=38" in home_html
+          assert 'id="newChat"' in home_html
+          assert 'id="projectsPanel"' in home_html
+          assert 'id="explorePanel"' in home_html
+          assert 'id="conversationItems"' in home_html
+          assert 'id="themeToggle"' in home_html
+          assert 'id="loginLink"' in home_html
+          assert 'id="logout"' in home_html
+          assert 'data-tool="projects"' in home_html
+          assert 'data-tool="explore"' in home_html
+          assert 'data-tool="images"' in home_html
+          assert 'data-tool="library"' in home_html
+          assert 'aria-controls="projectsPanel"' in home_html
+          assert 'aria-controls="explorePanel"' in home_html
+          assert 'sidebar-footer-links' in home_html
+          sidebar_js = open("static/app.js", encoding="utf-8").read()
+          assert 'zolakSidebarController = "v4"' in sidebar_js
+          assert 'sidebar.addEventListener("click", handleSidebarAction, true)' in sidebar_js
+          assert 'mobileMenu.addEventListener("click"' in sidebar_js
+          assert 'desktopSidebarToggle.addEventListener("click"' in sidebar_js
+          sidebar_css = open("static/soft-slate-theme.css", encoding="utf-8").read()
+          assert "background-image:none!important" in sidebar_css
+          assert "backdrop-filter:none!important" in sidebar_css
+          assert "--z-sidebar:#202833" in sidebar_css
+          assert "--z-sidebar:#fff" in sidebar_css
+          assert "zolak-ai-assets-v50" in client.get("/sw.js").get_data(as_text=True)
+          assert "/static/soft-slate-theme.css?v=8" in home_html
+          assert "/static/app.js?v=41" in home_html
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
