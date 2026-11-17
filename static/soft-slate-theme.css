@@ -96,3 +96,29 @@ body.theme-dark .code-block .token-string{color:#6ee7b7!important}
 body.theme-dark .code-block .token-number{color:#93c5fd!important}
 body.theme-dark .code-block .token-keyword{color:#fda4af!important}
 body.theme-dark .code-block .token-function{color:#c4b5fd!important}
+
+
+/* Final polish: solid surfaces, clear hierarchy, responsive interaction states. */
+:root{scrollbar-color:#b8c5d3 #edf1f5}
+.app.chatgpt-layout>.sidebar{box-shadow:8px 0 28px rgba(25,42,62,.035)!important}
+.sidebar-tool,.sidebar-link,.explore-prompt,.home-icon-button,.sidebar-collapse-toggle,#send,.sidebar-new-chat{transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease!important}
+.sidebar-tool:hover,.sidebar-link:hover,.explore-prompt:hover,.home-icon-button:hover,.sidebar-collapse-toggle:hover{box-shadow:0 4px 12px rgba(25,42,62,.08)!important;transform:translateY(-1px)}
+.sidebar-new-chat:hover,#send:hover{box-shadow:0 7px 18px rgba(39,105,177,.22)!important;transform:translateY(-1px)}
+.sidebar-tool:active,.sidebar-link:active,.explore-prompt:active,.home-icon-button:active,.sidebar-collapse-toggle:active,.sidebar-new-chat:active,#send:active{transform:translateY(0) scale(.985)!important}
+.main-chat>.topbar,.main-chat>.chat-navbar{position:relative!important;z-index:5!important;box-shadow:0 2px 10px rgba(25,42,62,.035)!important}
+.main-chat>.topbar *,.main-chat>.chat-navbar *{opacity:1!important;filter:none!important;text-shadow:none!important}
+.messages{scrollbar-gutter:stable;overscroll-behavior:contain}
+.message.assistant .message-content,.message.user .message-content{line-height:1.8;overflow-wrap:anywhere}
+.welcome-screen{box-shadow:0 14px 36px rgba(25,42,62,.07)!important}
+.composer-inner{box-shadow:0 5px 18px rgba(25,42,62,.045)!important}
+#prompt{line-height:1.7;max-height:35vh;resize:none}
+button:disabled{cursor:not-allowed!important;transform:none!important;box-shadow:none!important}
+.sidebar-tool:focus-visible,.sidebar-link:focus-visible,.explore-prompt:focus-visible,#send:focus-visible,#prompt:focus-visible{outline:3px solid #70a7e3!important;outline-offset:2px!important}
+body.theme-dark{scrollbar-color:#53647b #182232}
+body.theme-dark .app.chatgpt-layout>.sidebar{box-shadow:8px 0 28px rgba(0,0,0,.16)!important}
+body.theme-dark .main-chat>.topbar,body.theme-dark .main-chat>.chat-navbar{box-shadow:0 2px 12px rgba(0,0,0,.14)!important}
+body.theme-dark .message.assistant .message-content{box-shadow:0 5px 18px rgba(0,0,0,.12)!important}
+body.theme-dark .welcome-screen{box-shadow:0 14px 36px rgba(0,0,0,.2)!important}
+body.theme-dark .composer-inner{box-shadow:0 5px 18px rgba(0,0,0,.16)!important}
+@media(max-width:800px){.messages{padding-top:16px!important;padding-bottom:18px!important}.welcome-screen{margin:14px auto;padding:22px 17px!important;border-radius:16px!important}.composer-note{gap:8px;flex-wrap:wrap;font-size:11px}.app.chatgpt-layout>.sidebar{box-shadow:-14px 0 34px rgba(20,35,55,.16)!important}}
+@media(prefers-reduced-motion:reduce){.sidebar-tool,.sidebar-link,.explore-prompt,.home-icon-button,.sidebar-collapse-toggle,#send,.sidebar-new-chat{transition:none!important}}
