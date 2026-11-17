@@ -413,6 +413,9 @@ async function refreshAccount() {
     }
 }
 
+// Populate login/logout/admin controls as soon as the page is ready.
+refreshAccount();
+
 /* =========================
    WELCOME SCREEN
 ========================= */
