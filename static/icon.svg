@@ -1,7 +1,68 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#08b991"/><stop offset="1" stop-color="#08785f"/></linearGradient></defs>
-<rect width="512" height="512" rx="112" fill="#101820"/>
-<rect x="90" y="90" width="332" height="332" rx="72" fill="url(#g)"/>
-<path d="M160 150h54v95l91-95h69L269 259l111 103h-75l-91-85v85h-54z" fill="#fff"/>
-<circle cx="367" cy="146" r="19" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Zolak AI</title>
+  <desc id="desc">A modern navy and cyan Z mark with circuit details and a Sudanese flag ribbon.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset=".55" stop-color="#e7edf6"/>
+      <stop offset="1" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="z" x1=".08" y1=".05" x2=".92" y2=".95">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset=".24" stop-color="#0754c8"/>
+      <stop offset=".62" stop-color="#102b67"/>
+      <stop offset="1" stop-color="#07152f"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#67e8f9"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fb3348"/>
+      <stop offset="1" stop-color="#be123c"/>
+    </linearGradient>
+    <linearGradient id="white" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="black" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#334155"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="15" stdDeviation="14" flood-color="#0f172a" flood-opacity=".24"/>
+    </filter>
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="round"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#round)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <circle cx="78" cy="78" r="130" fill="#fff" opacity=".42"/>
+    <circle cx="462" cy="450" r="180" fill="#93c5fd" opacity=".12"/>
+    <rect x="13" y="13" width="486" height="486" rx="101" fill="none" stroke="#fff" stroke-opacity=".82" stroke-width="5"/>
+    <path d="M112 119h288c16 0 24 19 12 31L197 366h204c13 0 23 10 23 23s-10 23-23 23H112c-18 0-27-21-14-34l215-216H112c-13 0-23-10-23-23s10-20 23-20Z" fill="#07152f" opacity=".15" transform="translate(0 10)"/>
+    <path d="M112 104h288c16 0 24 19 12 31L197 351h204c13 0 23 10 23 23s-10 23-23 23H112c-18 0-27-21-14-34l215-216H112c-13 0-23-10-23-23s10-20 23-20Z" fill="url(#z)" stroke="url(#edge)" stroke-width="5" stroke-linejoin="round" filter="url(#shadow)"/>
+    <path d="M117 121h241L114 367h84l215-233c7-8 2-20-9-20H117Z" fill="#fff" opacity=".07"/>
+    <g fill="none" stroke="#38d9ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".96" filter="url(#glow)">
+      <path d="M154 300h43l31-31v-49l34-34h51"/>
+      <path d="M178 332h25l44-44v-36l39-39h43"/>
+      <path d="M286 186v-24h36"/>
+    </g>
+    <g fill="#67e8f9" filter="url(#glow)">
+      <circle cx="154" cy="300" r="7"/><circle cx="178" cy="332" r="7"/>
+      <circle cx="313" cy="186" r="7"/><circle cx="365" cy="186" r="7"/>
+      <circle cx="230" cy="269" r="6"/><circle cx="247" cy="288" r="6"/>
+    </g>
+    <g filter="url(#shadow)">
+      <path d="M271 287c44-36 92-64 139-83 18-8 38-3 47 12 9 15 4 34-12 44-44 29-92 52-143 69l-31-42Z" fill="url(#red)"/>
+      <path d="M271 287c44-36 92-64 139-83 18-8 38-3 47 12 9 15 4 34-12 44-44 29-92 52-143 69l-31-42Z" fill="url(#white)" transform="translate(0 22)"/>
+      <path d="M271 287c44-36 92-64 139-83 18-8 38-3 47 12 9 15 4 34-12 44-44 29-92 52-143 69l-31-42Z" fill="url(#black)" transform="translate(0 44)"/>
+      <path d="M270 287 221 346l73-15-24-44Z" fill="#16a34a"/>
+    </g>
+    <path d="M88 447h336" stroke="#94a3b8" stroke-opacity=".35" stroke-width="2"/>
+    <circle cx="423" cy="87" r="9" fill="#22d3ee" filter="url(#glow)"/>
+  </g>
 </svg>
