@@ -45,7 +45,7 @@ body>.app.chatgpt-layout{display:flex!important;flex-direction:row!important;ali
 #prompt::placeholder{color:var(--z-muted)!important;-webkit-text-fill-color:var(--z-muted)!important;opacity:1!important}
 .composer-icon-button{color:var(--z-muted)!important}
 #send{color:#fff!important;background:var(--z-accent)!important;border:0!important;cursor:pointer!important}
-.sidebar-overlay{position:fixed!important;inset:0!important;z-index:90!important;background:rgba(20,32,48,.35)!important;backdrop-filter:none!important}
+.sidebar-overlay{position:fixed!important;inset:0!important;z-index:90!important;background:transparent!important;backdrop-filter:none!important}
 .sidebar-overlay:not(.active){display:none!important;visibility:hidden!important;pointer-events:none!important}
 .sidebar-overlay.active{display:block!important;visibility:visible!important;pointer-events:auto!important}
 .app.chatgpt-layout button,.app.chatgpt-layout a,.app.chatgpt-layout input,.app.chatgpt-layout textarea{pointer-events:auto!important}
