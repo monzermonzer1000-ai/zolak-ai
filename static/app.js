@@ -475,14 +475,33 @@ async function sendMessage() {
     promptBox.value = "";
     updateComposerMode();
     sendButton.disabled = true;
+    sendButton.setAttribute("aria-busy", "true");
     sendButton.innerHTML = '<span class="send-icon">…</span>';
-    let liveMessage = null, liveContent = null, streamedText = "", streamError = "", completed = false;
+    let liveMessage = null, liveContent = null, typingIndicator = null, streamedText = "", streamError = "", completed = false;
+    function removeTypingIndicator() {
+        if (typingIndicator) { typingIndicator.remove(); typingIndicator = null; }
+    }
+    function showTypingIndicator() {
+        removeTypingIndicator();
+        typingIndicator = document.createElement("div");
+        typingIndicator.className = "message assistant typing-message";
+        typingIndicator.setAttribute("role", "status");
+        typingIndicator.setAttribute("aria-live", "polite");
+        typingIndicator.setAttribute("aria-label", "زولك AI يكتب الرد الآن");
+        const bubble = document.createElement("div");
+        bubble.className = "message-content typing-indicator";
+        bubble.innerHTML = '<span class="typing-label">زولك AI يفكر</span><span class="typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>';
+        typingIndicator.appendChild(bubble);
+        messages.appendChild(typingIndicator);
+        messages.scrollTop = messages.scrollHeight;
+    }
+    showTypingIndicator();
     try {
         const body = {message:question};
         if (currentConversationId !== null) body.conversation_id = currentConversationId;
         const response = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json","Accept":"text/event-stream"},body:JSON.stringify(body)});
-        if (response.status === 401) { window.location.href="/login"; return; }
-        if (!response.ok) { const data=await response.json().catch(function(){return {};}); addMessage(data.error || "حصل خطأ، جرّب تاني.","assistant"); await refreshAccount(); return; }
+        if (response.status === 401) { removeTypingIndicator(); window.location.href="/login"; return; }
+        if (!response.ok) { removeTypingIndicator(); const data=await response.json().catch(function(){return {};}); addMessage(data.error || "حصل خطأ، جرّب تاني.","assistant"); await refreshAccount(); return; }
         if (!response.body || !response.body.getReader) throw new Error("المتصفح لا يدعم استقبال الرد المباشر.");
         const reader=response.body.getReader(), decoder=new TextDecoder("utf-8");
         let buffer="", streamFinished=false;
@@ -492,19 +511,20 @@ async function sendMessage() {
             if(!payloadText)return; let payload; try{payload=JSON.parse(payloadText);}catch(_){return;}
             if(eventName==="meta"&&payload.conversation_id)currentConversationId=Number(payload.conversation_id);
             else if(eventName==="token"&&payload.text){
-                if(!liveMessage){liveMessage=document.createElement("div");liveMessage.className="message assistant";liveContent=document.createElement("div");liveContent.className="message-content streaming-content";liveMessage.appendChild(liveContent);messages.appendChild(liveMessage);}
+                if(!liveMessage){removeTypingIndicator();liveMessage=document.createElement("div");liveMessage.className="message assistant streaming-message";liveContent=document.createElement("div");liveContent.className="message-content streaming-content";liveMessage.appendChild(liveContent);messages.appendChild(liveMessage);}
                 streamedText+=payload.text;liveContent.textContent=streamedText;messages.scrollTop=messages.scrollHeight;
             }else if(eventName==="error"){streamError=payload.error||"حصل خطأ أثناء توليد الرد.";streamFinished=true;}
             else if(eventName==="done"){completed=true;streamFinished=true;if(payload.conversation_id)currentConversationId=Number(payload.conversation_id);}
         }
         while(!streamFinished){const result=await reader.read();if(result.done)break;buffer+=decoder.decode(result.value,{stream:true});const events=buffer.split(/\r?\n\r?\n/);buffer=events.pop()||"";for(const eventText of events){handleEvent(eventText);if(streamFinished)break;}}
         if(streamFinished){try{await reader.cancel();}catch(_){}}else{buffer+=decoder.decode();if(buffer.trim())handleEvent(buffer);}
+        removeTypingIndicator();
         if(liveMessage)liveMessage.remove();
         if(streamedText)addMessage(streamedText,"assistant");
         if(streamError)addMessage(streamError,"assistant");else if(!completed)addMessage("انقطع الاتصال قبل اكتمال الرد. حاول تاني.","assistant");
         await refreshAccount();
-    }catch(error){console.error("خطأ في إرسال الرسالة:",error);if(liveMessage)liveMessage.remove();addMessage("ما قدرنا نكمل الاتصال بالخدمة. تأكد من الإنترنت وحاول تاني.","assistant");}
-    finally{isSending=false;sendButton.disabled=false;sendButton.innerHTML='<span class="send-icon">↑</span>';if(promptBox)promptBox.focus();}
+    }catch(error){console.error("خطأ في إرسال الرسالة:",error);removeTypingIndicator();if(liveMessage)liveMessage.remove();addMessage("ما قدرنا نكمل الاتصال بالخدمة. تأكد من الإنترنت وحاول تاني.","assistant");}
+    finally{removeTypingIndicator();isSending=false;sendButton.disabled=false;sendButton.removeAttribute("aria-busy");sendButton.innerHTML='<span class="send-icon">↑</span>';if(promptBox)promptBox.focus();}
 }
 
 const composerInner = document.querySelector(".composer-inner");
