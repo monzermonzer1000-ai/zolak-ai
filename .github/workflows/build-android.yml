@@ -100,6 +100,112 @@ jobs:
           sed -i 's#https://zolak-ai-p8mz5.faable.link/#https://zolak-ai.vercel.app/#g' "$JAVA_FILE"
           grep -q 'https://zolak-ai.vercel.app/' "$JAVA_FILE"
 
+      - name: Install large branded splash screen
+        run: |
+          set -euo pipefail
+          APP_DIR="$ANDROID_PROJECT_DIR/app/src/main"
+          mkdir -p "$APP_DIR/assets"
+          curl -fL --retry 3 "https://raw.githubusercontent.com/monzermonzer1000-ai/zolak-ai/main/static/icon.svg" -o "$APP_DIR/assets/zolak-logo.svg"
+          test -s "$APP_DIR/assets/zolak-logo.svg"
+          cat > "$APP_DIR/assets/splash.html" <<'HTML'
+          <!doctype html>
+          <html lang="ar" dir="rtl">
+          <head>
+          <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+          <meta name="theme-color" content="#07152f">
+          <style>
+          *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
+          body{display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,#173b70 0,#0b2043 42%,#07152f 100%);font-family:Arial,sans-serif;color:#fff}
+          main{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:25px;padding:28px}
+          img{display:block;width:min(72vw,340px);height:auto;max-height:42vh;object-fit:contain;filter:drop-shadow(0 18px 30px #0008)}
+          h1{margin:0;font-size:34px;font-weight:800;letter-spacing:.2px}p{margin:0;color:#b9cbe5;font-size:15px}
+          .dot{width:7px;height:7px;border-radius:50%;background:#38d9ff;box-shadow:0 0 14px #38d9ff}
+          </style></head><body><main><img src="zolak-logo.svg" alt="شعار زولك AI"><h1>زولك AI</h1><p>مساعدك الذكي من السودان</p><span class="dot"></span></main></body></html>
+          HTML
+          JAVA_FILE=$(find "$ANDROID_PROJECT_DIR" -type f -name 'MainActivity.java' -print -quit)
+          cat > "$JAVA_FILE" <<'JAVA'
+          package com.zolak.ai;
+
+          import android.app.Activity;
+          import android.graphics.Color;
+          import android.os.Bundle;
+          import android.os.Handler;
+          import android.os.Looper;
+          import android.webkit.CookieManager;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.widget.Toast;
+
+          public class MainActivity extends Activity {
+              private static final String START_URL = "https://zolak-ai.vercel.app/";
+              private WebView webView;
+              private long lastBack = 0;
+              private final Handler handler = new Handler(Looper.getMainLooper());
+              private final Runnable openWebsite = () -> {
+                  if (webView != null) webView.loadUrl(START_URL);
+              };
+
+              @Override protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  webView = new WebView(this);
+                  webView.setBackgroundColor(Color.rgb(7, 21, 47));
+                  setContentView(webView);
+
+                  WebSettings s = webView.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setDatabaseEnabled(true);
+                  s.setSupportZoom(false);
+                  s.setBuiltInZoomControls(false);
+                  s.setDisplayZoomControls(false);
+                  s.setMediaPlaybackRequiresUserGesture(false);
+                  s.setUserAgentString(s.getUserAgentString() + " ZolakAI-Android/1.1.0");
+
+                  CookieManager.getInstance().setAcceptCookie(true);
+                  CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
+                  webView.setWebChromeClient(new WebChromeClient());
+                  webView.setWebViewClient(new WebViewClient() {
+                      @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                          String host = request.getUrl().getHost();
+                          if (host == null) return false;
+                          return !(host.equals("zolak-ai.vercel.app") || host.endsWith(".zolak-ai.vercel.app") || host.endsWith("faable.link"));
+                      }
+                  });
+
+                  if (savedInstanceState == null) {
+                      webView.loadUrl("file:///android_asset/splash.html");
+                      handler.postDelayed(openWebsite, 1500);
+                  } else {
+                      webView.restoreState(savedInstanceState);
+                      if (webView.getUrl() == null || webView.getUrl().contains("splash.html")) {
+                          handler.postDelayed(openWebsite, 500);
+                      }
+                  }
+              }
+
+              @Override protected void onSaveInstanceState(Bundle outState) {
+                  if (webView != null) webView.saveState(outState);
+                  super.onSaveInstanceState(outState);
+              }
+
+              @Override public void onBackPressed() {
+                  if (webView != null && webView.canGoBack()) webView.goBack();
+                  else if (System.currentTimeMillis() - lastBack < 1800) super.onBackPressed();
+                  else { lastBack = System.currentTimeMillis(); Toast.makeText(this, "اضغط رجوع مرة تانية للخروج", Toast.LENGTH_SHORT).show(); }
+              }
+
+              @Override protected void onDestroy() {
+                  handler.removeCallbacks(openWebsite);
+                  if (webView != null) { webView.stopLoading(); webView.destroy(); }
+                  super.onDestroy();
+              }
+          }
+          JAVA
+          echo "Installed SVG logo splash; image width is responsive up to 340dp."
+
       - name: Build APK
         run: |
           set -e
