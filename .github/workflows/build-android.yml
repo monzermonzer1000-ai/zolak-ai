@@ -70,6 +70,13 @@ jobs:
 
           echo "Android project found at: $PROJECT_DIR"
 
+      - name: Inspect splash screen resources
+        run: |
+          echo "=== ANDROID FILES ==="
+          find "$ANDROID_PROJECT_DIR" -type f | sort | head -250
+          echo "=== SPLASH REFERENCES ==="
+          grep -RniE 'splash|launch|logo|icon|scaleType|fitCenter|centerInside|layout_width|layout_height' "$ANDROID_PROJECT_DIR" --include='*.xml' --include='*.java' --include='*.kt' | head -250 || true
+
       - name: Point Android app to the current Vercel website
         run: |
           set -e
