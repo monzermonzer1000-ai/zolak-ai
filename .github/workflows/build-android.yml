@@ -84,3 +84,5 @@ jobs:
           path: '**/build/outputs/apk/debug/*.apk'
           if-no-files-found: error
           retention-days: 14
+
+# Rebuild Android APK for the latest Zolak AI web release (2026-11-18)
