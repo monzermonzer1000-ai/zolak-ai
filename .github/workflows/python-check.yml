@@ -463,7 +463,7 @@ jobs:
           assistant_css = css_source[assistant_css_start:assistant_css_end]
           assistant_color_css = assistant_css.split("@media (max-width: 800px)")[0]
           assert "body.theme-light .app.chatgpt-layout > .main .message.assistant .message-content" in assistant_color_css
-          assert "\\n.app.chatgpt-layout > .main .message.assistant .message-content" not in assistant_color_css
+          assert "\n.app.chatgpt-layout > .main .message.assistant .message-content" not in assistant_color_css
           assert "body.theme-dark .message.assistant .message-content{background:#1b2738!important;color:#e5edf7!important;border-color:#39485d!important}" in theme_source
           assert ".code-block .token-keyword" in chat_css_source
           performance_source = open("static/performance.css", encoding="utf-8").read()
