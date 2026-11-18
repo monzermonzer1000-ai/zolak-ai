@@ -3006,7 +3006,6 @@ button, .sidebar-link, .conversation-item { -webkit-tap-highlight-color:transpar
    ZOLAK AI — FINAL READABLE ASSISTANT OUTPUT / v31
    Keep high-specificity assistant colors scoped to light mode so dark mode can apply.
    ========================================================= */
-body.theme-light .app.chatgpt-layout > .main .message.assistant .message-content,
 body.theme-light .app.chatgpt-layout > .main .message.assistant .message-content {
     color: #17231f !important;
     background: #ffffff !important;
