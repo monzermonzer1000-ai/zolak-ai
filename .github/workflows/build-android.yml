@@ -70,6 +70,17 @@ jobs:
 
           echo "Android project found at: $PROJECT_DIR"
 
+      - name: Point Android app to the current Vercel website
+        run: |
+          set -e
+          JAVA_FILE=$(find "$ANDROID_PROJECT_DIR" -type f -name 'MainActivity.java' -print -quit)
+          if [ -z "$JAVA_FILE" ]; then
+            echo "ERROR: MainActivity.java not found"
+            exit 1
+          fi
+          sed -i 's#https://zolak-ai-p8mz5.faable.link/#https://zolak-ai.vercel.app/#g' "$JAVA_FILE"
+          grep -q 'https://zolak-ai.vercel.app/' "$JAVA_FILE"
+
       - name: Build APK
         run: |
           set -e
