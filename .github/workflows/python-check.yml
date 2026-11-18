@@ -68,6 +68,7 @@ jobs:
           home_html = client.get("/").get_data(as_text=True)
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
+          assert "/static/style.css?v=33" in home_html
           assert "/static/soft-slate-theme.css?v=14" in home_html
           assert "/static/app.js?v=47" in home_html
           assert 'class="theme-light"' in home_html
@@ -104,7 +105,7 @@ jobs:
           assert "backdrop-filter:none!important" in sidebar_css
           assert "background:#fff!important" in sidebar_css
           assert "theme-dark" in sidebar_css
-          assert "zolak-ai-assets-v57" in client.get("/sw.js").get_data(as_text=True)
+          assert "zolak-ai-assets-v58" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -457,6 +458,13 @@ jobs:
           css_source = open("static/style.css", encoding="utf-8").read()
           chat_css_source = open("static/chat-enhancements.css", encoding="utf-8").read()
           assert ".app.chatgpt-layout > .main .message.assistant .message-content span {" not in css_source
+          assistant_css_start = css_source.index("ZOLAK AI — FINAL READABLE ASSISTANT OUTPUT")
+          assistant_css_end = css_source.index("Sidebar refinement", assistant_css_start)
+          assistant_css = css_source[assistant_css_start:assistant_css_end]
+          assistant_color_css = assistant_css.split("@media (max-width: 800px)")[0]
+          assert "body.theme-light .app.chatgpt-layout > .main .message.assistant .message-content" in assistant_color_css
+          assert "\n.app.chatgpt-layout > .main .message.assistant .message-content" not in assistant_color_css
+          assert "body.theme-dark .message.assistant .message-content{background:#1b2738!important;color:#e5edf7!important;border-color:#39485d!important}" in theme_source
           assert ".code-block .token-keyword" in chat_css_source
           performance_source = open("static/performance.css", encoding="utf-8").read()
           premium_source = open("static/premium-ui.css", encoding="utf-8").read()
@@ -467,7 +475,7 @@ jobs:
           assert "identity_answer = \"الموقع تحت تطوير منذر السيد.\"" in backend_source
           assert "width:100%!important" in theme_source
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
-          assert "filename='style.css') }}?v=32" in home_source
+          assert "filename='style.css') }}?v=33" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
           assert "filename='app.js') }}?v=47" in home_source
           assert 'id="composerVoice"' not in home_source
