@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "zolak-ai-assets-v58";
+const CACHE_NAME = "zolak-ai-assets-v59";
 const ASSETS = [
   "/manifest.json",
   "/static/style.css?v=33",
@@ -9,7 +9,7 @@ const ASSETS = [
   "/static/chat-enhancements.css?v=1",
   "/static/soft-slate-theme.css?v=14",
   "/static/app.js?v=47",
-  "/static/icon.svg",
+  "/static/icon.svg?v=3",
 ];
 
 self.addEventListener("install", event => {
