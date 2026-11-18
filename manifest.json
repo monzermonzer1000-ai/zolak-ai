@@ -11,10 +11,10 @@
   "theme_color": "#0b1b3a",
   "icons": [
     {
-      "src": "/static/icon.svg",
+      "src": "/static/icon.svg?v=3",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "id": "zolak-ai"
