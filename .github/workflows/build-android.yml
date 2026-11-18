@@ -77,6 +77,18 @@ jobs:
           echo "=== SPLASH REFERENCES ==="
           grep -RniE 'splash|launch|logo|icon|scaleType|fitCenter|centerInside|layout_width|layout_height' "$ANDROID_PROJECT_DIR" --include='*.xml' --include='*.java' --include='*.kt' | head -250 || true
 
+      - name: Read actual Android launch and splash implementation
+        run: |
+          echo "=== MAIN ACTIVITY ==="
+          ACTIVITY_FILE=$(find "$ANDROID_PROJECT_DIR" -type f -name 'MainActivity.java' -print -quit)
+          sed -n '1,260p' "$ACTIVITY_FILE"
+          echo "=== APP THEME ==="
+          find "$ANDROID_PROJECT_DIR/app/src/main/res" -type f -name '*.xml' -maxdepth 4 -print -exec sed -n '1,220p' {} \;
+          echo "=== MANIFEST ==="
+          sed -n '1,220p' "$ANDROID_PROJECT_DIR/app/src/main/AndroidManifest.xml"
+          echo "=== IMAGE/DRAWABLE ASSETS ==="
+          find "$ANDROID_PROJECT_DIR/app/src/main/res" -type f | grep -Ei 'drawable|mipmap|png|webp|jpg|xml' | sort || true
+
       - name: Point Android app to the current Vercel website
         run: |
           set -e
