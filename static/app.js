@@ -697,81 +697,322 @@ if (removeImageButton) removeImageButton.addEventListener("click", function () {
     pendingImageAttachment = null; renderPendingImage(); setComposerStatus("");
 });
 
-/* Speech recognition fills the prompt; the user always confirms before sending. */
+/* Live voice chat: native Gemini audio-to-audio over a short-lived token. */
 const microphoneButton = document.getElementById("microphoneButton");
-let speechRecognition = null;
-let isListening = false;
-function stopSpeechRecognition() {
-    if (speechRecognition && isListening) {
-        try { speechRecognition.stop(); } catch (_) {}
+const voicePanel = document.getElementById("voiceChatPanel");
+const voiceStatus = document.getElementById("voiceStatus");
+const voiceTranscript = document.getElementById("voiceTranscript");
+const voiceEndButton = document.getElementById("voiceEndButton");
+const voiceMuteButton = document.getElementById("voiceMuteButton");
+const voiceCloseButton = document.getElementById("voiceCloseButton");
+let liveVoiceSocket = null;
+let liveVoiceStream = null;
+let liveVoiceContext = null;
+let liveVoiceSource = null;
+let liveVoiceProcessor = null;
+let liveVoiceActive = false;
+let liveVoiceMuted = false;
+let liveVoiceSetupReady = false;
+let liveVoiceNextPlayTime = 0;
+let liveVoiceUserText = "";
+let liveVoiceAssistantText = "";
+
+function setLiveVoiceStatus(message, state) {
+    if (voiceStatus) voiceStatus.textContent = message;
+    if (voicePanel) {
+        voicePanel.dataset.state = state || "idle";
+        voicePanel.querySelector(".voice-orb")?.setAttribute("data-state", state || "idle");
     }
-    isListening = false;
+}
+function showVoiceTranscript() {
+    if (!voiceTranscript) return;
+    const parts = [];
+    if (liveVoiceUserText) parts.push("أنت: " + liveVoiceUserText);
+    if (liveVoiceAssistantText) parts.push("زولك: " + liveVoiceAssistantText);
+    voiceTranscript.textContent = parts.join("\n\n");
+}
+function floatToPcm16Base64(floatSamples) {
+    const pcm = new Int16Array(floatSamples.length);
+    for (let i = 0; i < floatSamples.length; i++) {
+        const sample = Math.max(-1, Math.min(1, floatSamples[i]));
+        pcm[i] = sample < 0 ? sample * 32768 : sample * 32767;
+    }
+    const bytes = new Uint8Array(pcm.buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + 0x8000, bytes.length)));
+    }
+    return btoa(binary);
+}
+function resampleTo16k(input, inputRate) {
+    if (inputRate === 16000) return input;
+    const ratio = inputRate / 16000;
+    const outputLength = Math.max(1, Math.floor(input.length / ratio));
+    const output = new Float32Array(outputLength);
+    for (let i = 0; i < outputLength; i++) {
+        const position = i * ratio;
+        const left = Math.floor(position);
+        const right = Math.min(left + 1, input.length - 1);
+        const fraction = position - left;
+        output[i] = input[left] * (1 - fraction) + input[right] * fraction;
+    }
+    return output;
+}
+function playLivePcm(base64Audio) {
+    if (!liveVoiceContext || !base64Audio) return;
+    const binary = atob(base64Audio);
+    const samples = new Int16Array(binary.length / 2);
+    for (let i = 0; i < samples.length; i++) {
+        const low = binary.charCodeAt(i * 2);
+        const high = binary.charCodeAt(i * 2 + 1);
+        let value = (high << 8) | low;
+        if (value >= 32768) value -= 65536;
+        samples[i] = value;
+    }
+    if (!samples.length) return;
+    const audioBuffer = liveVoiceContext.createBuffer(1, samples.length, 24000);
+    const channel = audioBuffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768;
+    const source = liveVoiceContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(liveVoiceContext.destination);
+    const startAt = Math.max(liveVoiceContext.currentTime + 0.025, liveVoiceNextPlayTime);
+    source.start(startAt);
+    liveVoiceNextPlayTime = startAt + audioBuffer.duration;
+    setLiveVoiceStatus("زولك بيتكلم معاك...", "speaking");
+}
+function stopLivePlayback() {
+    if (liveVoiceContext) {
+        liveVoiceNextPlayTime = liveVoiceContext.currentTime;
+    }
+}
+function startLiveMicrophone() {
+    if (!liveVoiceStream || !liveVoiceContext || !liveVoiceSocket || liveVoiceSocket.readyState !== WebSocket.OPEN) return;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) throw new Error("المتصفح لا يدعم معالجة الصوت المباشر.");
+    liveVoiceSource = liveVoiceContext.createMediaStreamSource(liveVoiceStream);
+    liveVoiceProcessor = liveVoiceContext.createScriptProcessor(4096, 1, 1);
+    liveVoiceProcessor.onaudioprocess = function (event) {
+        if (!liveVoiceActive || liveVoiceMuted || liveVoiceSocket?.readyState !== WebSocket.OPEN) return;
+        const samples = resampleTo16k(event.inputBuffer.getChannelData(0), liveVoiceContext.sampleRate);
+        if (!samples.length) return;
+        liveVoiceSocket.send(JSON.stringify({
+            realtimeInput: {
+                audio: {
+                    data: floatToPcm16Base64(samples),
+                    mimeType: "audio/pcm;rate=16000"
+                }
+            }
+        }));
+    };
+    liveVoiceSource.connect(liveVoiceProcessor);
+    liveVoiceProcessor.connect(liveVoiceContext.destination);
+}
+function cleanupLiveVoice(closePanel) {
+    liveVoiceActive = false;
+    liveVoiceSetupReady = false;
+    if (liveVoiceProcessor) {
+        liveVoiceProcessor.onaudioprocess = null;
+        try { liveVoiceProcessor.disconnect(); } catch (_) {}
+        liveVoiceProcessor = null;
+    }
+    if (liveVoiceSource) {
+        try { liveVoiceSource.disconnect(); } catch (_) {}
+        liveVoiceSource = null;
+    }
+    if (liveVoiceStream) {
+        liveVoiceStream.getTracks().forEach(function (track) { track.stop(); });
+        liveVoiceStream = null;
+    }
+    if (liveVoiceSocket) {
+        const socket = liveVoiceSocket;
+        liveVoiceSocket = null;
+        try { socket.close(1000, "User ended voice chat"); } catch (_) {}
+    }
+    if (liveVoiceContext) {
+        const context = liveVoiceContext;
+        liveVoiceContext = null;
+        try { context.close(); } catch (_) {}
+    }
+    liveVoiceNextPlayTime = 0;
+    liveVoiceMuted = false;
+    if (voiceMuteButton) {
+        voiceMuteButton.textContent = "كتم الميكروفون";
+        voiceMuteButton.setAttribute("aria-pressed", "false");
+    }
     if (microphoneButton) {
-        microphoneButton.classList.remove("is-listening");
+        microphoneButton.disabled = false;
+        microphoneButton.classList.remove("is-live");
         microphoneButton.setAttribute("aria-pressed", "false");
-        microphoneButton.title = "الإدخال الصوتي";
     }
+    if (closePanel && voicePanel) voicePanel.hidden = true;
 }
-function startSpeechRecognition() {
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) {
-        setComposerStatus("الإدخال الصوتي غير مدعوم في هذا المتصفح. استخدم لوحة المفاتيح الصوتية إن كانت متاحة.", true);
+function endLiveVoiceChat() {
+    cleanupLiveVoice(true);
+    setComposerStatus("");
+}
+function appendVoiceText(target, text) {
+    if (!text) return;
+    if (target === "user") liveVoiceUserText += text;
+    else liveVoiceAssistantText += text;
+    showVoiceTranscript();
+}
+async function startLiveVoiceChat() {
+    if (liveVoiceActive) { endLiveVoiceChat(); return; }
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia || !window.WebSocket) {
+        setComposerStatus("الدردشة الصوتية تحتاج متصفحاً حديثاً واتصال HTTPS مع دعم الميكروفون.", true);
         return;
     }
-    if (!window.isSecureContext) {
-        setComposerStatus("يلزم فتح الموقع عبر اتصال HTTPS لاستخدام الميكروفون.", true);
+    if (!voicePanel) {
+        setComposerStatus("واجهة الدردشة الصوتية غير متاحة في هذه النسخة.", true);
         return;
     }
-    if (isListening) { stopSpeechRecognition(); return; }
-    speechRecognition = new Recognition();
-    speechRecognition.lang = "ar-SA";
-    speechRecognition.interimResults = true;
-    speechRecognition.continuous = false;
-    let finalTranscript = "";
-    speechRecognition.onstart = function () {
-        isListening = true;
-        microphoneButton.classList.add("is-listening");
+
+    liveVoiceActive = true;
+    liveVoiceUserText = "";
+    liveVoiceAssistantText = "";
+    liveVoiceNextPlayTime = 0;
+    if (voiceTranscript) voiceTranscript.textContent = "";
+    voicePanel.hidden = false;
+    setLiveVoiceStatus("جارٍ تجهيز الاتصال الصوتي...", "connecting");
+    if (microphoneButton) {
+        microphoneButton.disabled = true;
+        microphoneButton.classList.add("is-live");
         microphoneButton.setAttribute("aria-pressed", "true");
-        microphoneButton.title = "إيقاف التسجيل";
-        setComposerStatus("تحدث الآن... اضغط الميكروفون عند الانتهاء.");
-    };
-    speechRecognition.onresult = function (event) {
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript || "";
-            if (event.results[i].isFinal) finalTranscript += transcript;
-            else interim += transcript;
+    }
+
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        liveVoiceContext = new AudioContextClass();
+        await liveVoiceContext.resume();
+
+        const tokenResponse = await fetch("/api/live-token", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conversation_id: currentConversationId })
+        });
+        if (tokenResponse.status === 401) {
+            cleanupLiveVoice(true);
+            window.location.href = "/login";
+            return;
         }
-        const existing = promptBox.value.trim();
-        const prefix = existing && !promptBox.dataset.speechBase ? existing + " " : (promptBox.dataset.speechBase || "");
-        promptBox.value = prefix + finalTranscript + (interim ? " " + interim : "");
-        updateComposerMode();
-    };
-    speechRecognition.onerror = function (event) {
-        const messagesByError = {
-            "not-allowed": "تم رفض إذن الميكروفون. اسمح للموقع باستخدام الميكروفون من إعدادات المتصفح.",
-            "service-not-allowed": "المتصفح منع خدمة التعرف على الصوت.",
-            "no-speech": "ما التقطنا كلاماً. حاول تتحدث قريباً من الميكروفون.",
-            "audio-capture": "ما لقينا ميكروفون متاحاً على الجهاز.",
-            "network": "تعذر الاتصال بخدمة تحويل الصوت إلى نص."
+        const tokenData = await tokenResponse.json().catch(function () { return {}; });
+        if (!tokenResponse.ok || !tokenData.token) {
+            throw new Error(tokenData.error || "تعذر بدء الدردشة الصوتية.");
+        }
+
+        const modelName = String(tokenData.model || "gemini-3.8-live").replace(/^models\//, "");
+        const socketUrl = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?access_token=" + encodeURIComponent(tokenData.token);
+        liveVoiceSocket = new WebSocket(socketUrl);
+
+        liveVoiceSocket.onopen = function () {
+            if (!liveVoiceActive || !liveVoiceSocket) return;
+            liveVoiceSocket.send(JSON.stringify({
+                setup: {
+                    model: "models/" + modelName,
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            languageCode: "ar",
+                            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } }
+                        }
+                    },
+                    systemInstruction: {
+                        parts: [{ text: "أنت زولك AI، مساعد سوداني. تحدث بالعربية بوضوح وبلهجة سودانية طبيعية عند ملاءمتها. أجب بصوت طبيعي ومباشر، استمع جيداً ولا تخترع معلومات." }]
+                    },
+                    inputAudioTranscription: {},
+                    outputAudioTranscription: {},
+                    realtimeInputConfig: {
+                        automaticActivityDetection: {
+                            disabled: false,
+                            silenceDurationMs: 800
+                        }
+                    }
+                }
+            }));
+            setLiveVoiceStatus("تم الاتصال. بنجهز الميكروفون...", "connecting");
         };
-        setComposerStatus(messagesByError[event.error] || "تعذر تشغيل الإدخال الصوتي.", true);
-        stopSpeechRecognition();
-    };
-    speechRecognition.onend = function () {
-        isListening = false;
-        if (microphoneButton) {
-            microphoneButton.classList.remove("is-listening");
-            microphoneButton.setAttribute("aria-pressed", "false");
-            microphoneButton.title = "الإدخال الصوتي";
-        }
-        if (promptBox) { delete promptBox.dataset.speechBase; promptBox.focus(); }
-    };
-    promptBox.dataset.speechBase = promptBox.value.trim();
-    try { speechRecognition.start(); }
-    catch (_) { setComposerStatus("تعذر بدء الميكروفون. تحقق من الإذن وحاول مجدداً.", true); stopSpeechRecognition(); }
+
+        liveVoiceSocket.onmessage = async function (event) {
+            let packet;
+            try { packet = JSON.parse(event.data); } catch (_) { return; }
+            if (packet.setupComplete) {
+                liveVoiceSetupReady = true;
+                try {
+                    liveVoiceStream = await navigator.mediaDevices.getUserMedia({
+                        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                    });
+                    if (!liveVoiceActive) return;
+                    startLiveMicrophone();
+                    setLiveVoiceStatus("سامعك الآن... اتكلم براحتك", "listening");
+                } catch (error) {
+                    const denied = error && (error.name === "NotAllowedError" || error.name === "PermissionDeniedError");
+                    throw new Error(denied
+                        ? "إذن الميكروفون مرفوض. اسمح لزولك AI باستخدام الميكروفون من إعدادات الموقع."
+                        : "ما قدرنا نفتح الميكروفون. تأكد أنه غير مستخدم بواسطة تطبيق آخر.");
+                }
+                return;
+            }
+            if (packet.error) {
+                const detail = packet.error.message || "خدمة الصوت أرسلت خطأ.";
+                setLiveVoiceStatus(detail, "error");
+                cleanupLiveVoice(false);
+                return;
+            }
+            const content = packet.serverContent;
+            if (!content) return;
+            if (content.interrupted) {
+                stopLivePlayback();
+                setLiveVoiceStatus("سامعك الآن...", "listening");
+            }
+            if (content.inputTranscription?.text) {
+                appendVoiceText("user", content.inputTranscription.text);
+                setLiveVoiceStatus("وصل كلامك لزولك...", "thinking");
+            }
+            if (content.outputTranscription?.text) {
+                appendVoiceText("assistant", content.outputTranscription.text);
+                setLiveVoiceStatus("زولك بيتكلم معاك...", "speaking");
+            }
+            const parts = content.modelTurn?.parts || [];
+            for (const part of parts) {
+                const audioData = part.inlineData?.data || part.inline_data?.data;
+                if (audioData) playLivePcm(audioData);
+            }
+            if (content.turnComplete) {
+                if (!content.outputTranscription?.text && liveVoiceAssistantText) showVoiceTranscript();
+                setLiveVoiceStatus("سامعك الآن... اتكلم براحتك", "listening");
+            }
+        };
+        liveVoiceSocket.onerror = function () {
+            if (!liveVoiceActive) return;
+            setLiveVoiceStatus("حصلت مشكلة في اتصال الصوت. تحقق من الإنترنت وحاول مرة أخرى.", "error");
+            cleanupLiveVoice(false);
+        };
+        liveVoiceSocket.onclose = function (event) {
+            if (!liveVoiceActive) return;
+            const message = event.code === 1008
+                ? "انتهت صلاحية جلسة الصوت. اضغط زر البدء وحاول مجدداً."
+                : "انقطع اتصال الدردشة الصوتية. تحقق من الإنترنت وحاول مجدداً.";
+            setLiveVoiceStatus(message, "error");
+            cleanupLiveVoice(false);
+        };
+    } catch (error) {
+        console.error("Live voice chat error:", error);
+        setLiveVoiceStatus(error.message || "تعذر تشغيل الدردشة الصوتية.", "error");
+        cleanupLiveVoice(false);
+    }
 }
-if (microphoneButton) microphoneButton.addEventListener("click", startSpeechRecognition);
+if (microphoneButton) microphoneButton.addEventListener("click", startLiveVoiceChat);
+if (voiceEndButton) voiceEndButton.addEventListener("click", endLiveVoiceChat);
+if (voiceCloseButton) voiceCloseButton.addEventListener("click", endLiveVoiceChat);
+if (voiceMuteButton) voiceMuteButton.addEventListener("click", function () {
+    if (!liveVoiceActive) return;
+    liveVoiceMuted = !liveVoiceMuted;
+    voiceMuteButton.textContent = liveVoiceMuted ? "تشغيل الميكروفون" : "كتم الميكروفون";
+    voiceMuteButton.setAttribute("aria-pressed", String(liveVoiceMuted));
+    setLiveVoiceStatus(liveVoiceMuted ? "الميكروفون مكتوم. اضغط تشغيل الميكروفون للمتابعة." : "سامعك الآن... اتكلم براحتك", liveVoiceMuted ? "muted" : "listening");
+});
 
 const composerInner = document.querySelector(".composer-inner");
 function updateComposerMode() {
