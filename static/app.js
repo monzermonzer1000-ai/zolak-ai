@@ -328,7 +328,7 @@ function renderAssistantMarkdown(container, source) {
     flushList();
 }
 
-function addMessage(text, type) {
+function addMessage(text, type, retryPayload = null) {
     if (!messages) return;
 
     const message = document.createElement("div");
@@ -350,15 +350,17 @@ function addMessage(text, type) {
             window.setTimeout(function () { if (copyButton.isConnected) copyButton.textContent = "نسخ الرد"; }, 1800);
         });
         actions.appendChild(copyButton);
-        const retryButton = document.createElement("button");
-        retryButton.type = "button";
-        retryButton.className = "message-retry";
-        retryButton.textContent = "إعادة المحاولة";
-        retryButton.addEventListener("click", function () {
-            if (!lastRequestPayload || isSending) return;
-            sendMessage(lastRequestPayload);
-        });
-        actions.appendChild(retryButton);
+        if (retryPayload) {
+            const retryButton = document.createElement("button");
+            retryButton.type = "button";
+            retryButton.className = "message-retry";
+            retryButton.textContent = "إعادة المحاولة";
+            retryButton.addEventListener("click", function () {
+                if (isSending) return;
+                sendMessage(retryPayload);
+            });
+            actions.appendChild(retryButton);
+        }
         content.appendChild(actions);
     } else {
         content.textContent = text;
@@ -479,7 +481,8 @@ async function sendMessage(retryPayload = null) {
     const attachments = retryPayload ? (retryPayload.attachments || []) : (pendingImageAttachment ? [pendingImageAttachment] : []);
     if (!question && !attachments.length) return;
     const requestPayload = { message: question, attachments: attachments };
-    if (currentConversationId !== null) requestPayload.conversation_id = currentConversationId;
+    if (retryPayload && retryPayload.conversation_id) requestPayload.conversation_id = retryPayload.conversation_id;
+    else if (currentConversationId !== null) requestPayload.conversation_id = currentConversationId;
     lastRequestPayload = { message: question, attachments: attachments.map(function (item) { return Object.assign({}, item); }) };
     isSending = true;
 
@@ -534,8 +537,8 @@ async function sendMessage(retryPayload = null) {
         if(streamFinished){try{await reader.cancel();}catch(_){}}else{buffer+=decoder.decode();if(buffer.trim())handleEvent(buffer);}
         removeTypingIndicator();
         if(liveMessage)liveMessage.remove();
-        if(streamedText)addMessage(streamedText,"assistant");
-        if(streamError)addMessage(streamError,"assistant");else if(!completed)addMessage("انقطع الاتصال قبل اكتمال الرد. حاول تاني.","assistant");
+        if(streamedText)addMessage(streamedText,"assistant",requestPayload);
+        if(streamError)addMessage(streamError,"assistant",requestPayload);else if(!completed)addMessage("انقطع الاتصال قبل اكتمال الرد. حاول تاني.","assistant");
         await refreshAccount();
     }catch(error){console.error("خطأ في إرسال الرسالة:",error);removeTypingIndicator();if(liveMessage)liveMessage.remove();addMessage("ما قدرنا نكمل الاتصال بالخدمة. تأكد من الإنترنت وحاول تاني.","assistant");}
     finally{removeTypingIndicator();isSending=false;sendButton.disabled=false;sendButton.removeAttribute("aria-busy");sendButton.innerHTML='<span class="send-icon">↑</span>';if(promptBox)promptBox.focus();}
