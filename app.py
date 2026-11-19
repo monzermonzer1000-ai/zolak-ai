@@ -1168,7 +1168,7 @@ def create_live_voice_token():
         if not token_name:
             app.logger.error("Gemini Live token response did not contain a token name")
             return jsonify(error="تعذر تجهيز جلسة الصوت. حاول مرة أخرى."), 502
-        return jsonify(token=token_name, model=model, expires_in=900)
+        return jsonify(token=token_name, model=model, system_instruction=system_instruction, expires_in=900)
     except HTTPError as error:
         detail = error.read().decode("utf-8", errors="replace")[:1200]
         app.logger.error("Gemini Live token request failed (HTTP %s): %s", error.code, detail)
