@@ -19,7 +19,7 @@
 
     <!-- Main Design -->
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}?v=33">
+          href="{{ url_for('static', filename='style.css') }}?v=34">
 
     <style>
         :root {
@@ -178,10 +178,19 @@
 
         
         <div class="composer composer-area">
+            <div class="image-preview" id="imagePreview" hidden></div>
             <div class="composer-inner">
-                <textarea id="prompt" placeholder="اسأل زولك AI" rows="1" aria-label="اكتب رسالتك"></textarea>
+                <div class="composer-tools">
+                    <button id="attachImageButton" class="composer-tool" type="button" aria-label="إرفاق صورة من الجهاز" title="إرفاق صورة">＋</button>
+                    <button id="cameraButton" class="composer-tool" type="button" aria-label="التقاط صورة بالكاميرا" title="الكاميرا">▧</button>
+                    <button id="microphoneButton" class="composer-tool microphone-tool" type="button" aria-label="الإدخال الصوتي" aria-pressed="false" title="الإدخال الصوتي">🎙</button>
+                </div>
+                <textarea id="prompt" placeholder="اسأل زولك AI" rows="1" aria-label="اكتب رسالتك أو سؤالك عن الصورة"></textarea>
                 <button id="send" type="button" aria-label="إرسال الرسالة" title="إرسال"><span class="send-icon">↑</span></button>
+                <input id="imageInput" type="file" accept="image/*" hidden>
+                <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
             </div>
+            <div class="composer-status" id="composerStatus" role="status" aria-live="polite"></div>
             <div class="composer-note"><span>زولك AI قد يخطئ، راجع المعلومات المهمة.</span><span class="composer-flag">صُنع في السودان 🇸🇩</span></div>
         </div>
 
@@ -191,7 +200,7 @@
 
 
 <!-- APPLICATION JAVASCRIPT -->
-<script src="{{ url_for('static', filename='app.js') }}?v=47"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=48"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
