@@ -83,7 +83,7 @@ body.theme-dark .sidebar-tool,body.theme-dark .sidebar-link,body.theme-dark .exp
 body.theme-dark .sidebar-tool:hover,body.theme-dark .sidebar-link:hover,body.theme-dark .explore-prompt:hover,body.theme-dark .sidebar-link.active{background:#273449!important;border-color:#39485d!important}
 body.theme-dark .account-box,body.theme-dark .sidebar-explore,body.theme-dark .composer-inner{background:#202d40!important;border-color:#39485d!important}
 body.theme-dark .welcome-screen,body.theme-dark .message.assistant .message-content{background:#1b2738!important;color:#e5edf7!important;border-color:#39485d!important}
-body.theme-dark .welcome-screen h1,body.theme-dark .welcome-screen p,body.theme-dark .message.assistant .message-content,body.theme-dark .message.assistant .message-content *{color:#e5edf7!important}
+body.theme-dark .welcome-screen h1,body.theme-dark .welcome-screen p,body.theme-dark .message.assistant .message-content{color:#e5edf7!important}
 body.theme-dark #prompt{color:#e5edf7!important;-webkit-text-fill-color:#e5edf7!important}
 body.theme-dark #prompt::placeholder{color:#a8b5c7!important;-webkit-text-fill-color:#a8b5c7!important}
 body.theme-dark .message.user .message-content{background:#243b56!important;color:#e5edf7!important;border-color:#405b78!important}
