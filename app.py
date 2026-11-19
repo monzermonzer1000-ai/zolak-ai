@@ -1069,6 +1069,121 @@ def me():
 # الذكاء الاصطناعي - Gemini Interactions API
 # =========================================================
 
+@app.post("/api/live-token")
+@login_required
+def create_live_voice_token():
+    """Issue a one-use, short-lived Gemini Live token without exposing the API key."""
+    import json
+    from urllib.request import Request, urlopen
+    from urllib.error import HTTPError, URLError
+    from datetime import datetime, timezone, timedelta
+
+    if setting("maintenance", "false").lower() == "true":
+        return jsonify(error="الموقع تحت الصيانة حالياً. جرب بعد شوية."), 503
+
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return jsonify(error="خدمة الصوت المباشر غير مهيأة. راجع إعدادات Gemini في الاستضافة."), 503
+
+    user_id = session["uid"]
+    data = request.get_json(silent=True) or {}
+    c = db()
+    user = c.execute("SELECT credits FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not user:
+        c.close()
+        session.clear()
+        return jsonify(error="سجل دخولك من جديد."), 401
+    if int(user["credits"] or 0) <= 0:
+        c.close()
+        return jsonify(error="رصيدك المجاني خلص. أضف رصيداً لمواصلة استخدام زولك AI."), 402
+
+    context_lines = []
+    conversation_id = data.get("conversation_id")
+    if conversation_id is not None:
+        try:
+            conversation_id = int(conversation_id)
+        except (TypeError, ValueError):
+            c.close()
+            return jsonify(error="المحادثة المطلوبة غير صحيحة."), 400
+        owned = c.execute(
+            "SELECT id FROM conversations WHERE id = ? AND user_id = ?",
+            (conversation_id, user_id)
+        ).fetchone()
+        if not owned:
+            c.close()
+            return jsonify(error="المحادثة غير موجودة."), 404
+        rows = c.execute(
+            """SELECT role, content FROM chats
+               WHERE conversation_id = ? AND user_id = ?
+               ORDER BY id DESC LIMIT 8""",
+            (conversation_id, user_id)
+        ).fetchall()
+        for row in reversed(rows):
+            role = "المستخدم" if row["role"] == "user" else "زولك AI"
+            content = str(row["content"] or "").strip()[:1800]
+            if content:
+                context_lines.append(role + ": " + content)
+    c.close()
+
+    system_instruction = (
+        "أنت زولك AI، مساعد ذكاء اصطناعي سوداني. تحدث مع المستخدم بصوت طبيعي "
+        "وبالعربية، واستخدم اللهجة السودانية بصورة طبيعية عندما تناسب الحديث. "
+        "استمع جيداً، أجب مباشرة وبوضوح، ولا تقل إنك إنسان. "
+        "لا تخترع معلومات، وإذا لم تعرف الإجابة فقل ذلك. "
+        "هذه محادثة صوتية تفاعلية؛ لا تحوّل ردودك إلى قوائم طويلة إلا عند الحاجة."
+    )
+    if context_lines:
+        system_instruction += "\nسياق المحادثة السابقة للاستمرارية فقط:\n" + "\n".join(context_lines)
+
+    model = os.getenv("GEMINI_LIVE_MODEL", "gemini-3.8-live").strip()
+    if not model.startswith("gemini-"):
+        model = "gemini-3.8-live"
+
+    now = datetime.now(timezone.utc)
+    token_request = {
+        "uses": 1,
+        "expireTime": (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
+        "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
+        "liveConnectConstraints": {
+            "model": model,
+            "config": {
+                "responseModalities": ["AUDIO"]
+            }
+        }
+    }
+
+    req = Request(
+        "https://generativelanguage.googleapis.com/v1beta/auth_tokens",
+        data=json.dumps(token_request).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key
+        },
+        method="POST"
+    )
+    try:
+        with urlopen(req, timeout=18) as response:
+            token_data = json.loads(response.read().decode("utf-8"))
+        token_name = token_data.get("name")
+        if not token_name:
+            app.logger.error("Gemini Live token response did not contain a token name")
+            return jsonify(error="تعذر تجهيز جلسة الصوت. حاول مرة أخرى."), 502
+        return jsonify(token=token_name, model=model, expires_in=900)
+    except HTTPError as error:
+        detail = error.read().decode("utf-8", errors="replace")[:1200]
+        app.logger.error("Gemini Live token request failed (HTTP %s): %s", error.code, detail)
+        if error.code in (401, 403):
+            message = "مفتاح Gemini غير صالح أو لا يملك صلاحية Live API."
+        elif error.code == 429:
+            message = "خدمة الصوت مشغولة أو وصلت حد الاستخدام. حاول لاحقاً."
+        else:
+            message = "تعذر الاتصال بخدمة الصوت المباشر. حاول مرة أخرى."
+        return jsonify(error=message), 502
+    except (URLError, TimeoutError, ValueError, OSError) as error:
+        app.logger.error("Gemini Live token provisioning error: %s", error)
+        return jsonify(error="الاتصال بخدمة الصوت تأخر أو انقطع. تحقق من الإنترنت وحاول مجدداً."), 502
+
+
 @app.post("/api/chat")
 @login_required
 def chat():
