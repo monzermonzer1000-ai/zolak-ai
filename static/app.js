@@ -920,13 +920,13 @@ async function startLiveVoiceChat() {
                         speechConfig: {
                             languageCode: "ar",
                             voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } }
-                        }
+                        },
+                        inputAudioTranscription: {},
+                        outputAudioTranscription: {}
                     },
                     systemInstruction: {
                         parts: [{ text: tokenData.system_instruction || "أنت زولك AI، مساعد سوداني. تحدث بالعربية بوضوح وبلهجة سودانية طبيعية عند ملاءمتها. أجب بصوت طبيعي ومباشر، استمع جيداً ولا تخترع معلومات." }]
                     },
-                    inputAudioTranscription: {},
-                    outputAudioTranscription: {},
                     realtimeInputConfig: {
                         automaticActivityDetection: {
                             disabled: false,
