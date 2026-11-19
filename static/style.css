@@ -3165,3 +3165,44 @@ body.theme-light .app.chatgpt-layout > .main .message.user .message-content {
 @media (prefers-reduced-motion: reduce) {
     .sidebar-search { transition: none; }
 }
+
+
+/* Interactive composer controls — image, camera, voice and message actions */
+.composer-inner { display:flex; align-items:flex-end; gap:7px; }
+.composer-tools { display:flex; align-items:center; gap:4px; padding:0 7px 9px 0; }
+.composer-tool {
+  width:36px; height:36px; flex:0 0 36px; border:1px solid var(--border,#e2e9e5);
+  border-radius:11px; background:var(--surface,#fff); color:var(--text,#24352d);
+  display:grid; place-items:center; font:inherit; font-size:19px; cursor:pointer;
+  transition:background .15s,border-color .15s,transform .15s;
+}
+.composer-tool:hover { background:#eff8f3; border-color:#9bcdb8; }
+.composer-tool:disabled { opacity:.5; cursor:wait; }
+.microphone-tool.is-listening { color:#fff; background:#c43d4d; border-color:#c43d4d; animation:zolak-mic-pulse 1.2s infinite; }
+@keyframes zolak-mic-pulse { 50% { box-shadow:0 0 0 5px rgba(196,61,77,.14); } }
+#prompt { min-width:0; flex:1; }
+.image-preview {
+  width:min(100%,880px); margin:0 auto 8px; padding:9px 12px; display:flex;
+  align-items:center; justify-content:space-between; gap:12px; border:1px solid #cfe6d9;
+  border-radius:12px; background:#f1faf5; color:#235b43; font-size:13px;
+}
+.image-preview[hidden] { display:none; }
+.remove-image { border:0; background:transparent; color:#a33242; font:inherit; cursor:pointer; }
+.composer-status { min-height:0; width:min(100%,880px); margin:4px auto 0; color:#648075; font-size:12px; text-align:right; }
+.composer-status:empty { display:none; }
+.composer-status.is-error { color:#b42335; }
+.message-actions { display:flex; align-items:center; gap:7px; margin-top:10px; }
+.message-copy,.message-retry {
+  border:1px solid var(--border,#e3e9e5); border-radius:9px; background:transparent;
+  color:var(--muted,#6d7d74); padding:6px 10px; font:inherit; font-size:12px; cursor:pointer;
+}
+.message-copy:hover,.message-retry:hover { color:var(--zolak-primary,#08785f); background:#eff8f3; }
+.message-copy:disabled,.message-retry:disabled { opacity:.5; cursor:wait; }
+@media(max-width:800px) {
+  .composer-inner { gap:3px; }
+  .composer-tools { gap:3px; padding:0 4px 8px 0; }
+  .composer-tool { width:32px; height:34px; flex-basis:32px; border-radius:10px; font-size:17px; }
+  #send { flex:0 0 40px; }
+  .composer-status { padding-inline:5px; }
+}
+@media(prefers-reduced-motion:reduce) { .microphone-tool.is-listening { animation:none; } }
