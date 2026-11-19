@@ -3206,3 +3206,6 @@ body.theme-light .app.chatgpt-layout > .main .message.user .message-content {
   .composer-status { padding-inline:5px; }
 }
 @media(prefers-reduced-motion:reduce) { .microphone-tool.is-listening { animation:none; } }
+
+.pending-image-thumbnail { width:42px; height:42px; flex:0 0 42px; object-fit:cover; border-radius:8px; border:1px solid #d7e7de; }
+.message-attachment-image { display:block; width:auto; max-width:min(100%,360px); max-height:300px; object-fit:contain; margin-top:9px; border-radius:12px; border:1px solid var(--border,#e1e9e4); }
