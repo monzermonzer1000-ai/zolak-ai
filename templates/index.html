@@ -183,7 +183,7 @@
                 <div class="composer-tools">
                     <button id="attachImageButton" class="composer-tool" type="button" aria-label="إرفاق صورة من الجهاز" title="إرفاق صورة">＋</button>
                     <button id="cameraButton" class="composer-tool" type="button" aria-label="التقاط صورة بالكاميرا" title="الكاميرا">▧</button>
-                    <button id="microphoneButton" class="composer-tool microphone-tool" type="button" aria-label="الإدخال الصوتي" aria-pressed="false" title="الإدخال الصوتي">🎙</button>
+                    <button id="microphoneButton" class="composer-tool microphone-tool" type="button" aria-label="دردشة صوتية مباشرة" aria-pressed="false" title="دردشة صوتية مباشرة"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"></path></svg></button>
                 </div>
                 <textarea id="prompt" placeholder="اسأل زولك AI" rows="1" aria-label="اكتب رسالتك أو سؤالك عن الصورة"></textarea>
                 <button id="send" type="button" aria-label="إرسال الرسالة" title="إرسال"><span class="send-icon">↑</span></button>
@@ -193,6 +193,22 @@
             <div class="composer-status" id="composerStatus" role="status" aria-live="polite"></div>
             <div class="composer-note"><span>زولك AI قد يخطئ، راجع المعلومات المهمة.</span><span class="composer-flag">صُنع في السودان 🇸🇩</span></div>
         </div>
+
+        <section class="voice-chat-panel" id="voiceChatPanel" role="dialog" aria-modal="true" aria-labelledby="voiceTitle" hidden>
+            <div class="voice-chat-card">
+                <button class="voice-close" id="voiceCloseButton" type="button" aria-label="إنهاء وإغلاق الدردشة الصوتية">×</button>
+                <div class="voice-brand-mark">ز</div>
+                <h2 id="voiceTitle">دردشة صوتية مباشرة</h2>
+                <div class="voice-orb" aria-hidden="true"><span></span><span></span><span></span></div>
+                <p class="voice-status" id="voiceStatus" role="status" aria-live="polite">جارٍ الاتصال...</p>
+                <div class="voice-transcript" id="voiceTranscript" aria-live="polite"></div>
+                <div class="voice-controls">
+                    <button class="voice-mute" id="voiceMuteButton" type="button" aria-pressed="false">كتم الميكروفون</button>
+                    <button class="voice-end" id="voiceEndButton" type="button">إنهاء المحادثة</button>
+                </div>
+                <p class="voice-footnote">تحدث بصورة طبيعية، وسيجيبك زولك بصوت مباشر.</p>
+            </div>
+        </section>
 
     </main>
 
