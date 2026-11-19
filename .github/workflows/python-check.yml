@@ -105,7 +105,7 @@ jobs:
           assert "backdrop-filter:none!important" in sidebar_css
           assert "background:#fff!important" in sidebar_css
           assert "theme-dark" in sidebar_css
-          assert "zolak-ai-assets-v58" in client.get("/sw.js").get_data(as_text=True)
+          assert "const CACHE_NAME = \"zolak-ai-assets-v" in client.get("/sw.js").get_data(as_text=True)
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
