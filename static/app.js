@@ -29,6 +29,8 @@ if (appShell && window.innerWidth > 800) {
 }
 let currentConversationId = null;
 let isSending = false;
+let pendingImageAttachment = null;
+let lastRequestPayload = null;
 
 /* Attach navigation handlers before the rest of the app initializes. */
 bindZolakSidebarControls();
@@ -343,14 +345,20 @@ function addMessage(text, type) {
         copyButton.className = "message-copy";
         copyButton.textContent = "نسخ الرد";
         copyButton.addEventListener("click", async function () {
-            try {
-                await navigator.clipboard.writeText(String(text || ""));
-                copyButton.textContent = "تم النسخ ✓";
-            } catch (error) {
-                copyButton.textContent = "تعذر النسخ";
-            }
+            const copied = await copyZolakText(String(text || ""));
+            copyButton.textContent = copied ? "تم النسخ ✓" : "تعذر النسخ";
+            window.setTimeout(function () { if (copyButton.isConnected) copyButton.textContent = "نسخ الرد"; }, 1800);
         });
         actions.appendChild(copyButton);
+        const retryButton = document.createElement("button");
+        retryButton.type = "button";
+        retryButton.className = "message-retry";
+        retryButton.textContent = "إعادة المحاولة";
+        retryButton.addEventListener("click", function () {
+            if (!lastRequestPayload || isSending) return;
+            sendMessage(lastRequestPayload);
+        });
+        actions.appendChild(retryButton);
         content.appendChild(actions);
     } else {
         content.textContent = text;
@@ -465,14 +473,22 @@ async function createNewConversation() {
    SEND MESSAGE
 ========================= */
 
-async function sendMessage() {
+async function sendMessage(retryPayload = null) {
     if (!promptBox || !sendButton || !messages || isSending) return;
-    const question = promptBox.value.trim();
-    if (!question) return;
+    const question = retryPayload ? String(retryPayload.message || "").trim() : promptBox.value.trim();
+    const attachments = retryPayload ? (retryPayload.attachments || []) : (pendingImageAttachment ? [pendingImageAttachment] : []);
+    if (!question && !attachments.length) return;
+    const requestPayload = { message: question, attachments: attachments };
+    if (currentConversationId !== null) requestPayload.conversation_id = currentConversationId;
+    lastRequestPayload = { message: question, attachments: attachments.map(function (item) { return Object.assign({}, item); }) };
     isSending = true;
 
-    addMessage(question, "user");
+    addMessage(question || "حلّل الصورة المرفقة", "user");
     promptBox.value = "";
+    if (!retryPayload) {
+        pendingImageAttachment = null;
+        renderPendingImage();
+    }
     updateComposerMode();
     sendButton.disabled = true;
     sendButton.setAttribute("aria-busy", "true");
@@ -497,9 +513,7 @@ async function sendMessage() {
     }
     showTypingIndicator();
     try {
-        const body = {message:question};
-        if (currentConversationId !== null) body.conversation_id = currentConversationId;
-        const response = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json","Accept":"text/event-stream"},body:JSON.stringify(body)});
+        const response = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json","Accept":"text/event-stream"},body:JSON.stringify(requestPayload)});
         if (response.status === 401) { removeTypingIndicator(); window.location.href="/login"; return; }
         if (!response.ok) { removeTypingIndicator(); const data=await response.json().catch(function(){return {};}); addMessage(data.error || "حصل خطأ، جرّب تاني.","assistant"); await refreshAccount(); return; }
         if (!response.body || !response.body.getReader) throw new Error("المتصفح لا يدعم استقبال الرد المباشر.");
@@ -526,6 +540,221 @@ async function sendMessage() {
     }catch(error){console.error("خطأ في إرسال الرسالة:",error);removeTypingIndicator();if(liveMessage)liveMessage.remove();addMessage("ما قدرنا نكمل الاتصال بالخدمة. تأكد من الإنترنت وحاول تاني.","assistant");}
     finally{removeTypingIndicator();isSending=false;sendButton.disabled=false;sendButton.removeAttribute("aria-busy");sendButton.innerHTML='<span class="send-icon">↑</span>';if(promptBox)promptBox.focus();}
 }
+
+async function copyZolakText(value) {
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(value);
+            return true;
+        }
+    } catch (_) {}
+    const fallback = document.createElement("textarea");
+    fallback.value = value;
+    fallback.setAttribute("readonly", "");
+    fallback.style.position = "fixed";
+    fallback.style.opacity = "0";
+    document.body.appendChild(fallback);
+    fallback.select();
+    fallback.setSelectionRange(0, fallback.value.length);
+    let copied = false;
+    try { copied = document.execCommand("copy"); } catch (_) {}
+    fallback.remove();
+    return copied;
+}
+
+/* Image attachment: resize on-device before sending to the existing Gemini attachment API. */
+const imageInput = document.getElementById("imageInput");
+const cameraInput = document.getElementById("cameraInput");
+const imagePreview = document.getElementById("imagePreview");
+const attachImageButton = document.getElementById("attachImageButton");
+const cameraButton = document.getElementById("cameraButton");
+const removeImageButton = document.getElementById("removeImageButton");
+const composerStatus = document.getElementById("composerStatus");
+
+function setComposerStatus(message, isError) {
+    if (!composerStatus) return;
+    composerStatus.textContent = message || "";
+    composerStatus.classList.toggle("is-error", Boolean(isError));
+}
+function renderPendingImage() {
+    if (!imagePreview) return;
+    imagePreview.replaceChildren();
+    if (!pendingImageAttachment) {
+        imagePreview.hidden = true;
+        return;
+    }
+    imagePreview.hidden = false;
+    const label = document.createElement("span");
+    label.textContent = "صورة جاهزة للإرسال: " + pendingImageAttachment.name;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "remove-image";
+    remove.textContent = "إزالة";
+    remove.setAttribute("aria-label", "إزالة الصورة المرفقة");
+    remove.addEventListener("click", function () {
+        pendingImageAttachment = null;
+        if (imageInput) imageInput.value = "";
+        if (cameraInput) cameraInput.value = "";
+        renderPendingImage();
+        setComposerStatus("");
+    });
+    imagePreview.append(label, remove);
+}
+function loadImageForCompression(file) {
+    return new Promise(function (resolve, reject) {
+        if (window.createImageBitmap) {
+            createImageBitmap(file).then(resolve).catch(reject);
+            return;
+        }
+        const url = URL.createObjectURL(file);
+        const image = new Image();
+        image.onload = function () {
+            URL.revokeObjectURL(url);
+            resolve(image);
+        };
+        image.onerror = function () {
+            URL.revokeObjectURL(url);
+            reject(new Error("تعذر فتح الصورة."));
+        };
+        image.src = url;
+    });
+}
+async function prepareImageAttachment(file) {
+    if (!file || !file.type || !file.type.startsWith("image/")) throw new Error("اختَر ملف صورة صالحاً.");
+    if (file.size > 12 * 1024 * 1024) throw new Error("الصورة الأصلية كبيرة جداً. الحد قبل الضغط 12 ميجابايت.");
+    const image = await loadImageForCompression(file);
+    const originalWidth = image.width || image.naturalWidth;
+    const originalHeight = image.height || image.naturalHeight;
+    const scale = Math.min(1, 1600 / Math.max(originalWidth, originalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(originalWidth * scale));
+    canvas.height = Math.max(1, Math.round(originalHeight * scale));
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("المتصفح لا يدعم تجهيز الصورة.");
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    if (image.close) image.close();
+    let blob = await new Promise(function (resolve) { canvas.toBlob(resolve, "image/jpeg", 0.82); });
+    if (!blob) throw new Error("تعذر ضغط الصورة.");
+    if (blob.size > 2 * 1024 * 1024) {
+        blob = await new Promise(function (resolve) { canvas.toBlob(resolve, "image/jpeg", 0.68); });
+    }
+    if (!blob || blob.size > 2.4 * 1024 * 1024) throw new Error("تعذر تقليل حجم الصورة بما يكفي. جرّب صورة أصغر.");
+    const dataUrl = await new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function () { resolve(String(reader.result || "")); };
+        reader.onerror = function () { reject(new Error("تعذرت قراءة الصورة.")); };
+        reader.readAsDataURL(blob);
+    });
+    return {
+        name: (file.name || "zolak-image").replace(/\.[^.]+$/, "") + ".jpg",
+        mime_type: "image/jpeg",
+        data: dataUrl.split(",")[1]
+    };
+}
+async function handleImageSelection(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    if (attachImageButton) attachImageButton.disabled = true;
+    if (cameraButton) cameraButton.disabled = true;
+    setComposerStatus("جارٍ تجهيز الصورة...");
+    try {
+        pendingImageAttachment = await prepareImageAttachment(file);
+        renderPendingImage();
+        setComposerStatus("الصورة جاهزة. اكتب سؤالك ثم اضغط إرسال.");
+        if (promptBox) promptBox.focus();
+    } catch (error) {
+        pendingImageAttachment = null;
+        renderPendingImage();
+        setComposerStatus(error.message || "تعذر تجهيز الصورة.", true);
+    } finally {
+        if (attachImageButton) attachImageButton.disabled = false;
+        if (cameraButton) cameraButton.disabled = false;
+        event.target.value = "";
+    }
+}
+if (imageInput) imageInput.addEventListener("change", handleImageSelection);
+if (cameraInput) cameraInput.addEventListener("change", handleImageSelection);
+if (attachImageButton && imageInput) attachImageButton.addEventListener("click", function () { imageInput.click(); });
+if (cameraButton && cameraInput) cameraButton.addEventListener("click", function () { cameraInput.click(); });
+if (removeImageButton) removeImageButton.addEventListener("click", function () {
+    pendingImageAttachment = null; renderPendingImage(); setComposerStatus("");
+});
+
+/* Speech recognition fills the prompt; the user always confirms before sending. */
+const microphoneButton = document.getElementById("microphoneButton");
+let speechRecognition = null;
+let isListening = false;
+function stopSpeechRecognition() {
+    if (speechRecognition && isListening) {
+        try { speechRecognition.stop(); } catch (_) {}
+    }
+    isListening = false;
+    if (microphoneButton) {
+        microphoneButton.classList.remove("is-listening");
+        microphoneButton.setAttribute("aria-pressed", "false");
+        microphoneButton.title = "الإدخال الصوتي";
+    }
+}
+function startSpeechRecognition() {
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+        setComposerStatus("الإدخال الصوتي غير مدعوم في هذا المتصفح. استخدم لوحة المفاتيح الصوتية إن كانت متاحة.", true);
+        return;
+    }
+    if (!window.isSecureContext) {
+        setComposerStatus("يلزم فتح الموقع عبر اتصال HTTPS لاستخدام الميكروفون.", true);
+        return;
+    }
+    if (isListening) { stopSpeechRecognition(); return; }
+    speechRecognition = new Recognition();
+    speechRecognition.lang = "ar-SD";
+    speechRecognition.interimResults = true;
+    speechRecognition.continuous = false;
+    let finalTranscript = "";
+    speechRecognition.onstart = function () {
+        isListening = true;
+        microphoneButton.classList.add("is-listening");
+        microphoneButton.setAttribute("aria-pressed", "true");
+        microphoneButton.title = "إيقاف التسجيل";
+        setComposerStatus("تحدث الآن... اضغط الميكروفون عند الانتهاء.");
+    };
+    speechRecognition.onresult = function (event) {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript || "";
+            if (event.results[i].isFinal) finalTranscript += transcript;
+            else interim += transcript;
+        }
+        const existing = promptBox.value.trim();
+        const prefix = existing && !promptBox.dataset.speechBase ? existing + " " : (promptBox.dataset.speechBase || "");
+        promptBox.value = prefix + finalTranscript + (interim ? " " + interim : "");
+        updateComposerMode();
+    };
+    speechRecognition.onerror = function (event) {
+        const messagesByError = {
+            "not-allowed": "تم رفض إذن الميكروفون. اسمح للموقع باستخدام الميكروفون من إعدادات المتصفح.",
+            "service-not-allowed": "المتصفح منع خدمة التعرف على الصوت.",
+            "no-speech": "ما التقطنا كلاماً. حاول تتحدث قريباً من الميكروفون.",
+            "audio-capture": "ما لقينا ميكروفون متاحاً على الجهاز.",
+            "network": "تعذر الاتصال بخدمة تحويل الصوت إلى نص."
+        };
+        setComposerStatus(messagesByError[event.error] || "تعذر تشغيل الإدخال الصوتي.", true);
+        stopSpeechRecognition();
+    };
+    speechRecognition.onend = function () {
+        isListening = false;
+        if (microphoneButton) {
+            microphoneButton.classList.remove("is-listening");
+            microphoneButton.setAttribute("aria-pressed", "false");
+            microphoneButton.title = "الإدخال الصوتي";
+        }
+        if (promptBox) { delete promptBox.dataset.speechBase; promptBox.focus(); }
+    };
+    promptBox.dataset.speechBase = promptBox.value.trim();
+    try { speechRecognition.start(); }
+    catch (_) { setComposerStatus("تعذر بدء الميكروفون. تحقق من الإذن وحاول مجدداً.", true); stopSpeechRecognition(); }
+}
+if (microphoneButton) microphoneButton.addEventListener("click", startSpeechRecognition);
 
 const composerInner = document.querySelector(".composer-inner");
 function updateComposerMode() {
