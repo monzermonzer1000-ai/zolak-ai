@@ -1141,11 +1141,18 @@ def create_live_voice_token():
 
     now = datetime.now(timezone.utc)
     token_request = {
-        "uses": 1,
-        "expireTime": (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
-        "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
-        "liveConnectConstraints": {
-            "model": "models/" + model
+        "authToken": {
+            "uses": 1,
+            "expireTime": (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
+            "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
+            "liveConnectConstraints": {
+                "model": model,
+                "config": {
+                    "responseModalities": ["AUDIO"],
+                    "inputAudioTranscription": {},
+                    "outputAudioTranscription": {}
+                }
+            }
         }
     }
 
