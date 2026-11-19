@@ -451,9 +451,9 @@ jobs:
           assert ".code-block{background:#f8fafc!important;border:" in theme_source
           assert "background:transparent!important;backdrop-filter:none!important" in theme_source
           assert ".message.assistant .message-content *" in theme_source
-assert "body.theme-dark .message.assistant .message-content *{color:#e5edf7!important}" not in theme_source
-for token in ("token-comment", "token-string", "token-number", "token-keyword", "token-function"):
-    assert f"body.theme-dark .code-block .{token}" in theme_source
+          assert "body.theme-dark .message.assistant .message-content *{color:#e5edf7!important}" not in theme_source
+          for token in ("token-comment", "token-string", "token-number", "token-keyword", "token-function"):
+              assert f"body.theme-dark .code-block .{token}" in theme_source
           assert "pointer-events:auto!important" in theme_source
           assert "plusSubscribe" not in home_source
           assert "homeQuickActions" not in home_source
