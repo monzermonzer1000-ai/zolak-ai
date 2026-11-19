@@ -304,6 +304,16 @@ def init_db():
             )
         )
 
+    # One-time recovery: re-enable public registration after the initial
+    # deployment shipped with registration disabled. The migration marker
+    # ensures an administrator can disable registration again later.
+    registration_migration = c.execute(
+        "SELECT value FROM settings WHERE key = 'registration_enabled_migration_v1'"
+    ).fetchone()
+    if not registration_migration:
+        save_setting(c, "allow_register", "true")
+        save_setting(c, "registration_enabled_migration_v1", "done")
+
     # -----------------------------------------------------
     # المدير
     # -----------------------------------------------------
