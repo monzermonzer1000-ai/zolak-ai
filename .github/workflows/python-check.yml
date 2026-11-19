@@ -72,9 +72,11 @@ jobs:
           assert theme_html_version == theme_sw_version
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
-          assert "/static/style.css?v=33" in home_html
+          assert "/static/style.css?v=36" in home_html
           assert "/static/soft-slate-theme.css?v=" in home_html
-          assert "/static/app.js?v=47" in home_html
+          assert "/static/app.js?v=50" in home_html
+          assert 'id="voiceChatPanel"' in home_html
+          assert 'id="microphoneButton"' in home_html
           assert 'class="theme-light"' in home_html
           assert 'id="adminLink"' in home_html and 'id="newChat"' in home_html
           assert 'id="clearHistoryButton"' in home_html and 'id="themeToggleButton"' in home_html
@@ -83,6 +85,8 @@ jobs:
           for removed in ("attachmentInput", "attachmentPreview", "composerAdd",  "conversationList", "conversationSearch", "allConversationsButton"):
               assert removed not in home_html
           sidebar_js = open("static/app.js", encoding="utf-8").read()
+          assert "SpeechRecognition" not in sidebar_js
+          assert "startLiveVoiceChat" in sidebar_js
           assert "bindZolakSidebarControls" in sidebar_js
           assert "function handleNewChatClick" in sidebar_js
           assert "function handleClearHistoryClick" in sidebar_js
@@ -133,6 +137,8 @@ jobs:
               "password": "test-password"
           })
           assert registered.status_code == 200, registered.get_json()
+          live_without_key = client.post("/api/live-token", json={})
+          assert live_without_key.status_code == 503, live_without_key.get_json()
 
           me = client.get("/api/me").get_json()
           assert me.get("logged_in") is True, me
@@ -446,6 +452,8 @@ jobs:
           assert 'sendButton.addEventListener("click", sendMessage)' in app_source
           assert "loadConversations" not in app_source
           backend_source = open("app.py", encoding="utf-8").read()
+          assert '@app.post("/api/live-token")' in backend_source
+          assert "liveConnectConstraints" in backend_source
           assert "pg_advisory_xact_lock(1515148353, 1262766641)" in backend_source
           assert "users.gemini_interaction_id IS NOT NULL" in backend_source
           theme_source = open("static/soft-slate-theme.css", encoding="utf-8").read()
@@ -482,9 +490,9 @@ jobs:
           assert "identity_answer = \"الموقع تحت تطوير منذر السيد.\"" in backend_source
           assert "width:100%!important" in theme_source
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
-          assert "filename='style.css') }}?v=33" in home_source
+          assert "filename='style.css') }}?v=36" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=47" in home_source
+          assert "filename='app.js') }}?v=50" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
           assert "filename='chat-enhancements.css') }}?v=1" in home_source
