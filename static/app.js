@@ -364,6 +364,16 @@ function addMessage(text, type, retryPayload = null) {
         content.appendChild(actions);
     } else {
         content.textContent = text;
+        const imageAttachment = retryPayload && retryPayload.attachments && retryPayload.attachments.find(function (item) {
+            return String(item.mime_type || "").startsWith("image/");
+        });
+        if (imageAttachment) {
+            const image = document.createElement("img");
+            image.className = "message-attachment-image";
+            image.alt = "الصورة المرفقة";
+            image.src = "data:" + imageAttachment.mime_type + ";base64," + imageAttachment.data;
+            content.appendChild(image);
+        }
     }
 
     message.appendChild(content);
@@ -486,7 +496,7 @@ async function sendMessage(retryPayload = null) {
     lastRequestPayload = { message: question, attachments: attachments.map(function (item) { return Object.assign({}, item); }) };
     isSending = true;
 
-    addMessage(question || "حلّل الصورة المرفقة", "user");
+    addMessage(question || "حلّل الصورة المرفقة", "user", requestPayload);
     promptBox.value = "";
     if (!retryPayload) {
         pendingImageAttachment = null;
@@ -587,6 +597,10 @@ function renderPendingImage() {
         return;
     }
     imagePreview.hidden = false;
+    const thumbnail = document.createElement("img");
+    thumbnail.className = "pending-image-thumbnail";
+    thumbnail.alt = "معاينة الصورة المرفقة";
+    thumbnail.src = "data:" + pendingImageAttachment.mime_type + ";base64," + pendingImageAttachment.data;
     const label = document.createElement("span");
     label.textContent = "صورة جاهزة للإرسال: " + pendingImageAttachment.name;
     const remove = document.createElement("button");
@@ -601,7 +615,7 @@ function renderPendingImage() {
         renderPendingImage();
         setComposerStatus("");
     });
-    imagePreview.append(label, remove);
+    imagePreview.append(thumbnail, label, remove);
 }
 function loadImageForCompression(file) {
     return new Promise(function (resolve, reject) {
@@ -710,7 +724,7 @@ function startSpeechRecognition() {
     }
     if (isListening) { stopSpeechRecognition(); return; }
     speechRecognition = new Recognition();
-    speechRecognition.lang = "ar-SD";
+    speechRecognition.lang = "ar-SA";
     speechRecognition.interimResults = true;
     speechRecognition.continuous = false;
     let finalTranscript = "";
