@@ -915,7 +915,7 @@ async function startLiveVoiceChat() {
         }
 
         const modelName = String(tokenData.model || "gemini-3.8-live").replace(/^models\//, "");
-        const socketUrl = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?access_token=" + encodeURIComponent(tokenData.token);
+        const socketUrl = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=" + encodeURIComponent(tokenData.token);
         liveVoiceSocket = new WebSocket(socketUrl);
 
         liveVoiceSocket.onopen = function () {
