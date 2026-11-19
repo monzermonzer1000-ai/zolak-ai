@@ -1145,10 +1145,7 @@ def create_live_voice_token():
         "expireTime": (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
         "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
         "liveConnectConstraints": {
-            "model": model,
-            "config": {
-                "responseModalities": ["AUDIO"]
-            }
+            "model": "models/" + model
         }
     }
 
