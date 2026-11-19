@@ -66,10 +66,14 @@ jobs:
           assert client.get("/manifest.json").status_code == 200
           assert client.get("/sw.js").status_code == 200
           home_html = client.get("/").get_data(as_text=True)
+          service_worker = client.get("/sw.js").get_data(as_text=True)
+          theme_html_version = next(line.split("?v=", 1)[1].split('"', 1)[0] for line in home_html.splitlines() if "soft-slate-theme.css" in line)
+          theme_sw_version = next(line.split("?v=", 1)[1].split('"', 1)[0] for line in service_worker.splitlines() if "soft-slate-theme.css" in line)
+          assert theme_html_version == theme_sw_version
           assert "/static/mobile-fixes.css?v=1" in home_html
           assert "/static/performance.css?v=2" in home_html
           assert "/static/style.css?v=33" in home_html
-          assert "/static/soft-slate-theme.css?v=14" in home_html
+          assert "/static/soft-slate-theme.css?v=" in home_html
           assert "/static/app.js?v=47" in home_html
           assert 'class="theme-light"' in home_html
           assert 'id="adminLink"' in home_html and 'id="newChat"' in home_html
