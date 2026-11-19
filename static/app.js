@@ -714,6 +714,7 @@ let liveVoiceActive = false;
 let liveVoiceMuted = false;
 let liveVoiceSetupReady = false;
 let liveVoiceNextPlayTime = 0;
+let liveVoicePlayingSources = new Set();
 let liveVoiceUserText = "";
 let liveVoiceAssistantText = "";
 
@@ -777,14 +778,16 @@ function playLivePcm(base64Audio) {
     source.buffer = audioBuffer;
     source.connect(liveVoiceContext.destination);
     const startAt = Math.max(liveVoiceContext.currentTime + 0.025, liveVoiceNextPlayTime);
+    source.onended = function () { liveVoicePlayingSources.delete(source); };
+    liveVoicePlayingSources.add(source);
     source.start(startAt);
     liveVoiceNextPlayTime = startAt + audioBuffer.duration;
     setLiveVoiceStatus("زولك بيتكلم معاك...", "speaking");
 }
 function stopLivePlayback() {
-    if (liveVoiceContext) {
-        liveVoiceNextPlayTime = liveVoiceContext.currentTime;
-    }
+    liveVoicePlayingSources.forEach(function (source) { try { source.stop(); } catch (_) {} });
+    liveVoicePlayingSources.clear();
+    if (liveVoiceContext) liveVoiceNextPlayTime = liveVoiceContext.currentTime;
 }
 function startLiveMicrophone() {
     if (!liveVoiceStream || !liveVoiceContext || !liveVoiceSocket || liveVoiceSocket.readyState !== WebSocket.OPEN) return;
@@ -834,6 +837,7 @@ function cleanupLiveVoice(closePanel) {
         liveVoiceContext = null;
         try { context.close(); } catch (_) {}
     }
+    stopLivePlayback();
     liveVoiceNextPlayTime = 0;
     liveVoiceMuted = false;
     if (voiceMuteButton) {
@@ -919,7 +923,7 @@ async function startLiveVoiceChat() {
                         }
                     },
                     systemInstruction: {
-                        parts: [{ text: "أنت زولك AI، مساعد سوداني. تحدث بالعربية بوضوح وبلهجة سودانية طبيعية عند ملاءمتها. أجب بصوت طبيعي ومباشر، استمع جيداً ولا تخترع معلومات." }]
+                        parts: [{ text: tokenData.system_instruction || "أنت زولك AI، مساعد سوداني. تحدث بالعربية بوضوح وبلهجة سودانية طبيعية عند ملاءمتها. أجب بصوت طبيعي ومباشر، استمع جيداً ولا تخترع معلومات." }]
                     },
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},
@@ -948,9 +952,10 @@ async function startLiveVoiceChat() {
                     setLiveVoiceStatus("سامعك الآن... اتكلم براحتك", "listening");
                 } catch (error) {
                     const denied = error && (error.name === "NotAllowedError" || error.name === "PermissionDeniedError");
-                    throw new Error(denied
+                    setLiveVoiceStatus(denied
                         ? "إذن الميكروفون مرفوض. اسمح لزولك AI باستخدام الميكروفون من إعدادات الموقع."
-                        : "ما قدرنا نفتح الميكروفون. تأكد أنه غير مستخدم بواسطة تطبيق آخر.");
+                        : "ما قدرنا نفتح الميكروفون. تأكد أنه غير مستخدم بواسطة تطبيق آخر.", "error");
+                    cleanupLiveVoice(false);
                 }
                 return;
             }
