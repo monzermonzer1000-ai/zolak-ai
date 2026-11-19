@@ -714,6 +714,7 @@ let liveVoiceActive = false;
 let liveVoiceMuted = false;
 let liveVoiceSetupReady = false;
 let liveVoiceNextPlayTime = 0;
+let liveVoiceTurnComplete = false;
 let liveVoicePlayingSources = new Set();
 let liveVoiceUserText = "";
 let liveVoiceAssistantText = "";
@@ -778,8 +779,14 @@ function playLivePcm(base64Audio) {
     source.buffer = audioBuffer;
     source.connect(liveVoiceContext.destination);
     const startAt = Math.max(liveVoiceContext.currentTime + 0.025, liveVoiceNextPlayTime);
-    source.onended = function () { liveVoicePlayingSources.delete(source); };
+    source.onended = function () {
+        liveVoicePlayingSources.delete(source);
+        if (liveVoiceTurnComplete && liveVoicePlayingSources.size === 0 && liveVoiceActive) {
+            setLiveVoiceStatus("سامعك الآن... اتكلم براحتك", "listening");
+        }
+    };
     liveVoicePlayingSources.add(source);
+    liveVoiceTurnComplete = false;
     source.start(startAt);
     liveVoiceNextPlayTime = startAt + audioBuffer.duration;
     setLiveVoiceStatus("زولك بيتكلم معاك...", "speaking");
@@ -839,6 +846,7 @@ function cleanupLiveVoice(closePanel) {
     }
     stopLivePlayback();
     liveVoiceNextPlayTime = 0;
+    liveVoiceTurnComplete = false;
     liveVoiceMuted = false;
     if (voiceMuteButton) {
         voiceMuteButton.textContent = "كتم الميكروفون";
@@ -985,8 +993,11 @@ async function startLiveVoiceChat() {
                 if (audioData) playLivePcm(audioData);
             }
             if (content.turnComplete) {
+                liveVoiceTurnComplete = true;
                 if (!content.outputTranscription?.text && liveVoiceAssistantText) showVoiceTranscript();
-                setLiveVoiceStatus("سامعك الآن... اتكلم براحتك", "listening");
+                if (liveVoicePlayingSources.size === 0) {
+                    setLiveVoiceStatus("سامعك الآن... اتكلم براحتك", "listening");
+                }
             }
         };
         liveVoiceSocket.onerror = function () {
