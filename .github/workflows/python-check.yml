@@ -74,7 +74,7 @@ jobs:
           assert "/static/performance.css?v=2" in home_html
           assert "/static/style.css?v=36" in home_html
           assert "/static/soft-slate-theme.css?v=" in home_html
-          assert "/static/app.js?v=52" in home_html
+          assert "/static/app.js?v=53" in home_html
           assert 'id="voiceChatPanel"' in home_html
           assert 'id="microphoneButton"' in home_html
           assert 'class="theme-light"' in home_html
@@ -114,7 +114,8 @@ jobs:
           assert "backdrop-filter:none!important" in sidebar_css
           assert "background:#fff!important" in sidebar_css
           assert "theme-dark" in sidebar_css
-          assert "const CACHE_NAME = \"zolak-ai-assets-v" in client.get("/sw.js").get_data(as_text=True)
+          assert 'const CACHE_NAME = "zolak-ai-assets-v64"' in service_worker
+          assert '"/static/app.js?v=53"' in service_worker
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -497,6 +498,8 @@ jobs:
           assert "createNewConversation" in app_source
           assert 'sendButton.addEventListener("click", sendMessage)' in app_source
           assert "loadConversations" not in app_source
+          assert "                    inputAudioTranscription: {},\\n                    outputAudioTranscription: {},\\n                    systemInstruction:" in app_source
+          assert "                        inputAudioTranscription: {},\\n                        outputAudioTranscription: {}" not in app_source
           backend_source = open("app.py", encoding="utf-8").read()
           assert '@app.post("/api/live-token")' in backend_source
           live_token_source = backend_source.split('@app.post("/api/live-token")', 1)[1].split('@app.post("/api/chat")', 1)[0]
@@ -542,7 +545,7 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=36" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=52" in home_source
+          assert "filename='app.js') }}?v=53" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
           assert "filename='chat-enhancements.css') }}?v=1" in home_source
