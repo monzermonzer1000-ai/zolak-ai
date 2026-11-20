@@ -74,7 +74,7 @@ jobs:
           assert "/static/performance.css?v=2" in home_html
           assert "/static/style.css?v=36" in home_html
           assert "/static/soft-slate-theme.css?v=" in home_html
-          assert "/static/app.js?v=52" in home_html
+          assert "/static/app.js?v=53" in home_html
           assert 'id="voiceChatPanel"' in home_html
           assert 'id="microphoneButton"' in home_html
           assert 'class="theme-light"' in home_html
@@ -114,7 +114,8 @@ jobs:
           assert "backdrop-filter:none!important" in sidebar_css
           assert "background:#fff!important" in sidebar_css
           assert "theme-dark" in sidebar_css
-          assert "const CACHE_NAME = \"zolak-ai-assets-v" in client.get("/sw.js").get_data(as_text=True)
+          assert 'const CACHE_NAME = "zolak-ai-assets-v64"' in service_worker
+          assert '"/static/app.js?v=53"' in service_worker
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
           assert "backdrop-filter: none" in performance_css
@@ -140,6 +141,51 @@ jobs:
           assert registered.status_code == 200, registered.get_json()
           live_without_key = client.post("/api/live-token", json={})
           assert live_without_key.status_code == 503, live_without_key.get_json()
+
+          # Verify the authenticated Live token route sends a valid minimal
+          # v1beta provisioning body without calling Google's external API.
+          import os as os_module
+          import json as json_module
+          from unittest.mock import patch
+
+          token_request_capture = {}
+
+          class FakeLiveTokenResponse:
+              def __enter__(self):
+                  return self
+
+              def __exit__(self, exc_type, exc, tb):
+                  return False
+
+              def read(self):
+                  return b'{"name":"ci-live-token"}'
+
+          def fake_live_token_urlopen(req, timeout):
+              token_request_capture["url"] = req.full_url
+              token_request_capture["timeout"] = timeout
+              token_request_capture["payload"] = json_module.loads(req.data.decode("utf-8"))
+              return FakeLiveTokenResponse()
+
+          previous_live_key = os_module.environ.get("GEMINI_API_KEY")
+          os_module.environ["GEMINI_API_KEY"] = "ci-fake-key"
+          try:
+              with patch("urllib.request.urlopen", side_effect=fake_live_token_urlopen):
+                  live_token_ok = client.post("/api/live-token", json={})
+          finally:
+              if previous_live_key is None:
+                  os_module.environ.pop("GEMINI_API_KEY", None)
+              else:
+                  os_module.environ["GEMINI_API_KEY"] = previous_live_key
+
+          assert live_token_ok.status_code == 200, live_token_ok.get_json()
+          assert live_token_ok.get_json()["token"] == "ci-live-token"
+          assert token_request_capture["url"] == "https://generativelanguage.googleapis.com/v1beta/auth_tokens"
+          assert token_request_capture["timeout"] == 18
+          live_payload = token_request_capture["payload"]
+          assert set(live_payload) == {"uses", "expireTime", "newSessionExpireTime"}, live_payload
+          assert live_payload["uses"] == 1
+          assert live_payload["expireTime"].endswith("Z")
+          assert live_payload["newSessionExpireTime"].endswith("Z")
 
           me = client.get("/api/me").get_json()
           assert me.get("logged_in") is True, me
@@ -452,9 +498,17 @@ jobs:
           assert "createNewConversation" in app_source
           assert 'sendButton.addEventListener("click", sendMessage)' in app_source
           assert "loadConversations" not in app_source
+          assert "                    inputAudioTranscription: {}," in app_source
+          assert "                    outputAudioTranscription: {}," in app_source
+          assert "                        inputAudioTranscription: {}," not in app_source
+          assert "                        outputAudioTranscription: {}" not in app_source
           backend_source = open("app.py", encoding="utf-8").read()
           assert '@app.post("/api/live-token")' in backend_source
-          assert "liveConnectConstraints" in backend_source
+          live_token_source = backend_source.split('@app.post("/api/live-token")', 1)[1].split('@app.post("/api/chat")', 1)[0]
+          assert '"uses": 1' in live_token_source
+          assert '"expireTime":' in live_token_source
+          assert '"newSessionExpireTime":' in live_token_source
+          assert '"liveConnectConstraints":' not in live_token_source
           assert "pg_advisory_xact_lock(1515148353, 1262766641)" in backend_source
           assert "users.gemini_interaction_id IS NOT NULL" in backend_source
           theme_source = open("static/soft-slate-theme.css", encoding="utf-8").read()
@@ -493,7 +547,7 @@ jobs:
           assert "sudan-flag-background.jpg" not in home_source + login_source + css_source + performance_source
           assert "filename='style.css') }}?v=36" in home_source
           assert "filename='performance.css') }}?v=2" in home_source
-          assert "filename='app.js') }}?v=52" in home_source
+          assert "filename='app.js') }}?v=53" in home_source
           assert 'id="composerVoice"' not in home_source
           assert "composerVoice" not in app_source
           assert "filename='chat-enhancements.css') }}?v=1" in home_source
