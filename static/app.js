@@ -715,6 +715,8 @@ let liveVoiceMuted = false;
 let liveVoiceSetupReady = false;
 let liveVoiceNextPlayTime = 0;
 let liveVoiceTurnComplete = false;
+let liveVoiceSetupTimer = null;
+let liveVoiceMicTimer = null;
 let liveVoicePlayingSources = new Set();
 let liveVoiceUserText = "";
 let liveVoiceAssistantText = "";
@@ -819,6 +821,10 @@ function startLiveMicrophone() {
     liveVoiceProcessor.connect(liveVoiceContext.destination);
 }
 function cleanupLiveVoice(closePanel) {
+    clearTimeout(liveVoiceSetupTimer);
+    clearTimeout(liveVoiceMicTimer);
+    liveVoiceSetupTimer = null;
+    liveVoiceMicTimer = null;
     liveVoiceActive = false;
     liveVoiceSetupReady = false;
     if (liveVoiceProcessor) {
@@ -915,7 +921,7 @@ async function startLiveVoiceChat() {
         }
 
         const modelName = String(tokenData.model || "gemini-3.8-live").replace(/^models\//, "");
-        const socketUrl = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=" + encodeURIComponent(tokenData.token);
+        const socketUrl = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained?access_token=" + encodeURIComponent(tokenData.token);
         liveVoiceSocket = new WebSocket(socketUrl);
 
         liveVoiceSocket.onopen = function () {
@@ -943,7 +949,14 @@ async function startLiveVoiceChat() {
                     }
                 }
             }));
-            setLiveVoiceStatus("تم الاتصال. بنجهز الميكروفون...", "connecting");
+            setLiveVoiceStatus("اتصلنا بخدمة Gemini؛ في انتظار جاهزية الجلسة...", "connecting");
+            clearTimeout(liveVoiceSetupTimer);
+            liveVoiceSetupTimer = setTimeout(function () {
+                if (liveVoiceActive && !liveVoiceSetupReady) {
+                    setLiveVoiceStatus("اتصال Gemini تم، لكن لم تصل رسالة جاهزية الجلسة خلال 15 ثانية. غالباً النموذج أو صلاحية الجلسة رفضت الإعداد. حاول لاحقاً.", "error");
+                    cleanupLiveVoice(false);
+                }
+            }, 15000);
         };
 
         liveVoiceSocket.onmessage = async function (event) {
@@ -951,25 +964,43 @@ async function startLiveVoiceChat() {
             try { packet = JSON.parse(event.data); } catch (_) { return; }
             if (packet.setupComplete) {
                 liveVoiceSetupReady = true;
+                clearTimeout(liveVoiceSetupTimer);
+                setLiveVoiceStatus("خدمة Gemini جاهزة. بنطلب إذن الميكروفون الآن...", "connecting");
                 try {
-                    liveVoiceStream = await navigator.mediaDevices.getUserMedia({
+                    const micPromise = navigator.mediaDevices.getUserMedia({
                         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
                     });
-                    if (!liveVoiceActive) return;
+                    const micTimeout = new Promise(function (_, reject) {
+                        liveVoiceMicTimer = setTimeout(function () {
+                            reject(new Error("المتصفح لم يرد على طلب الميكروفون. راجع إذن الميكروفون في إعدادات الموقع."));
+                        }, 12000);
+                    });
+                    liveVoiceStream = await Promise.race([micPromise, micTimeout]);
+                    clearTimeout(liveVoiceMicTimer);
+                    liveVoiceMicTimer = null;
+                    if (!liveVoiceActive) {
+                        liveVoiceStream.getTracks().forEach(function (track) { track.stop(); });
+                        liveVoiceStream = null;
+                        return;
+                    }
+                    if (!liveVoiceStream.getAudioTracks().length) throw new Error("لم يتم العثور على مسار صوت من الميكروفون.");
                     startLiveMicrophone();
                     setLiveVoiceStatus("سامعك الآن... اتكلم براحتك", "listening");
                 } catch (error) {
-                    const denied = error && (error.name === "NotAllowedError" || error.name === "PermissionDeniedError");
+                    clearTimeout(liveVoiceMicTimer);
+                    liveVoiceMicTimer = null;
+                    const denied = error && (error.name === "NotAllowedError" || error.name === "PermissionDeniedError" || error.name === "SecurityError");
                     setLiveVoiceStatus(denied
-                        ? "إذن الميكروفون مرفوض. اسمح لزولك AI باستخدام الميكروفون من إعدادات الموقع."
-                        : "ما قدرنا نفتح الميكروفون. تأكد أنه غير مستخدم بواسطة تطبيق آخر.", "error");
+                        ? "إذن الميكروفون مرفوض. افتح إعدادات الموقع واسمح باستخدام الميكروفون."
+                        : (error.message || "تعذر تشغيل الميكروفون. تأكد أنه غير مستخدم بواسطة تطبيق آخر."), "error");
                     cleanupLiveVoice(false);
                 }
                 return;
             }
             if (packet.error) {
-                const detail = packet.error.message || "خدمة الصوت أرسلت خطأ.";
-                setLiveVoiceStatus(detail, "error");
+                clearTimeout(liveVoiceSetupTimer);
+                const detail = packet.error.message || packet.error.status || "خدمة الصوت أرسلت خطأ أثناء إعداد الجلسة.";
+                setLiveVoiceStatus("Gemini رفض إعداد الجلسة: " + detail, "error");
                 cleanupLiveVoice(false);
                 return;
             }
@@ -1002,14 +1033,16 @@ async function startLiveVoiceChat() {
         };
         liveVoiceSocket.onerror = function () {
             if (!liveVoiceActive) return;
-            setLiveVoiceStatus("حصلت مشكلة في اتصال الصوت. تحقق من الإنترنت وحاول مرة أخرى.", "error");
+            setLiveVoiceStatus("تعذر إنشاء اتصال آمن مع Gemini Live. افحص الشبكة أو صلاحية مفتاح Gemini.", "error");
             cleanupLiveVoice(false);
         };
         liveVoiceSocket.onclose = function (event) {
             if (!liveVoiceActive) return;
+            clearTimeout(liveVoiceSetupTimer);
+            const reason = (event.reason || "").trim();
             const message = event.code === 1008
-                ? "انتهت صلاحية جلسة الصوت. اضغط زر البدء وحاول مجدداً."
-                : "انقطع اتصال الدردشة الصوتية. تحقق من الإنترنت وحاول مجدداً.";
+                ? "Gemini رفض الجلسة (1008)." + (reason ? " السبب: " + reason : " تحقق من النموذج وصلاحية الرمز.")
+                : "انقطع اتصال Gemini (رمز " + event.code + ")." + (reason ? " السبب: " + reason : " تحقق من الإنترنت وحاول مجدداً.");
             setLiveVoiceStatus(message, "error");
             cleanupLiveVoice(false);
         };
