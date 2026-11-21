@@ -969,6 +969,12 @@ async function startLiveVoiceChat() {
                 try {
                     const micPromise = navigator.mediaDevices.getUserMedia({
                         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                    }).then(function (stream) {
+                        if (!liveVoiceActive) {
+                            stream.getTracks().forEach(function (track) { track.stop(); });
+                            throw new Error("تم إيقاف طلب الميكروفون.");
+                        }
+                        return stream;
                     });
                     const micTimeout = new Promise(function (_, reject) {
                         liveVoiceMicTimer = setTimeout(function () {
@@ -983,7 +989,14 @@ async function startLiveVoiceChat() {
                         liveVoiceStream = null;
                         return;
                     }
-                    if (!liveVoiceStream.getAudioTracks().length) throw new Error("لم يتم العثور على مسار صوت من الميكروفون.");
+                    const audioTrack = liveVoiceStream.getAudioTracks()[0];
+                    if (!audioTrack) throw new Error("لم يتم العثور على مسار صوت من الميكروفون.");
+                    audioTrack.addEventListener("ended", function () {
+                        if (liveVoiceActive) {
+                            setLiveVoiceStatus("انقطع الميكروفون أو سُحب الإذن أثناء المحادثة.", "error");
+                            cleanupLiveVoice(false);
+                        }
+                    }, { once: true });
                     startLiveMicrophone();
                     setLiveVoiceStatus("سامعك الآن... اتكلم براحتك", "listening");
                 } catch (error) {
