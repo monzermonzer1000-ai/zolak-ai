@@ -1147,11 +1147,17 @@ def create_live_voice_token():
     token_request = {
         "uses": 1,
         "expireTime": (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
-        "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z")
+        "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
+        "liveConnectConstraints": {
+            "model": "models/" + model,
+            "config": {
+                "responseModalities": ["AUDIO"]
+            }
+        }
     }
 
     req = Request(
-        "https://generativelanguage.googleapis.com/v1beta/auth_tokens",
+        "https://generativelanguage.googleapis.com/v1alpha/auth_tokens",
         data=json.dumps(token_request).encode("utf-8"),
         headers={
             "Content-Type": "application/json",
