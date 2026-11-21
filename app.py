@@ -1143,13 +1143,18 @@ def create_live_voice_token():
     # Create a one-use v1alpha token constrained to the model. The current AuthToken
     # schema uses bidiGenerateContentSetup (not the older liveConnectConstraints).
     # fieldMask=model locks only the model; the browser supplies the remaining setup.
+    # CreateAuthTokenRequest requires the AuthToken payload to be nested
+    # under the top-level "authToken" field. Sending these fields at the root
+    # can produce a token/setup mismatch and prevent setupComplete from arriving.
     token_request = {
-        "uses": 1,
-        "expireTime": (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
-        "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
-        "fieldMask": "model",
-        "bidiGenerateContentSetup": {
-            "model": "models/" + model
+        "authToken": {
+            "uses": 1,
+            "expireTime": (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
+            "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
+            "fieldMask": "model",
+            "bidiGenerateContentSetup": {
+                "model": "models/" + model
+            }
         }
     }
 
