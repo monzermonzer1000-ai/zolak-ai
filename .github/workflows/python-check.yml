@@ -508,7 +508,9 @@ jobs:
           assert '"uses": 1' in live_token_source
           assert '"expireTime":' in live_token_source
           assert '"newSessionExpireTime":' in live_token_source
-          assert '"liveConnectConstraints":' not in live_token_source
+          assert '"bidiGenerateContentSetup":' in live_token_source
+          assert '"fieldMask": "model"' in live_token_source
+          assert 'v1alpha/auth_tokens' in live_token_source
           assert "pg_advisory_xact_lock(1515148353, 1262766641)" in backend_source
           assert "users.gemini_interaction_id IS NOT NULL" in backend_source
           theme_source = open("static/soft-slate-theme.css", encoding="utf-8").read()
