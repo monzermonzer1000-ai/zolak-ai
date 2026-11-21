@@ -88,6 +88,8 @@ jobs:
           assert "SpeechRecognition" not in sidebar_js
           assert "startLiveVoiceChat" in sidebar_js
           assert "BidiGenerateContentConstrained" in sidebar_js
+          assert "v1alpha.GenerativeService.BidiGenerateContentConstrained" in sidebar_js
+          assert "liveVoiceSetupTimer" in sidebar_js
           assert "bindZolakSidebarControls" in sidebar_js
           assert "function handleNewChatClick" in sidebar_js
           assert "function handleClearHistoryClick" in sidebar_js
@@ -114,7 +116,7 @@ jobs:
           assert "backdrop-filter:none!important" in sidebar_css
           assert "background:#fff!important" in sidebar_css
           assert "theme-dark" in sidebar_css
-          assert 'const CACHE_NAME = "zolak-ai-assets-v64"' in service_worker
+          assert 'const CACHE_NAME = "zolak-ai-assets-v66"' in service_worker
           assert '"/static/app.js?v=55"' in service_worker
           assert client.get("/static/mobile-fixes.css").status_code == 200
           performance_css = client.get("/static/performance.css").get_data(as_text=True)
@@ -143,7 +145,7 @@ jobs:
           assert live_without_key.status_code == 503, live_without_key.get_json()
 
           # Verify the authenticated Live token route sends a valid minimal
-          # v1beta provisioning body without calling Google's external API.
+          # v1alpha constrained token body without calling Google's external API.
           import os as os_module
           import json as json_module
           from unittest.mock import patch
@@ -179,11 +181,13 @@ jobs:
 
           assert live_token_ok.status_code == 200, live_token_ok.get_json()
           assert live_token_ok.get_json()["token"] == "ci-live-token"
-          assert token_request_capture["url"] == "https://generativelanguage.googleapis.com/v1beta/auth_tokens"
+          assert token_request_capture["url"] == "https://generativelanguage.googleapis.com/v1alpha/auth_tokens"
           assert token_request_capture["timeout"] == 18
           live_payload = token_request_capture["payload"]
-          assert set(live_payload) == {"uses", "expireTime", "newSessionExpireTime"}, live_payload
+          assert set(live_payload) == {"uses", "expireTime", "newSessionExpireTime", "fieldMask", "bidiGenerateContentSetup"}, live_payload
           assert live_payload["uses"] == 1
+          assert live_payload["fieldMask"] == "model"
+          assert live_payload["bidiGenerateContentSetup"]["model"] == "models/gemini-3.8-live"
           assert live_payload["expireTime"].endswith("Z")
           assert live_payload["newSessionExpireTime"].endswith("Z")
 
