@@ -1140,19 +1140,16 @@ def create_live_voice_token():
         model = "gemini-3.8-live"
 
     now = datetime.now(timezone.utc)
-    # Keep the v1beta provisioning body to fields accepted by auth_tokens.
-    # The Live session model and audio/transcription settings are sent by the
-    # browser in the first WebSocket setup message. The provisioning endpoint
-    # currently rejects liveConnectConstraints in this request body.
+    # Create a one-use v1alpha token constrained to the model. The current AuthToken
+    # schema uses bidiGenerateContentSetup (not the older liveConnectConstraints).
+    # fieldMask=model locks only the model; the browser supplies the remaining setup.
     token_request = {
         "uses": 1,
         "expireTime": (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
         "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
-        "liveConnectConstraints": {
-            "model": "models/" + model,
-            "config": {
-                "responseModalities": ["AUDIO"]
-            }
+        "fieldMask": "model",
+        "bidiGenerateContentSetup": {
+            "model": "models/" + model
         }
     }
 
