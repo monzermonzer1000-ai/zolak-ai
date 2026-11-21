@@ -1143,17 +1143,38 @@ def create_live_voice_token():
     # Create a one-use v1alpha token constrained to the model. The current AuthToken
     # schema uses bidiGenerateContentSetup (not the older liveConnectConstraints).
     # fieldMask=model locks only the model; the browser supplies the remaining setup.
-    # The Gemini REST create-token endpoint accepts the AuthToken config
-    # directly as the JSON body (not wrapped in an "authToken" property).
-    # This shape is confirmed by Google's REST ephemeral-token examples.
+    # Lock the complete Live setup into the ephemeral token. Google documents
+    # that an empty fieldMask plus bidiGenerateContentSetup makes this server-side
+    # setup authoritative; the client's initial setup frame is ignored.
+    live_setup = {
+        "model": "models/" + model,
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "languageCode": "ar-EG",
+                "voiceConfig": {
+                    "prebuiltVoiceConfig": {"voiceName": "Kore"}
+                }
+            }
+        },
+        "inputAudioTranscription": {},
+        "outputAudioTranscription": {},
+        "systemInstruction": {
+            "parts": [{"text": system_instruction}]
+        },
+        "realtimeInputConfig": {
+            "automaticActivityDetection": {
+                "disabled": False,
+                "silenceDurationMs": 800
+            }
+        }
+    }
     token_request = {
         "uses": 1,
         "expireTime": (now + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
         "newSessionExpireTime": (now + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
-        "fieldMask": "model",
-        "bidiGenerateContentSetup": {
-            "model": "models/" + model
-        }
+        "fieldMask": "",
+        "bidiGenerateContentSetup": live_setup
     }
 
     req = Request(
