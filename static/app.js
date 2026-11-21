@@ -926,29 +926,9 @@ async function startLiveVoiceChat() {
 
         liveVoiceSocket.onopen = function () {
             if (!liveVoiceActive || !liveVoiceSocket) return;
-            liveVoiceSocket.send(JSON.stringify({
-                setup: {
-                    model: "models/" + modelName,
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: {
-                            languageCode: "ar",
-                            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } }
-                        }
-                    },
-                    inputAudioTranscription: {},
-                    outputAudioTranscription: {},
-                    systemInstruction: {
-                        parts: [{ text: tokenData.system_instruction || "أنت زولك AI، مساعد سوداني. تحدث بالعربية بوضوح وبلهجة سودانية طبيعية عند ملاءمتها. أجب بصوت طبيعي ومباشر، استمع جيداً ولا تخترع معلومات." }]
-                    },
-                    realtimeInputConfig: {
-                        automaticActivityDetection: {
-                            disabled: false,
-                            silenceDurationMs: 800
-                        }
-                    }
-                }
-            }));
+            // The complete setup is locked into the ephemeral token on the server.
+            // Send the required first setup frame; Google uses the token's setup config.
+            liveVoiceSocket.send(JSON.stringify({ setup: {} }));
             setLiveVoiceStatus("اتصلنا بخدمة Gemini؛ في انتظار جاهزية الجلسة...", "connecting");
             clearTimeout(liveVoiceSetupTimer);
             liveVoiceSetupTimer = setTimeout(function () {
